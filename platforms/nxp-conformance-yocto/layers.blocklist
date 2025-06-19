@@ -1,2 +1,3 @@
 poky/meta-selftest
 poky/meta-skeleton
+meta-imx-frdm/meta-nxp-demo-experience
