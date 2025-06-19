@@ -1,0 +1,10 @@
+build/
+downloads/
+patches/**/*.patch.done
+/sources/
+build.log
+README.html
+README.pdf
+*.tar.gz
+doc/test-report-pdf/
+doc/test-report/*.xml

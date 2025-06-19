@@ -1,0 +1,7 @@
+# These are the requirements to run yocto-build/scripts/sfl_cd/sfl_cd.py
+future==0.18.3
+Jinja2==3.1.2
+junitparser==3.1.0
+MarkupSafe==2.1.3
+pdf2image==1.16.3
+python-redmine==2.4.0
