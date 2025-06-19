@@ -233,14 +233,26 @@ You can run the built debug image in QEMU virtual machine with the following com
 
   $ cqfd -b runqemu
 
-== Flashing the firmware to an SD Card
+== Flashing the firmware to the IMX93
 
-On a Linux system, you can use the `dd` command. For instance, if the SD Card
-device is /dev/sdx:
+=== Prerequisites
 
-  $ sudo umount /dev/sdx*
-  $ sudo dd if=build/tmp/deploy/image/geisa-imx93/geisa-imx93-image-geisa-imx93.img \
-      of=/dev/sdx bs=64k conv=fsync status=progress
+Download the latest version of uuu here: https://github.com/nxp-imx/mfgtools/releases
+and execute:
+
+   $ chmod a+x uuu
+
+=== Flash the EMMC
+
+Connect the USB1 port to the host machine. Unplug the power adapter and
+configure the board to boot on serial download protocol by configuring the
+switch SW1 on the value 1000. Plug the power adapter.
+To launch the flash execute:
+
+    $ sudo ./uuu -b emmc_all geisa-imx93-image-geisa-imx93.rootfs.wic.zst
+
+Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
+switch SW1 on the value 0100. Then plug the power adapter.
 
 == About this documentation
 
