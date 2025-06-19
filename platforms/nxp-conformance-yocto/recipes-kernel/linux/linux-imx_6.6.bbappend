@@ -1,0 +1,2 @@
+SRCREV = "d23d64eea5111e1607efcce1d601834fceec92cb"
+LINUX_VERSION = "6.6.36"
