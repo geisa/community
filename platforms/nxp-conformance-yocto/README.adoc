@@ -233,7 +233,7 @@ You can run the built debug image in QEMU virtual machine with the following com
 
   $ cqfd -b runqemu
 
-== Flashing the firmware to the IMX93
+== Flashing the firmware to the IMX93-frdm
 
 === Prerequisites
 
@@ -253,6 +253,24 @@ To launch the flash execute:
 
 Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
 switch SW1 on the value 0100. Then plug the power adapter.
+
+== Flashing the firmware to the IMX93-evk
+
+=== Prerequisites
+
+See the prerequisites for flashing the IMX93-frdm.
+
+=== Flash the EMMC
+
+Connect the USB1 port to the host machine. Unplug the power adapter and
+configure the board to boot on serial download protocol by configuring the
+switch SW1301 on the value 1100. Plug the power adapter.
+To launch the flash execute:
+
+    $ sudo ./uuu -b emmc_all geisa-imx93-image-geisa-imx93-evk.rootfs.wic.zst
+
+Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
+switch SW1301 on the value 0000. Then plug the power adapter.
 
 == About this documentation
 
