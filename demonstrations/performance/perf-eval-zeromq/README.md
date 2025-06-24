@@ -72,26 +72,21 @@ chmod +x zmqsub
 chmod +x zmqpub
 ```
 
-2. Start the subscriber program first:
+2. To see command line options::
 ```
-./zmqsub
+./zmqsub -- --help
+./zmqpub -- --help
 ```
 
-        Choose the location for the socket (default seems to work every time)
+3. Start the subscriber program first:
+```
+./zmqsub -e
+```
 
 
 3. Then start the publisher program:
 ```
 ./zmqpub
 ```
-
-        Choose the same location for the socket
-
-        Then choose the time period between messages.   The value 16,667 is basically the number of microseconds that gives us 60 messages per second.  (One message per cycle, basically)
-
-        Then choose the message size in bytes (1525 for 128samplesX6channelsX16bit, etc)
-
-        Then choose the number of messages to send.  Enough to watch the processor a while.  Not too much so you have to sit there for ever.
-
 
 4. When it's done, zmqsub will spit out an analysis.
