@@ -1,4 +1,4 @@
-# geisa-messaging-benchmarking
+# perf-eval-zeromq
 Contains work meant to evaluate messaging options for GEISA
 
 ## Intro
