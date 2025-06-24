@@ -14,6 +14,14 @@ To run zmqsub:
 cd zmqsub
 cargo run
 ```
+To see command line options
+```
+cargo run -- --help
+```
+Ex: to enable latency analysis
+```
+cargo run -- -e
+```
 
 To run zmqpub:
 ```
@@ -74,8 +82,8 @@ chmod +x zmqpub
 
 2. To see command line options::
 ```
-./zmqsub -- --help
-./zmqpub -- --help
+./zmqsub --help
+./zmqpub --help
 ```
 
 3. Start the subscriber program first:
