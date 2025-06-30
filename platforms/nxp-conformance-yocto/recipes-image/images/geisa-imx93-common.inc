@@ -6,3 +6,7 @@ require recipes-core/images/core-image-minimal.bb
 IMAGE_FSTYPES += "tar.gz wic.zst wic.bmap"
 
 IMAGE_FEATURES:append = " ssh-server-openssh allow-root-login"
+
+IMAGE_INSTALL:append = " \
+    lrzsz \
+"
