@@ -10,4 +10,5 @@ IMAGE_FEATURES:append = " ssh-server-openssh allow-root-login"
 IMAGE_INSTALL:append = " \
     lrzsz \
     lxc \
+    kernel-modules \
 "
