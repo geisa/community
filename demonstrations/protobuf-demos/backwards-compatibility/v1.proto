@@ -1,0 +1,10 @@
+edition = "2023";
+
+message WaveformData {
+  uint64 sequence_number = 1;
+  uint64 timestamp = 2;
+  uint32 sample_rate = 3;
+  uint32 sample_count = 4;
+  uint32 channel_count = 5;
+  repeated float data = 6;
+}
