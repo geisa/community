@@ -5,4 +5,5 @@ LINUX_VERSION = "6.6.36"
 
 SRC_URI:append = " \
     file://container.cfg \
+    file://unused-configs.cfg \
 "
