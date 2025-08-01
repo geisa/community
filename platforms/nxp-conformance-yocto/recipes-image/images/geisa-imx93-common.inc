@@ -11,4 +11,5 @@ IMAGE_INSTALL:append = " \
     lrzsz \
     lxc \
     kernel-modules \
+    iperf3 \
 "
