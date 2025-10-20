@@ -1,0 +1,6 @@
+[gerrit]
+host = g1.sfl.io
+port = 29419
+project = SCE/geisa-imx93/meta-geisa-imx93-bsp
+defaultbranch = master
+defaultremote = sfl_gerrit
