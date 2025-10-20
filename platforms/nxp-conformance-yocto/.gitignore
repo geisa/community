@@ -1,7 +1,6 @@
 build/
 downloads/
 patches/**/*.patch.done
-/sources/
 build.log
 README.html
 README.pdf
