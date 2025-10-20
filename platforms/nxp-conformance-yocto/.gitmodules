@@ -1,0 +1,32 @@
+[submodule "sources/poky"]
+	path = sources/poky
+	url = git://git.yoctoproject.org/poky
+    branch = scarthgap
+[submodule "sources/meta-openembedded"]
+	path = sources/meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded
+    branch = scarthgap
+[submodule "sources/meta-virtualization"]
+	path = sources/meta-virtualization
+	url = git://git.yoctoproject.org/meta-virtualization
+    branch = scarthgap
+[submodule "sources/meta-freescale"]
+	path = sources/meta-freescale
+	url = git://git.yoctoproject.org/meta-freescale
+    branch = scarthgap
+[submodule "sources/meta-arm"]
+	path = sources/meta-arm
+	url = git://git.yoctoproject.org/meta-arm
+    branch = scarthgap
+[submodule "sources/meta-imx"]
+	path = sources/meta-imx
+	url = https://github.com/nxp-imx/meta-imx.git
+    branch = scarthgap-6.6.52-2.2.1
+[submodule "sources/meta-imx-frdm"]
+	path = sources/meta-imx-frdm
+	url = https://github.com/nxp-imx-support/meta-imx-frdm.git
+    branch = lf-6.6.36-2.1.0
+[submodule "doc/test-report-pdf"]
+	path = doc/test-report-pdf
+	url = https://github.com/savoirfairelinux/test-report-pdf
+    branch = master
