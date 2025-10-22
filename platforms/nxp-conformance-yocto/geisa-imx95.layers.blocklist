@@ -1,0 +1,6 @@
+poky/meta-selftest
+poky/meta-skeleton
+meta-imx-frdm/meta-imx-bsp
+meta-imx-frdm/meta-imx-sdk
+meta-imx-frdm/meta-nxp-connectivity
+meta-imx-frdm/meta-nxp-demo-experience
