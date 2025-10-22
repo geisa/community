@@ -39,3 +39,13 @@ command='./build.sh \
     -m geisa-imx93-evk \
     --distro geisa-imx93-dbg \
     -i geisa-imx93-dbg-image'
+
+[imx95-evk]
+command='./build.sh \
+    -m geisa-imx95-evk'
+
+[imx95-evk-debug]
+command='./build.sh \
+    -m geisa-imx95-evk \
+    --distro geisa-imx93-dbg \
+    -i geisa-imx93-dbg-image'
