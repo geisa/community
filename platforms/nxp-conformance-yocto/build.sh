@@ -273,17 +273,18 @@ filter_layers_blocklist()
     local sep
 
     # Build $filter, a |-separated list of layers to exclude
-    if [ -s "$TOPDIR/layers.blocklist" ]; then
-        while read -r layer; do
+    if [ -s "$TOPDIR/$BLOCKLIST" ]; then
+        while IFS= read -r layer || [ -n "$layer" ]; do
+            # Remove leading/trailing whitespace and carriage returns
+            layer="$(echo "$layer" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
             [ -z "$layer" ] && continue
-
             if [ -d "$SOURCESDIR/$layer" ]; then
                 filter+="${sep}${SOURCESDIR}/$layer"
-                sep="|" # separator for 2nd and next items
+                sep="|"
             else
-                log error "layers.blocklist entry not found: $layer"
+                log error "$BLOCKLIST entry not found: $layer"
             fi
-        done < "$TOPDIR/layers.blocklist"
+        done < "$TOPDIR/$BLOCKLIST"
 
         filter="($filter)"
     fi
@@ -507,6 +508,15 @@ export BB_ENV_PASSTHROUGH_ADDITIONS="$BB_ENV_PASSTHROUGH_ADDITIONS \
 export IMAGE=${IMAGE:-"$default_image"}
 export MACHINE=${MACHINE:-"$default_machine"}
 export DISTRO=${DISTRO:-"$default_distro"}
+
+# Every machine variants of the same family share the same blocklist (matched by prefix)
+BLOCKLIST_PREFIX=$(echo "$MACHINE" | awk -F'-' '{print $1"-"$2}')
+BLOCKLIST="$BLOCKLIST_PREFIX.layers.blocklist"
+
+# Use default blocklist if no machine-specific one is found
+if [ ! -f "$TOPDIR/$BLOCKLIST" ]; then
+    BLOCKLIST="layers.blocklist"
+fi
 
 # For NXP BSPs, auto-accept their EULA
 export ACCEPT_FSL_EULA="1"
