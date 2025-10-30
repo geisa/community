@@ -1,5 +1,5 @@
-DESCRIPTION = "A debug image for geisa-imx93"
-require geisa-imx93-common.inc
+DESCRIPTION = "A debug image for GEISA"
+require geisa-common.inc
 
 # Monitoring tools
 IMAGE_INSTALL += "htop"
