@@ -3,7 +3,7 @@ LICENSE = "CLOSED"
 require recipes-core/images/core-image-minimal.bb
 
 # zst compression has the fastest flashing time without a hardware accelerator
-IMAGE_FSTYPES += "tar.gz wic.zst wic.bmap"
+IMAGE_FSTYPES += "tar.gz wic.zst wic.bmap wic"
 
 IMAGE_FEATURES:append = " ssh-server-openssh allow-root-login"
 
