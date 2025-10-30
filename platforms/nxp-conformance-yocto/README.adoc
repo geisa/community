@@ -1,22 +1,14 @@
-= SCE geisa-imx93 Yocto Platform Developer Guide
+= SCE GEISA Mockup Yocto Platform Developer Guide
 
 :toc:
 :icons:
 :iconsdir: ./doc/icons/
 :sectnumlevels: 1
 
-The Yocto firmware generation has been tested on Ubuntu 18.04. You can either
+The Yocto firmware generation has been tested on Ubuntu 24.04. You can either
 use your host machine's tools, or use
 https://github.com/savoirfairelinux/cqfd[cqfd] to build. More details are given
 in the next sections of this document.
-
-== Release Notes
-
-=== Version 0.1.0 (June 20 2019)
-
-* Generates a default Yocto image
-* Supports installation using <fixme>
-* Console is limited to <fixme>
 
 :numbered:
 
@@ -27,60 +19,32 @@ in the next sections of this document.
 The firmware source code is fetched from several git repositories. Some
 of them are public and require no credentials.
 
-The part specific to SCE's product is stored on a private git server, provided
-by SFL at the moment.
-
 If you don't already have a set of SSH keys in the `~/.ssh` directory of your
 build machine, you can create them by running:
 
   $ ssh-keygen -t rsa -C <your_email@youremail.com>
 
-Then, connect to https://g1.sfl.io[gerrit] and authenticate using your
-provided user and password.
 
-In the top right corner:
+In the top right corner of Github (your profile picture):
 
 * Click on "Settings"
-* Go to the "SSH Public Keys" section.
+* Go to the "SSH and GPG Keys" section.
 * Add the contents of your public SSH key (with the .pub extension). The default
   SSH public key path should be `~/.ssh/id_rsa.pub`.
 
-=== Git defaults
-
-If you want to fetch the source code from SFL's Git server, add these default
-`User` and `Port` directives to your `~/.ssh/config`:
-
-```
-Host g1.sfl.io
-    Port 29419
-    User your_username
-```
-
-NOTE: Specify the SFL username that was provided to you.
-
 == Fetching the source using Git
 
-We are using `repo` to synchronize the source code using a manifest (an XML
-file) which describes all git repositories required to build a firmware. The
-manifest file is hosted in a git repository named `repo-manifest`.
+We are using `Git submodules` to synchronize the non-GEISA source code using a .gitmodules
+file, which is in the same repository.
 
-First initialize `repo`:
+First, clone the repo:
 
-  $ cd my_project_dir/
-  $ repo init -u <manifest_repo_url>
-  $ repo sync
+  $ git clone git@github.com:geisa/lee-mockup.git
 
-For instance, for SCE's yocto-build project:
-
-  $ cd my_project_dir/
-  $ repo init -u ssh://g1.sfl.io:29419/SCE/geisa-imx93/repo-manifest
-  $ repo sync
-
-Once the sync is completed, you should see a git repository named `yocto-build`,
-within which all the Yocto layers were fetched under the `yocto-build/sources`
-sub-directory.
+Then, fetch all non-GEISA repos using git submodule:
 
   $ cd yocto-build/
+  $ git submodule update --init --recursive
 
 NOTE: The initial build process takes approximately 4 to 5 hours on a current
 developer machine and will produce approximately 50GB of data.
@@ -111,13 +75,6 @@ section:
 
 * Install docker if it is not already done by following the official
   documentation: https://docs.docker.com/engine/install/
-
-* Install repo if it is not already done:
-
-```
-$ sudo wget https://storage.googleapis.com/git-repo-downloads/repo -O /usr/local/bin/repo
-$ sudo chmod +x /usr/local/bin/repo
-```
 
 * Install cqfd:
 
@@ -174,9 +131,38 @@ created on your machine, it will become persistent. Further calls to `cqfd init`
 will do nothing, unless the container definition (`.cqfd/docker/Dockerfile`) has
 changed in the source tree.
 
-You can then start the build using:
+To build the firmware from using cqfd, simply run execute cqfd
+with the desired flavor:
 
-  $ cqfd run
+**Dev build for i.MX93**
+```
+  $ cqfd -b imx93-dev
+```
+
+**Dev build for i.MX93-EVK**
+```
+  $ cqfd -b imx93-evk-dev
+```
+
+**Dev build for i.MX95-EVK**
+```
+  $ cqfd -b imx95-evk-dev
+```
+
+**Prod build for i.MX93**
+```
+  $ cqfd -b imx93-prod
+```
+
+**Prod build for i.MX93-EVK**
+```
+  $ cqfd -b imx93-evk-prod
+```
+
+**Prod build for i.MX95-EVK**
+```
+  $ cqfd -b imx95-evk-prod
+```
 
 == Building the firmware manually
 
@@ -197,23 +183,32 @@ The following packages need to be installed:
 
 The build is started by running the following command:
 
-  $ ./build.sh -i geisa-imx93-image -m geisa-imx93
+  $ ./build.sh -i geisa-prod-image -m geisa-imx93
 
 You can also pass custom BitBake commands using the `--` separator:
 
-  $ ./build.sh -i geisa-imx93-image -m geisa-imx93 -- bitbake -c clean package_name
+  $ ./build.sh -i geisa-prod-image -m geisa-imx93 -- bitbake -c clean package_name
 
 Custom commands can be entered using the `devshell` cqfd flavor:
 
   $ cqfd -b devshell
 
-== Building the debug image
+== Building the dev image
 
-A debug image is available, with additional tools and relaxed security features
+A development image is available, with additional tools and relaxed security features
 available for development. It can be built using cqfd, or manually:
 
-  $ cqfd -b debug
-  $ ./build.sh -i geisa-imx93-dbg-image -m geisa-imx93
+For i.MX93:
+  $ cqfd -b imx93-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93
+
+For i.MX93-EVK:
+  $ cqfd -b imx93-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93-evk
+
+For i.MX95:
+  $ cqfd -b imx95-evk-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx95-evk
 
 == Building an SDK Installer
 
@@ -226,12 +221,6 @@ NOTE: prefix this command with `cqfd run` if using cqfd.
 
 When the bitbake command completes, the toolchain installer will be in
 `tmp/deploy/sdk/` under your build directory.
-
-== Running the debug image in QEMU
-
-You can run the built debug image in QEMU virtual machine with the following command:
-
-  $ cqfd -b runqemu
 
 == Flashing the firmware to the IMX93-frdm
 
@@ -249,7 +238,7 @@ configure the board to boot on serial download protocol by configuring the
 switch SW1 on the value 1000. Plug the power adapter.
 To launch the flash execute:
 
-    $ sudo ./uuu -b emmc_all geisa-imx93-image-geisa-imx93.rootfs.wic.zst
+    $ sudo ./uuu -b emmc_all geisa-prod-image-geisa-imx93.rootfs.wic.zst
 
 Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
 switch SW1 on the value 0100. Then plug the power adapter.
@@ -267,10 +256,30 @@ configure the board to boot on serial download protocol by configuring the
 switch SW1301 on the value 1100. Plug the power adapter.
 To launch the flash execute:
 
-    $ sudo ./uuu -b emmc_all geisa-imx93-image-geisa-imx93-evk.rootfs.wic.zst
+    $ sudo ./uuu -b emmc_all geisa-prod-image-geisa-imx93-evk.rootfs.wic.zst
 
 Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
 switch SW1301 on the value 0000. Then plug the power adapter.
+
+== Flashing the firmware to the IMX95-evk
+
+=== Prerequisites
+
+See the prerequisites for flashing the IMX93-frdm.
+
+=== Flash the EMMC
+
+Connect the USB C Debug port (for serial terminal) and USB3.0/2.0C port (for flashing) to the host machine.
+Unplug the power adapter and configure the board to boot on serial download protocol by configuring the
+switch SW7 on the value 1011. Plug the power adapter and turn the board on with the power switch.
+
+To launch the flash execute (note we have to provide a bootloader in this case as well):
+
+    $ sudo ./uuu -b emmc_all imx-boot-geisa-imx95-evk-sd.bin-flash_all geisa-prod-image-geisa-imx95-evk.rootfs.wic.zst
+
+Unplug the power adapter the USB port used for flashing. Select the boot on EMMC by configuring the
+switch SW7 on the value 1010. Then plug the power adapter. For serial console, use ttyUSB0 for cortex-M and ttyUSB2 for
+cortex-A.
 
 == About this documentation
 
