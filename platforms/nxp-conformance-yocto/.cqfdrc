@@ -8,44 +8,44 @@ files='build/tmp/deploy/images/README.pdf'
 archive='%Po-%Pn-$(scripts/get-version).tar.gz'
 tar_options='-h'
 tar_transform='yes'
-flavors='sfl_ci debug devshell imx93-evk imx93-evk-debug'
+flavors='sfl_ci dev devshell imx93-evk imx93-evk-dev imx95-evk imx95-evk-dev'
 
 [sfl_ci]
 command='./build.sh && \
     ./build.sh \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image \
+    --distro geisa-dev \
+    -i geisa-dev-image \
     && ./build.sh -m geisa-imx93-evk \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image'
+    --distro geisa-dev \
+    -i geisa-dev-image'
 
-[debug]
+[dev]
 command='./build.sh \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image'
+    --distro geisa-dev \
+    -i geisa-dev-image'
 
 [devshell]
 command='./build.sh \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image \
+    --distro geisa-dev \
+    -i geisa-dev-image \
     -- /bin/bash'
 
 [imx93-evk]
 command='./build.sh \
     -m geisa-imx93-evk'
 
-[imx93-evk-debug]
+[imx93-evk-dev]
 command='./build.sh \
     -m geisa-imx93-evk \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image'
+    --distro geisa-dev \
+    -i geisa-dev-image'
 
 [imx95-evk]
 command='./build.sh \
     -m geisa-imx95-evk'
 
-[imx95-evk-debug]
+[imx95-evk-dev]
 command='./build.sh \
     -m geisa-imx95-evk \
-    --distro geisa-imx93-dbg \
-    -i geisa-imx93-dbg-image'
+    --distro geisa-dev \
+    -i geisa-dev-image'
