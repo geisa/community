@@ -1,6 +1,0 @@
-[gerrit]
-host = g1.sfl.io
-port = 29419
-project = SCE/geisa-imx93/yocto-build
-defaultbranch = master
-defaultremote = sfl_gerrit
