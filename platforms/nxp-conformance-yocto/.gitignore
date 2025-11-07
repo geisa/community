@@ -7,3 +7,5 @@ README.pdf
 *.tar.gz
 doc/test-report-pdf/
 doc/test-report/*.xml
+.gitreview
+.vscode/
