@@ -2,7 +2,7 @@
 #
 # Yocto build system initiator.
 #
-# Copyright (C) 2019-2022 Savoir-faire Linux, Inc.
+# Copyright (C) 2019-2025 Savoir-faire Linux, Inc.
 # This program is distributed under the Apache License 2.0.
 
 # Name:       print_usage

@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Copyright (C) 2025 Southern California Edison
+#
+
 DESCRIPTION = "A production image for GEISA"
 require geisa-common.inc
 inherit extrausers

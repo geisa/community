@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Copyright (C) 2025 Southern California Edison
+#
+
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRCREV:geisa-imx93-machine = "d23d64eea5111e1607efcce1d601834fceec92cb"
