@@ -17,4 +17,5 @@ IMAGE_INSTALL:append = " \
     lxc \
     kernel-modules \
     iperf3 \
+    mosquitto \
 "
