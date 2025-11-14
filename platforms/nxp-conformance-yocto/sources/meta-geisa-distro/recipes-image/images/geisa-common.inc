@@ -13,6 +13,7 @@ IMAGE_FSTYPES += "tar.gz wic.zst wic.bmap"
 IMAGE_FEATURES:append = " ssh-server-openssh allow-root-login"
 
 IMAGE_INSTALL:append = " \
+    glibc-utils \
     lrzsz \
     podman \
     kernel-modules \
