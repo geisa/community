@@ -199,14 +199,17 @@ A development image is available, with additional tools and relaxed security fea
 available for development. It can be built using cqfd, or manually:
 
 For i.MX93:
+
   $ cqfd -b imx93-dev
   $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93
 
 For i.MX93-EVK:
+
   $ cqfd -b imx93-dev
   $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93-evk
 
 For i.MX95:
+
   $ cqfd -b imx95-evk-dev
   $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx95-evk
 
