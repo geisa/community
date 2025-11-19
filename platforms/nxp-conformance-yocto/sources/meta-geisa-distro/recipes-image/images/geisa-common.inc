@@ -19,4 +19,5 @@ IMAGE_INSTALL:append = " \
     kernel-modules \
     iperf3 \
     mosquitto \
+    wakaama-staticdev \
 "
