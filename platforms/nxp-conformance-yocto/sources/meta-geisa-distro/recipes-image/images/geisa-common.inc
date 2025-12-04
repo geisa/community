@@ -19,5 +19,9 @@ IMAGE_INSTALL:append = " \
     kernel-modules \
     iperf3 \
     mosquitto \
+"
+
+TOOLCHAIN_TARGET_TASK:append = " \
+    wakaama-dev \
     wakaama-staticdev \
 "
