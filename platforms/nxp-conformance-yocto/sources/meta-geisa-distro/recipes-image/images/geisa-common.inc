@@ -15,7 +15,8 @@ IMAGE_FEATURES:append = " ssh-server-openssh allow-root-login"
 IMAGE_INSTALL:append = " \
     glibc-utils \
     lrzsz \
-    podman \
+    lxc \
+    lxc-networking \
     kernel-modules \
     iperf3 \
     mosquitto \
