@@ -3,6 +3,8 @@
 # Copyright (C) 2025 Southern California Edison
 #
 
+BBMULTICONFIG += "geisa-container"
+
 MACHINEOVERRIDES =. "geisa-imx95-machine:"
 
 BBMASK:append = " \
