@@ -26,3 +26,13 @@ TOOLCHAIN_TARGET_TASK:append = " \
     wakaama-dev \
     wakaama-staticdev \
 "
+
+DEPLOY_DIR_GEISA_CONTAINER ?= "${TOPDIR}/tmp-geisa-container/deploy/images/${MACHINE}"
+
+addtask copy_application_base_image before do_image after do_rootfs
+do_copy_application_base_image[mcdepends] += "mc::geisa-container:geisa-application-base:do_image_complete"
+do_copy_application_base_image() {
+    install -d ${IMAGE_ROOTFS}${sysconfdir}/geisa
+
+    install -m 0644 ${DEPLOY_DIR_GEISA_CONTAINER}/geisa-application-base-${MACHINE}.rootfs.squashfs ${IMAGE_ROOTFS}${sysconfdir}/geisa/
+}
