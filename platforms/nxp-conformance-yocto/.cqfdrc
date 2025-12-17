@@ -12,7 +12,7 @@ flavors='sfl_ci imx93-devshell imx95-devshell imx93-dev imx93-evk-dev imx95-evk-
 
 [sfl_ci]
 command='./build.sh && \
-    ./build.sh \
+    ./build.sh -m geisa-imx95-evk \
     --distro geisa-dev \
     -i geisa-dev-image \
     && ./build.sh -m geisa-imx93-evk \
