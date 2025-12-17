@@ -106,6 +106,8 @@
 #define RES_O_SOFTWARE_VERSION 19
 #define RES_O_BATTERY_STATUS 20
 #define RES_O_MEMORY_TOTAL 21
+// as per TS 20190617-A:
+#define RES_O_EXTDEVINFO 22
 
 typedef struct {
     int64_t free_memory;
