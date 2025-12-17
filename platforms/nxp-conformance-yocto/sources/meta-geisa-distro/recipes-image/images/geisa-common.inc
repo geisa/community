@@ -4,7 +4,7 @@
 #
 
 DESCRIPTION = "A common base for GEISA images"
-LICENSE = "CLOSED"
+LICENSE = "Apache-2.0"
 require recipes-core/images/core-image-minimal.bb
 
 # zst compression has the fastest flashing time without a hardware accelerator
