@@ -11,3 +11,6 @@ gapi: %: %.c gapi_mosquitto.o
 install: gapi
 	install -D -m 755 gapi $(DESTDIR)
 
+lint:
+	clang-format --Werror --dry-run *.c *.h
+	clang-tidy *.c *.h
