@@ -1,0 +1,9 @@
+[project]
+org='geisa'
+name='api-mockup'
+
+[build]
+command='make'
+
+[lint]
+command='make lint'
