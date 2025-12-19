@@ -74,6 +74,7 @@ struct mosquitto *api_communication_init(const char *broker, int port)
 		goto cleanup;
 	}
 
+	mosquitto_username_pw_set(mosq, "API", "api");
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect);
 	mosquitto_publish_callback_set(mosq, on_publish);
