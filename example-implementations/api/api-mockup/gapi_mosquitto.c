@@ -109,11 +109,11 @@ void api_communication_deinit(struct mosquitto *mosq)
 	mosquitto_lib_cleanup();
 }
 
-int api_subscribe(struct mosquitto *mosq, const char *topic)
+int api_subscribe(struct mosquitto *mosq, const char *topic, int qos)
 {
 	int return_code = 0;
 
-	return_code = mosquitto_subscribe(mosq, NULL, topic, 0);
+	return_code = mosquitto_subscribe(mosq, NULL, topic, qos);
 	if (return_code != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "Subscribe failed: %s\n",
 			mosquitto_strerror(return_code));
@@ -123,12 +123,13 @@ int api_subscribe(struct mosquitto *mosq, const char *topic)
 	return 0;
 }
 
-int api_publish(struct mosquitto *mosq, const char *topic, const char *message)
+int api_publish(struct mosquitto *mosq, const char *topic, const char *message,
+		int qos)
 {
 	int return_code = 0;
 
 	return_code = mosquitto_publish(
-	    mosq, &sent_mid, topic, (int)strlen(message), message, 1, false);
+	    mosq, &sent_mid, topic, (int)strlen(message), message, qos, false);
 	if (return_code != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "Publish failed: %s\n",
 			mosquitto_strerror(return_code));
