@@ -13,3 +13,5 @@ BBMASK:append = " \
     meta-imx/meta-imx-ml \
     meta-imx/meta-imx-v2x \
 "
+
+WKS_FILE = "geisa-imx-partitioning.wks.in"
