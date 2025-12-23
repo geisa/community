@@ -39,7 +39,7 @@
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/platform-discovery-rsp/#",
+					"topic":	"geisa/api/app-manifest-rsp/#",
 					"priority":	0,
 					"allow":	true
 				}, {
