@@ -11,4 +11,5 @@ RUN set -x \
         clang-format \
         clang-tidy \
         libmosquitto-dev \
+        protobuf-compiler \
     && rm -rf /var/lib/apt/lists/

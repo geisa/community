@@ -21,6 +21,7 @@ git submodule update --init --recursive
 
 To build the GEISA API Mockup application, you need to have the following tools installed on your system:
   - make
+  - protobuf-compiler
   - libmosquitto-dev
 
 A docker support is also available to launch the compilation, it requires:
