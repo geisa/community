@@ -3,6 +3,7 @@
  * @brief GEISA API mockup main
  * @copyright Copyright (C) 2025 Southern California Edison
  */
+#include "gapi_discovery.h"
 #include "gapi_mosquitto.h"
 
 volatile bool running = true;
@@ -21,6 +22,13 @@ int main()
 	}
 
 	while (running && !isConnected) {
+		mosquitto_loop(mosq, -1, 1);
+		sleep(1);
+	}
+
+	api_discovery_init(mosq);
+
+	while (running) {
 		mosquitto_loop(mosq, -1, 1);
 		sleep(1);
 	}
