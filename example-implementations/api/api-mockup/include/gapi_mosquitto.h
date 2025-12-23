@@ -62,4 +62,22 @@ int api_subscribe(struct mosquitto *mosq, const char *topic, int qos);
 int api_publish(struct mosquitto *mosq, const char *topic, const char *message,
 		int qos);
 
+/**
+ * @brief Type definition for a MQTT topic handler function
+ *
+ * @param topic The MQTT topic
+ * @param payloadlen The length of the payload
+ * @param payload The payload data
+ */
+typedef void (*topic_handler_t)(const char *topic, const int payloadlen,
+				const char *payload);
+
+/**
+ * @brief Register a handler function for a specific MQTT topic
+ *
+ * @param topic The MQTT topic
+ * @param handler The handler function to be registered
+ */
+void api_register_handler(const char *topic, topic_handler_t handler);
+
 #endif // GAPI_MOSQUITTO_H
