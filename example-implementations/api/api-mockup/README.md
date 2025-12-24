@@ -21,8 +21,11 @@ git submodule update --init --recursive
 
 To build the GEISA API Mockup application, you need to have the following tools installed on your system:
   - make
+  - pkg-config
   - protobuf-compiler
+  - protobuf-c-compiler
   - libmosquitto-dev
+  - libprotobuf-c-dev
 
 A docker support is also available to launch the compilation, it requires:
   - cqfd (See [requirements](https://github.com/savoirfairelinux/cqfd?tab=readme-ov-file#requirements) and [installation](https://github.com/savoirfairelinux/cqfd?tab=readme-ov-file#installingremoving-cqfd) steps on github)
