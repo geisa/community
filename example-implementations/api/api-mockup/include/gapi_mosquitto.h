@@ -55,22 +55,24 @@ int api_subscribe(struct mosquitto *mosq, const char *topic, int qos);
  *
  * @param mosq Pointer to the mosquitto struct
  * @param topic The MQTT topic to publish to
+ * @param message_size The size of the message to publish
  * @param message The message to publish
  * @param qos The Quality of Service level for the publication
  * @return 0 on success, non-zero on failure
  */
-int api_publish(struct mosquitto *mosq, const char *topic, const char *message,
-		int qos);
+int api_publish(struct mosquitto *mosq, const char *topic, size_t message_size,
+		const uint8_t *message, int qos);
 
 /**
  * @brief Type definition for a MQTT topic handler function
  *
+ * @param mosq Pointer to the mosquitto struct
  * @param topic The MQTT topic
  * @param payloadlen The length of the payload
  * @param payload The payload data
  */
-typedef void (*topic_handler_t)(const char *topic, const int payloadlen,
-				const char *payload);
+typedef void (*topic_handler_t)(struct mosquitto *mosq, const char *topic,
+				const int payloadlen, const uint8_t *payload);
 
 /**
  * @brief Register a handler function for a specific MQTT topic

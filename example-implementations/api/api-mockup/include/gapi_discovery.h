@@ -8,6 +8,7 @@
 #define GAPI_DISCOVERY_H
 
 #include "gapi_mosquitto.h"
+#include "schemas/discovery.pb-c.h"
 
 /**
  * @brief Initialize API platform discovery messages
