@@ -52,12 +52,9 @@ static void on_publish(struct mosquitto *mosq, void *obj, int mid)
 {
 	(void)obj;
 	(void)mosq;
-	if (mid == sent_mid) {
-		running = false;
-	} else {
+	if (mid != sent_mid) {
 		fprintf(stderr, "[publish] mid=%d (not expected %d)\n", mid,
 			sent_mid);
-		exit(1);
 	}
 }
 
