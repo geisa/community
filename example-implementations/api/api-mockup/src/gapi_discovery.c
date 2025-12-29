@@ -99,7 +99,14 @@ static PlatformDiscoveryWaveform waveform_platform_info = {
 	.n_instances = 1,
 	.instances = waveform_platform_instances,
 };
+
+uint8_t deployment_manifest_data[] = {0x0A, 0x0B, 0x0C, 0x0D};
 // NOLINTEND(cppcoreguidelines-interfaces-global-init,cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
+
+static ProtobufCBinaryData deployment_manifest = {
+	.len = sizeof(deployment_manifest_data),
+	.data = deployment_manifest_data,
+};
 
 static void
 api_platform_discovery_build_response(PlatformDiscoveryRsp *response)
@@ -150,10 +157,52 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 				     const int payloadlen,
 				     const uint8_t *payload)
 {
-	(void)mosq;
-	fprintf(stdout, "Received app manifest request\n");
-	fprintf(stdout, "[msg] topic=%s payload=%.*s\n", topic, payloadlen,
-		payload);
+	ApplicationManifestReq *request = NULL;
+	ApplicationManifestRsp response = APPLICATION_MANIFEST__RSP__INIT;
+	uint8_t *message = NULL;
+	char *rsp_topic = NULL;
+	char *app_id = NULL;
+
+	app_id = basename((char *)topic);
+
+	fprintf(stdout, "[Manifest] Received app manifest request from %s\n",
+		app_id);
+	request = application_manifest__req__unpack(NULL, payloadlen, payload);
+	if (request == NULL) {
+		fprintf(stderr,
+			"[Manifest] Error unpacking app manifest request\n");
+		return;
+	}
+	application_manifest__req__free_unpacked(request, NULL);
+
+	rsp_topic = malloc(strlen("geisa/api/app-manifest-rsp/") +
+			   strlen(app_id) + 1);
+	if (rsp_topic == NULL) {
+		fprintf(stderr,
+			"[Manifest] Error allocating memory for response "
+			"topic\n");
+		return;
+	}
+	// NOLINTNEXTLINE: strcpy is safe as enough memory allocate here
+	strcpy(rsp_topic, "geisa/api/app-manifest-rsp/");
+	// NOLINTNEXTLINE: strcat is safe as enough memory allocate here
+	strcat(rsp_topic, app_id);
+
+	response.manifest = deployment_manifest;
+	message = malloc(application_manifest__rsp__get_packed_size(&response));
+	if (message == NULL) {
+		fprintf(stderr,
+			"[Manifest] Error allocating memory for response "
+			"message\n");
+		free(rsp_topic);
+		return;
+	}
+	application_manifest__rsp__pack(&response, message);
+	api_publish(mosq, rsp_topic,
+		    application_manifest__rsp__get_packed_size(&response),
+		    message, 1);
+	free(message);
+	free(rsp_topic);
 }
 
 void api_discovery_init(struct mosquitto *mosq)

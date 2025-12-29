@@ -9,6 +9,7 @@
 
 #include "gapi_mosquitto.h"
 #include "schemas/discovery.pb-c.h"
+#include <libgen.h>
 
 /**
  * @brief Initialize API platform discovery messages
