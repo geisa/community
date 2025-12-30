@@ -68,8 +68,9 @@ static void on_message(struct mosquitto *mosq, void *obj,
 	(void)mosq;
 	for (int i = 0; i < topic_handler_count; i++) {
 		if (strstr(msg->topic, topic_handlers[i].topic) != NULL) {
-			topic_handlers[i].topic_handler(
-			    msg->topic, msg->payloadlen, (char *)msg->payload);
+			topic_handlers[i].topic_handler(msg->topic,
+							msg->payloadlen,
+							(char *)msg->payload);
 			return;
 		}
 	}
@@ -108,7 +109,7 @@ struct mosquitto *api_communication_init(const char *broker, int port)
 	mosquitto_loop(mosq, -1, 1);
 
 	return_code =
-	    mosquitto_connect(mosq, broker, port, MOSQUITTO_KEEP_ALIVE);
+		mosquitto_connect(mosq, broker, port, MOSQUITTO_KEEP_ALIVE);
 	if (return_code != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "Error: could not connect to %s: %s\n", broker,
 			mosquitto_strerror(return_code));
@@ -151,8 +152,9 @@ int api_publish(struct mosquitto *mosq, const char *topic, const char *message,
 {
 	int return_code = 0;
 
-	return_code = mosquitto_publish(
-	    mosq, &sent_mid, topic, (int)strlen(message), message, qos, false);
+	return_code =
+		mosquitto_publish(mosq, &sent_mid, topic, (int)strlen(message),
+				  message, qos, false);
 	if (return_code != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "Publish failed: %s\n",
 			mosquitto_strerror(return_code));
@@ -166,7 +168,7 @@ void api_register_handler(const char *topic, topic_handler_t handler)
 {
 	if (topic_handler_count < MAX_TOPIC_HANDLERS) {
 		topic_handlers[topic_handler_count].topic =
-		    malloc(strlen(topic) + 1);
+			malloc(strlen(topic) + 1);
 
 		// NOLINTNEXTLINE: strcpy is safe as enough memory allocate here
 		strcpy(topic_handlers[topic_handler_count].topic, topic);
