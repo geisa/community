@@ -10,6 +10,7 @@
 #include "gapi_mosquitto.h"
 #include "schemas/metered_quantities.pb-c.h"
 #include <pthread.h>
+#include <time.h>
 
 /**
  * @brief Initialize API instantaneous data sending thread
@@ -20,5 +21,7 @@
  * @return int 0 on success, non-zero on failure
  */
 int api_instantaneous_init(pthread_t *thread, struct mosquitto *mosq);
+
+#define SEC_IN_MS 1000
 
 #endif // GAPI_INSTANTANEOUS_H
