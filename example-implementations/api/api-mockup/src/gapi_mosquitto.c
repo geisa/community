@@ -10,7 +10,6 @@
 const int MOSQUITTO_KEEP_ALIVE = 60;
 enum { MAX_TOPIC_HANDLERS = 3 };
 
-static int sent_mid;
 static int topic_handler_count = 0;
 
 typedef struct {
@@ -46,16 +45,6 @@ static void on_disconnect(struct mosquitto *mosq, void *obj, int return_code)
 	(void)mosq;
 	fprintf(stdout, "[disconnected] return_code=%d\n", return_code);
 	isConnected = false;
-}
-
-static void on_publish(struct mosquitto *mosq, void *obj, int mid)
-{
-	(void)obj;
-	(void)mosq;
-	if (mid != sent_mid) {
-		fprintf(stderr, "[publish] mid=%d (not expected %d)\n", mid,
-			sent_mid);
-	}
 }
 
 static void on_message(struct mosquitto *mosq, void *obj,
@@ -96,7 +85,6 @@ struct mosquitto *api_communication_init(const char *broker, int port)
 	mosquitto_username_pw_set(mosq, "API", "api");
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_disconnect_callback_set(mosq, on_disconnect);
-	mosquitto_publish_callback_set(mosq, on_publish);
 	mosquitto_message_callback_set(mosq, on_message);
 
 	signal(SIGINT, handle_signal);
@@ -148,8 +136,8 @@ int api_publish(struct mosquitto *mosq, const char *topic,
 {
 	int return_code = 0;
 
-	return_code = mosquitto_publish(mosq, &sent_mid, topic,
-					(int)message_size, message, qos, false);
+	return_code = mosquitto_publish(mosq, NULL, topic, (int)message_size,
+					message, qos, false);
 	if (return_code != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "Publish failed: %s\n",
 			mosquitto_strerror(return_code));
