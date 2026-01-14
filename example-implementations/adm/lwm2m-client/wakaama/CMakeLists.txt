@@ -13,6 +13,7 @@ add_executable(adm_client
     sources/object_location.c
     sources/object_security.c
     sources/object_server.c
+    sources/object_software.c
     sources/system_api.c
     sources/shared/commandline.c
     sources/shared/platform.c
