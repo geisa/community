@@ -53,9 +53,6 @@
  Bosch Software Innovations GmbH - Please refer to git log
 
 */
-
-#include "lwm2mclient.h"
-#include "commandline.h"
 #include <liblwm2m.h>
 #include <tinydtls/connection.h>
 
@@ -75,13 +72,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "lwm2mclient.h"
+#include "commandline.h"
+#include "object_common.h"
+
 #define DEFAULT_SERVER_IPV6 "[::1]"
 #define DEFAULT_SERVER_IPV4 "127.0.0.1"
 
 int g_reboot = 0;
 static int g_quit = 0;
 
-#define OBJ_COUNT 6
+#define OBJ_COUNT 7
 lwm2m_object_t *objArray[OBJ_COUNT];
 
 // only backup security and server objects
@@ -672,6 +673,9 @@ static void prv_display_objects(lwm2m_context_t *lwm2mH, char *buffer, void *use
             case LWM2M_LOCATION_OBJECT_ID:
                 display_location_object(object);
                 break;
+            case LWM2M_SOFTWARE_UPDATE_OBJECT_ID:
+                display_software_object(object);
+                break;
             default:
                 fprintf(stdout, "unknown object ID: %" PRIu16 "\n", object->objID);
                 break;
@@ -684,7 +688,7 @@ void print_usage(void) {
     fprintf(stdout, "Usage: lwm2mclient [OPTION]\r\n");
     fprintf(stdout, "Launch a LwM2M client.\r\n");
     fprintf(stdout, "Options:\r\n");
-    fprintf(stdout, "  -n NAME\tSet the endpoint name of the Client. Default: testlwm2mclient\r\n");
+    fprintf(stdout, "  -n NAME\tSet the endpoint name of the Client. Default: geisa_adm_client\r\n");
     fprintf(stdout, "  -l PORT\tSet the local UDP port of the Client. Default: 56830\r\n");
     fprintf(stdout, "  -h HOST\tSet the hostname of the LwM2M Server to connect to. Default: localhost\r\n");
     fprintf(stdout,
@@ -710,7 +714,7 @@ int main(int argc, char *argv[]) {
     const char *localPort = "56830";
     const char *server = NULL;
     const char *serverPort = LWM2M_STANDARD_PORT_STR;
-    const char *name = "testlwm2mclient";
+    const char *name = "geisa_adm_client";
     int lifetime = 300;
     int batterylevelchanging = 0;
     time_t reboot_time = 0;
@@ -962,6 +966,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    objArray[6] = get_object_software();
+    if (NULL == objArray[6]) {
+        fprintf(stderr, "Failed to create software management object\r\n");
+        return -1;
+    }
+
     /*
      * The liblwm2m library is now initialized with the functions that will be in
      * charge of communication
@@ -1195,6 +1205,6 @@ int main(int argc, char *argv[]) {
     free_object_firmware(objArray[3]);
     free_object_location(objArray[4]);
     free_object_conn_m(objArray[5]);
-
+    free_object_software(objArray[6]);
     return 0;
 }
