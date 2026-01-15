@@ -91,6 +91,10 @@ typedef enum {
     UPDATE_STATE_INSTALLED = 4
 } software_update_state_t;
 
+typedef enum {
+    ACTIVATION_STATE_INACTIVE = 0,
+    ACTIVATION_STATE_ACTIVE = 1,
+} software_activation_state_t;
 
 typedef enum {
     UPDATE_RESULT_INITIAL = 0,
@@ -104,6 +108,7 @@ typedef enum {
 typedef struct {
     software_update_state_t update_state;
     software_update_result_t update_result;
+    software_activation_state_t activation_state;
     char pkg_name[256];
     char pkg_version[256];
     char pkg_id[512];
@@ -227,6 +232,12 @@ static uint8_t prv_software_read(lwm2m_context_t *contextP, uint16_t instanceId,
             result = COAP_205_CONTENT;
             break;
 
+        case RES_M_ACTIVATION_STATE:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+                return COAP_404_NOT_FOUND;
+            lwm2m_data_encode_int(data->activation_state, *dataArrayP + i);
+            result = COAP_205_CONTENT;
+            break;
         default:
             result = COAP_404_NOT_FOUND;
         }
@@ -327,6 +338,26 @@ static uint8_t prv_software_execute(lwm2m_context_t *contextP, uint16_t instance
             result = COAP_400_BAD_REQUEST;
         }
         break;
+    case RES_O_ACTIVATE:
+        if (data->update_state == UPDATE_STATE_INSTALLED) {
+            fprintf(stdout, "\n\t SOFTWARE ACTIVATION\r\n\n");
+
+            char activate_cmd[1024];
+            snprintf(activate_cmd, sizeof(activate_cmd), "%s %s %s",
+                    GEISA_PACKAGE_SCRIPT_PATH,
+                    "activate",
+                    data->pkg_name);
+            int ret = system(activate_cmd);
+            if (ret == 0) {
+                data->activation_state = ACTIVATION_STATE_ACTIVE;
+                result = COAP_204_CHANGED;
+            } else {
+                result = COAP_500_INTERNAL_SERVER_ERROR;
+            }
+        } else {
+            result = COAP_400_BAD_REQUEST;
+        }
+        break;
     default:
         result = COAP_405_METHOD_NOT_ALLOWED;
         break;
@@ -383,6 +414,7 @@ lwm2m_object_t *get_object_software(void) {
             software_data_t *data = (software_data_t *)(softwareObj->userData);
             data->update_state = UPDATE_STATE_INITIAL;
             data->update_result = UPDATE_RESULT_INITIAL;
+            data->activation_state = ACTIVATION_STATE_INACTIVE;
         } else {
             lwm2m_free(softwareObj);
             softwareObj = NULL;
