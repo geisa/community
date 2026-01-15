@@ -17,7 +17,7 @@
  *******************************************************************************/
 
 /*
- * This object is single instance only, and provide installation and activation of software functionality.
+ * This object provides installation and activation of software functionality.
  * Object ID is 9.
  */
 
@@ -178,11 +178,6 @@ static uint8_t prv_software_read(lwm2m_context_t *contextP, uint16_t instanceId,
     /* unused parameter */
     (void)contextP;
 
-    // this is a single instance object
-    if (instanceId != 0) {
-        return COAP_404_NOT_FOUND;
-    }
-
     // is the server asking for the full object ?
     if (*numDataP == 0) {
         *dataArrayP = lwm2m_data_new(4);
@@ -301,11 +296,6 @@ static uint8_t prv_software_execute(lwm2m_context_t *contextP, uint16_t instance
 
     /* unused parameter */
     (void)contextP;
-
-    // this is a single instance object
-    if (instanceId != 0) {
-        return COAP_404_NOT_FOUND;
-    }
 
     if (length != 0)
         return COAP_400_BAD_REQUEST;
