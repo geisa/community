@@ -50,6 +50,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "object_common.h"
 
@@ -77,6 +79,10 @@
 
 #define LWM2M_SOFTWARE_UPDATE_OBJECT_ID 9
 
+#ifndef GEISA_PACKAGE_SCRIPT_PATH
+#define GEISA_PACKAGE_SCRIPT_PATH "/usr/sbin/manage_package.sh"
+#endif
+
 typedef enum {
     UPDATE_STATE_INITIAL = 0,
     UPDATE_STATE_DOWNLOAD_STARTED = 1,
@@ -100,7 +106,11 @@ typedef struct {
     software_update_result_t update_result;
     char pkg_name[256];
     char pkg_version[256];
+    char pkg_id[512];
+    uint32_t persistent_storage_kibs;
+    uint32_t non_persistent_storage_kibs;
 } software_data_t;
+
 
 static bool verify_package_integrity(const char *filepath) {
     return true;
@@ -129,8 +139,8 @@ static void prv_process_package(software_data_t *data, const uint8_t *buffer, si
         data->pkg_version[sizeof(data->pkg_version) - 1] = '\0';
         strncpy(data->pkg_id, "org.lfenergy.geisa.geisa-app-1", sizeof(data->pkg_id) - 1);
         data->pkg_id[sizeof(data->pkg_id) - 1] = '\0';
-        data->pkg_storage_persistent = 10240;      // 10 MB
-        data->pkg_storage_non_persistent = 2048;   // 2 MB
+        data->persistent_storage_kibs = 10240;      // 10 MB
+        data->non_persistent_storage_kibs = 2048;   // 2 MB
 
         if (data->update_state == UPDATE_STATE_INITIAL) {
             data->update_state = UPDATE_STATE_DOWNLOAD_STARTED;
@@ -288,6 +298,39 @@ static uint8_t prv_software_execute(lwm2m_context_t *contextP, uint16_t instance
 
     if (length != 0)
         return COAP_400_BAD_REQUEST;
+
+    switch (resourceId) {
+    case RES_M_INSTALL:
+        if (data->update_state == UPDATE_STATE_DELIVERED) {
+            fprintf(stdout, "\n\t SOFTWARE INSTALLATION\r\n\n");
+
+            char install_cmd[2048];
+            snprintf(install_cmd, sizeof(install_cmd), "%s %s %s %s %s %u %u",
+                    GEISA_PACKAGE_SCRIPT_PATH,
+                    "install",
+                    data->pkg_name,
+                    data->pkg_version,
+                    data->pkg_id,
+                    data->persistent_storage_kibs,
+                    data->non_persistent_storage_kibs);
+            int ret = system(install_cmd);
+            if (ret == 0) {
+                data->update_state = UPDATE_STATE_INSTALLED;
+                data->update_result = UPDATE_RESULT_INSTALLATION_SUCCESS;
+                result = COAP_204_CHANGED;
+            } else {
+                data->update_result = UPDATE_RESULT_INSTALLATION_FAILURE;
+                result = COAP_500_INTERNAL_SERVER_ERROR;
+            }
+        } else {
+            // software installation already running
+            result = COAP_400_BAD_REQUEST;
+        }
+        break;
+    default:
+        result = COAP_405_METHOD_NOT_ALLOWED;
+        break;
+    }
 
     return result;
 }

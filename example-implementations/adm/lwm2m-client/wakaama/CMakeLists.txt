@@ -5,6 +5,9 @@ set(WAKAAMA_INCLUDE_DIR "/usr/include/wakaama" CACHE PATH "Path to the Wakaama h
 set(WAKAAMA_TINYDTLS_INCLUDE_DIR "/usr/include/tinydtls" CACHE PATH "Path to the Wakaama TinyDTLS header directory")
 set(WAKAAMA_LIB_DIR "/usr/lib/wakaama" CACHE PATH "Path to the Wakaama static library directory")
 
+set(GEISA_PACKAGE_SCRIPT_PATH "/usr/sbin/manage_package.sh" CACHE STRING "Path to manage_package.sh")
+add_definitions(-DGEISA_PACKAGE_SCRIPT_PATH=\"${GEISA_PACKAGE_SCRIPT_PATH}\")
+
 add_executable(adm_client
     sources/lwm2mclient.c
     sources/object_connectivity_moni.c
