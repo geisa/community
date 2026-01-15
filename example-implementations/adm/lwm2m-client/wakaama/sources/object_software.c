@@ -77,11 +77,82 @@
 
 #define LWM2M_SOFTWARE_UPDATE_OBJECT_ID 9
 
+typedef enum {
+    UPDATE_STATE_INITIAL = 0,
+    UPDATE_STATE_DOWNLOAD_STARTED = 1,
+    UPDATE_STATE_DOWNLOADED = 2,
+    UPDATE_STATE_DELIVERED = 3,
+    UPDATE_STATE_INSTALLED = 4
+} software_update_state_t;
+
+
+typedef enum {
+    UPDATE_RESULT_INITIAL = 0,
+    UPDATE_RESULT_DOWNLOADING = 1,
+    UPDATE_RESULT_DOWNLOAD_ERROR = 2,
+    UPDATE_RESULT_INTEGRITY_FAILURE = 3,
+    UPDATE_RESULT_INSTALLATION_FAILURE = 4,
+    UPDATE_RESULT_INSTALLATION_SUCCESS = 5
+} software_update_result_t;
 
 typedef struct {
+    software_update_state_t update_state;
+    software_update_result_t update_result;
     char pkg_name[256];
     char pkg_version[256];
 } software_data_t;
+
+static bool verify_package_integrity(const char *filepath) {
+    return true;
+}
+
+static void prv_process_package(software_data_t *data, const uint8_t *buffer, size_t length) {
+    const char *app_dir = "/platform/apps/geisa-app-1";
+    const char *package_path = "/platform/apps/geisa-app-1/geisa-app-1-1.0.1.squashfs";
+
+    if (access(app_dir, F_OK) != 0) {
+        if (mkdir(app_dir, 0755) != 0) {
+            data->update_state = UPDATE_STATE_INITIAL;
+            data->update_result = UPDATE_RESULT_DOWNLOAD_ERROR;
+            return;
+        }
+    }
+
+    FILE *f = fopen(package_path, "wb");
+    if (f) {
+        fwrite(buffer, 1, length, f);
+        fclose(f);
+
+        strncpy(data->pkg_name, "geisa-app-1", sizeof(data->pkg_name) - 1);
+        data->pkg_name[sizeof(data->pkg_name) - 1] = '\0';
+        strncpy(data->pkg_version, "1.0.1", sizeof(data->pkg_version) - 1);
+        data->pkg_version[sizeof(data->pkg_version) - 1] = '\0';
+        strncpy(data->pkg_id, "org.lfenergy.geisa.geisa-app-1", sizeof(data->pkg_id) - 1);
+        data->pkg_id[sizeof(data->pkg_id) - 1] = '\0';
+        data->pkg_storage_persistent = 10240;      // 10 MB
+        data->pkg_storage_non_persistent = 2048;   // 2 MB
+
+        if (data->update_state == UPDATE_STATE_INITIAL) {
+            data->update_state = UPDATE_STATE_DOWNLOAD_STARTED;
+            data->update_result = UPDATE_RESULT_DOWNLOADING;
+        }
+        if (data->update_state == UPDATE_STATE_DOWNLOAD_STARTED) {
+            data->update_state = UPDATE_STATE_DOWNLOADED;
+            data->update_result = UPDATE_RESULT_INITIAL;
+
+            if (verify_package_integrity(package_path) == true) {
+                data->update_state = UPDATE_STATE_DELIVERED;
+                data->update_result = UPDATE_RESULT_INITIAL;
+            } else {
+                data->update_state = UPDATE_STATE_INITIAL;
+                data->update_result = UPDATE_RESULT_INTEGRITY_FAILURE;
+            }
+        }
+    } else {
+        data->update_state = UPDATE_STATE_INITIAL;
+        data->update_result = UPDATE_RESULT_DOWNLOAD_ERROR;
+    }
+}
 
 static uint8_t prv_software_read(lwm2m_context_t *contextP, uint16_t instanceId, int *numDataP,
                                  lwm2m_data_t **dataArrayP, lwm2m_object_t *objectP) {
@@ -132,6 +203,20 @@ static uint8_t prv_software_read(lwm2m_context_t *contextP, uint16_t instanceId,
             result = COAP_405_METHOD_NOT_ALLOWED;
             break;
 
+        case RES_M_UPDATE_STATE:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+                return COAP_404_NOT_FOUND;
+            lwm2m_data_encode_int(data->update_state, *dataArrayP + i);
+            result = COAP_205_CONTENT;
+            break;
+
+        case RES_M_UPDATE_RESULT:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+                return COAP_404_NOT_FOUND;
+            lwm2m_data_encode_int(data->update_result, *dataArrayP + i);
+            result = COAP_205_CONTENT;
+            break;
+
         default:
             result = COAP_404_NOT_FOUND;
         }
@@ -160,6 +245,19 @@ static uint8_t prv_software_write(lwm2m_context_t *contextP, uint16_t instanceId
         }
 
         switch (dataArray[i].id) {
+        case RES_M_PACKAGE:
+            if (dataArray[i].type == LWM2M_TYPE_OPAQUE && dataArray[i].value.asBuffer.buffer != NULL) {
+                prv_process_package(data, dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
+                if (data->update_result == UPDATE_RESULT_DOWNLOADING || data->update_result == UPDATE_RESULT_INITIAL)
+                    result = COAP_204_CHANGED;
+                else if (data->update_result == UPDATE_RESULT_INTEGRITY_FAILURE || data->update_result == UPDATE_RESULT_DOWNLOAD_ERROR)
+                    result = COAP_500_INTERNAL_SERVER_ERROR;
+                else
+                    result = COAP_204_CHANGED;
+            } else {
+                result = COAP_400_BAD_REQUEST;
+            }
+            break;
 
         case RES_M_PACKAGE_URI:
             fprintf(stdout, "\n\t PACKAGE URI (PULL) not implemented yet\r\n\n");
@@ -240,6 +338,8 @@ lwm2m_object_t *get_object_software(void) {
          */
         if (NULL != softwareObj->userData) {
             software_data_t *data = (software_data_t *)(softwareObj->userData);
+            data->update_state = UPDATE_STATE_INITIAL;
+            data->update_result = UPDATE_RESULT_INITIAL;
         } else {
             lwm2m_free(softwareObj);
             softwareObj = NULL;
