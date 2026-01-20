@@ -6,6 +6,7 @@
 #include "gapi_discovery.h"
 #include "gapi_instantaneous.h"
 #include "gapi_mosquitto.h"
+#include "gapi_waveform.h"
 
 volatile bool running = true;
 volatile bool isConnected = false;
@@ -34,6 +35,7 @@ int main()
 	if (ret != EXIT_SUCCESS) {
 		goto deinit;
 	}
+	api_waveform_init(mosq);
 
 	while (running) {
 		mosquitto_loop(mosq, -1, 1);
