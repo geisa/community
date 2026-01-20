@@ -85,6 +85,7 @@ geisa_get_instantaneous_data(InstantaneousQuantities *response,
 	(*phase_c).phase_voltage_percentage_2nd_harmonic = 1.2F;
 
 	(*phase_n).message_version = 1;
+	(*phase_n).phase = TYPE_PHASE__PHASE_N;
 	(*phase_n).microamps = 5.0F;
 	(*phase_n).microvolts = 60.0F;
 	(*phase_n).microw = 600.0F;
