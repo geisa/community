@@ -348,6 +348,29 @@ static uint8_t prv_software_execute(lwm2m_context_t *contextP, uint16_t instance
             result = COAP_400_BAD_REQUEST;
         }
         break;
+    case RES_O_UNINSTALL:
+        fprintf(stdout, "\n\t SOFTWARE UNINSTALLATION\r\n\n");
+        if (data->update_state != UPDATE_STATE_INSTALLED && data->update_state != UPDATE_STATE_DELIVERED) {
+            result = COAP_400_BAD_REQUEST;
+            break;
+        }
+
+        char uninstall_cmd[1024];
+        snprintf(uninstall_cmd, sizeof(uninstall_cmd), "%s %s %s %s",
+                GEISA_PACKAGE_SCRIPT_PATH,
+                "uninstall",
+                data->pkg_name,
+                data->pkg_version);
+        int ret = system(uninstall_cmd);
+        if (ret == 0) {
+            data->activation_state = ACTIVATION_STATE_INACTIVE;
+            data->update_state = UPDATE_STATE_INITIAL;
+            data->update_result = UPDATE_RESULT_INITIAL;
+            result = COAP_204_CHANGED;
+        } else {
+            result = COAP_500_INTERNAL_SERVER_ERROR;
+        }
+        break;
     default:
         result = COAP_405_METHOD_NOT_ALLOWED;
         break;
