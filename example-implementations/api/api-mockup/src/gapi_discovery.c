@@ -177,18 +177,13 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 	}
 	application_manifest__req__free_unpacked(request, NULL);
 
-	rsp_topic = malloc(strlen("geisa/api/app-manifest-rsp/") +
-			   strlen(app_id) + 1);
-	if (rsp_topic == NULL) {
+	if (asprintf(&rsp_topic, "geisa/api/app-manifest-rsp/%s", app_id) ==
+	    -1) {
 		fprintf(stderr,
 			"[Manifest] Error allocating memory for response "
 			"topic\n");
 		return;
 	}
-	// NOLINTNEXTLINE: strcpy is safe as enough memory allocate here
-	strcpy(rsp_topic, "geisa/api/app-manifest-rsp/");
-	// NOLINTNEXTLINE: strcat is safe as enough memory allocate here
-	strcat(rsp_topic, app_id);
 
 	response.manifest = deployment_manifest;
 	message = malloc(application_manifest__rsp__get_packed_size(&response));
@@ -204,7 +199,6 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 		    application_manifest__rsp__get_packed_size(&response),
 		    message, 1);
 	free(message);
-	free(rsp_topic);
 }
 
 void api_discovery_init(struct mosquitto *mosq)

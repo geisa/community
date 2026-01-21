@@ -6,6 +6,7 @@
 
 #ifndef GAPI_DISCOVERY_H
 #define GAPI_DISCOVERY_H
+#define _GNU_SOURCE
 
 #include "gapi_mosquitto.h"
 #include "schemas/discovery.pb-c.h"
