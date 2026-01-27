@@ -348,6 +348,25 @@ static uint8_t prv_software_execute(lwm2m_context_t *contextP, uint16_t instance
             result = COAP_400_BAD_REQUEST;
         }
         break;
+    case RES_O_DEACTIVATE:
+        if (data->activation_state == ACTIVATION_STATE_ACTIVE) {
+            fprintf(stdout, "\n\t SOFTWARE DEACTIVATION\r\n\n");
+            char deactivate_cmd[1024];
+            snprintf(deactivate_cmd, sizeof(deactivate_cmd), "%s %s %s",
+                    GEISA_PACKAGE_SCRIPT_PATH,
+                    "deactivate",
+                    data->pkg_name);
+            int ret = system(deactivate_cmd);
+            if (ret == 0) {
+                data->activation_state = ACTIVATION_STATE_INACTIVE;
+                result = COAP_204_CHANGED;
+            } else {
+                result = COAP_500_INTERNAL_SERVER_ERROR;
+            }
+        } else {
+            result = COAP_400_BAD_REQUEST;
+        }
+        break;
     case RES_O_UNINSTALL:
         fprintf(stdout, "\n\t SOFTWARE UNINSTALLATION\r\n\n");
         if (data->update_state != UPDATE_STATE_INSTALLED && data->update_state != UPDATE_STATE_DELIVERED) {
