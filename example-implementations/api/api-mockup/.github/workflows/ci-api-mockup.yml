@@ -24,7 +24,7 @@ jobs:
                   cqfd init
             - name: Run linting
                 run: |
-                    cqfd -b lint
+                  cqfd -b lint
     build:
         runs-on: ubuntu-latest
         steps:
