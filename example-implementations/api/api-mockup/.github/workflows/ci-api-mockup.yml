@@ -1,0 +1,43 @@
+# Copyright (C) 2026 Southern California Edison.
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI API-mockup
+
+on:
+    push:
+        branches: [main]
+    pull_request_target:
+
+jobs:
+    linting:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.pull_request.head.sha || github.sha }}
+                  submodules: true
+            - name: Install CQFD and create docker image
+              run: |
+                  curl -LO https://github.com/savoirfairelinux/cqfd/releases/download/v5.8.0/cqfd_5.8.0_all.deb
+                  sudo dpkg -i ./cqfd_5.8.0_all.deb
+                  cqfd init
+            - name: Run linting
+                run: |
+                    cqfd -b lint
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.pull_request.head.sha || github.sha }}
+                  submodules: true
+            - name: Install CQFD and create docker image
+              run: |
+                  curl -LO https://github.com/savoirfairelinux/cqfd/releases/download/v5.8.0/cqfd_5.8.0_all.deb
+                  sudo dpkg -i ./cqfd_5.8.0_all.deb
+                  cqfd init
+            - name: Build application
+              run: |
+                  cqfd run
