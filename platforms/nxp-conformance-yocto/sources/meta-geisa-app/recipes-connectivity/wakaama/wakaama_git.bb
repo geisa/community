@@ -18,14 +18,19 @@ inherit cmake pkgconfig
 EXTRA_OECMAKE = " \
     -DCMAKE_BUILD_TYPE=Release \
     -DWAKAAMA_MODE_CLIENT=ON \
+    -DWAKAAMA_MODE_SERVER=OFF \
+    -DWAKAAMA_MODE_BOOTSTRAP_SERVER=OFF \
+    -DWAKAAMA_CLIENT_INITIATED_BOOTSTRAP=ON \
     -DWAKAAMA_DATA_SENML_JSON=ON \
     -DWAKAAMA_DATA_SENML_CBOR=ON \
     -DWAKAAMA_LOG_LEVEL=INFO \
     -DWAKAAMA_TRANSPORT=TINYDTLS \
     -DWAKAAMA_UNIT_TESTS=OFF \
+    -DWAKAAMA_CLI=OFF \
+    -DWAKAAMA_PLATFORM=POSIX \
 "
 
-EXTRA_OECMAKE:geisa-prod:append = " \
+EXTRA_OECMAKE:append:geisa-prod = " \
     -DWAKAAMA_ENABLE_EXAMPLES=OFF \
 "
 
@@ -39,13 +44,24 @@ do_install() {
         install -m 0644 ${B}/external_tinydtls-prefix/src/external_tinydtls-build/.libs/libtinydtls.a ${D}${libdir}/
     fi
 
-    # Install headers
+    # Install Wakaama headers
     install -d ${D}${includedir}/wakaama
     install -m 0644 ${S}/include/*.h ${D}${includedir}/wakaama/
     install -m 0644 ${S}/core/*.h ${D}${includedir}/wakaama/
 
+    # Install TinyDTLS public headers
+    install -d ${D}${includedir}/tinydtls/include/tinydtls
+    install -m 0644 ${S}/transport/tinydtls/include/tinydtls/*.h ${D}${includedir}/tinydtls/include/tinydtls/
+
+    # Install TinyDTLS third_party headers
+    install -d ${D}${includedir}/tinydtls/third_party/tinydtls
+    find ${S}/transport/tinydtls/third_party/tinydtls -type f -name '*.h' | while IFS= read -r header; do
+        relpath=${header#${S}/transport/tinydtls/third_party/tinydtls/}
+        install -d ${D}${includedir}/tinydtls/third_party/tinydtls/$(dirname "$relpath")
+        install -m 0644 "$header" ${D}${includedir}/tinydtls/third_party/tinydtls/"$relpath"
+    done
 }
 
 FILES:${PN} = ""
 FILES:${PN}-staticdev = "${libdir}/*.a"
-FILES:${PN}-dev = "${includedir}/wakaama"
+FILES:${PN}-dev = "${includedir}/wakaama ${includedir}/tinydtls"
