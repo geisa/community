@@ -33,7 +33,13 @@ DEPLOY_DIR_GEISA_CONTAINER ?= "${TOPDIR}/tmp-geisa-container/deploy/images/${MAC
 addtask copy_application_base_image before do_image after do_rootfs
 do_copy_application_base_image[mcdepends] += "mc::geisa-container:geisa-application-base:do_image_complete"
 do_copy_application_base_image() {
-    install -d ${IMAGE_ROOTFS}${sysconfdir}/geisa
+    install -d ${IMAGE_ROOTFS}/platform/base
 
-    install -m 0644 ${DEPLOY_DIR_GEISA_CONTAINER}/geisa-application-base-${MACHINE}.rootfs.squashfs ${IMAGE_ROOTFS}${sysconfdir}/geisa/
+    install -m 0644 ${DEPLOY_DIR_GEISA_CONTAINER}/geisa-application-base-${MACHINE}.rootfs.squashfs ${IMAGE_ROOTFS}/platform/base/
+}
+
+# Create /platform/apps for application packages according to GEISA specification
+ROOTFS_POSTPROCESS_COMMAND += "create_platform_apps_dir;"
+create_platform_apps_dir() {
+    install -d ${IMAGE_ROOTFS}/platform/apps
 }

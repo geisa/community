@@ -13,10 +13,10 @@ SRC_URI:append = " \
 do_install:append() {
     install -D -m 0644 ${WORKDIR}/mosquitto.conf ${D}${sysconfdir}/mosquitto/mosquitto.conf
 
-    install -D -m 0600 ${WORKDIR}/dynamic-security.json ${D}/data/mosquitto/dynamic-security.json
-    chown -R mosquitto:mosquitto ${D}/data/mosquitto
+    install -D -m 0600 ${WORKDIR}/dynamic-security.json ${D}/platform/mosquitto/dynamic-security.json
+    chown -R mosquitto:mosquitto ${D}/platform/mosquitto
 }
 
 FILES:${PN}:append = " \
-    data/mosquitto/dynamic-security.json \
+    platform/mosquitto/dynamic-security.json \
 "
