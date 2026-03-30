@@ -7,28 +7,28 @@
 #include "gapi_instantaneous.h"
 
 static void
-geisa_get_instantaneous_data(InstantaneousQuantities *response,
-			     TypeInstantaneousQuantitiesPerPhase *phase_a,
-			     TypeInstantaneousQuantitiesPerPhase *phase_b,
-			     TypeInstantaneousQuantitiesPerPhase *phase_c,
-			     TypeInstantaneousQuantitiesPerPhase *phase_n,
-			     TypeInstantaneousQuantitiesOther *other)
+geisa_get_instantaneous_data(GeisaInstantaneousQuantities *response,
+			     GeisaTypeInstantaneousQuantitiesPerPhase *phase_a,
+			     GeisaTypeInstantaneousQuantitiesPerPhase *phase_b,
+			     GeisaTypeInstantaneousQuantitiesPerPhase *phase_c,
+			     GeisaTypeInstantaneousQuantitiesPerPhase *phase_n,
+			     GeisaTypeInstantaneousQuantitiesOther *other)
 {
 	// This function should interact with the GEISA system to retrieve
 	// instantaneous data. Here we provide a mock implementation.
-	instantaneous_quantities__init(response);
-	type_instantaneous_quantities__per_phase__init(phase_a);
-	type_instantaneous_quantities__per_phase__init(phase_b);
-	type_instantaneous_quantities__per_phase__init(phase_c);
-	type_instantaneous_quantities__per_phase__init(phase_n);
-	type_instantaneous_quantities__other__init(other);
+	geisa_instantaneous_quantities__init(response);
+	geisa_type_instantaneous_quantities__per_phase__init(phase_a);
+	geisa_type_instantaneous_quantities__per_phase__init(phase_b);
+	geisa_type_instantaneous_quantities__per_phase__init(phase_c);
+	geisa_type_instantaneous_quantities__per_phase__init(phase_n);
+	geisa_type_instantaneous_quantities__other__init(other);
 
 	time_t timestamp = time(NULL) * SEC_IN_MS;
 
 	// NOLINTBEGIN(readability-magic-numbers,cppcoreguidelines-avoid-magic-numbers)
 	// Mock data assignment
 	(*phase_a).message_version = 1;
-	(*phase_a).phase = TYPE_PHASE__PHASE_A;
+	(*phase_a).phase = GEISA_TYPE_PHASE__PHASE_A;
 	(*phase_a).microamps = 10.0F;
 	(*phase_a).microvolts = 120.0F;
 	(*phase_a).microw = 1200.0F;
@@ -47,7 +47,7 @@ geisa_get_instantaneous_data(InstantaneousQuantities *response,
 	(*phase_a).phase_voltage_percentage_2nd_harmonic = 1.0F;
 
 	(*phase_b).message_version = 1;
-	(*phase_b).phase = TYPE_PHASE__PHASE_B;
+	(*phase_b).phase = GEISA_TYPE_PHASE__PHASE_B;
 	(*phase_b).microamps = 11.0F;
 	(*phase_b).microvolts = 121.0F;
 	(*phase_b).microw = 1210.0F;
@@ -66,7 +66,7 @@ geisa_get_instantaneous_data(InstantaneousQuantities *response,
 	(*phase_b).phase_voltage_percentage_2nd_harmonic = 1.1F;
 
 	(*phase_c).message_version = 1;
-	(*phase_c).phase = TYPE_PHASE__PHASE_C;
+	(*phase_c).phase = GEISA_TYPE_PHASE__PHASE_C;
 	(*phase_c).microamps = 12.0F;
 	(*phase_c).microvolts = 122.0F;
 	(*phase_c).microw = 1220.0F;
@@ -85,7 +85,7 @@ geisa_get_instantaneous_data(InstantaneousQuantities *response,
 	(*phase_c).phase_voltage_percentage_2nd_harmonic = 1.2F;
 
 	(*phase_n).message_version = 1;
-	(*phase_n).phase = TYPE_PHASE__PHASE_N;
+	(*phase_n).phase = GEISA_TYPE_PHASE__PHASE_N;
 	(*phase_n).microamps = 5.0F;
 	(*phase_n).microvolts = 60.0F;
 	(*phase_n).microw = 600.0F;
@@ -121,30 +121,31 @@ geisa_get_instantaneous_data(InstantaneousQuantities *response,
 static void *gapi_instantaneous_thread(void *arg)
 {
 	struct mosquitto *mosq = (struct mosquitto *)arg;
-	TypeInstantaneousQuantitiesPerPhase phase_a;
-	TypeInstantaneousQuantitiesPerPhase phase_b;
-	TypeInstantaneousQuantitiesPerPhase phase_c;
-	TypeInstantaneousQuantitiesPerPhase phase_n;
-	TypeInstantaneousQuantitiesOther other;
-	InstantaneousQuantities response;
+	GeisaTypeInstantaneousQuantitiesPerPhase phase_a;
+	GeisaTypeInstantaneousQuantitiesPerPhase phase_b;
+	GeisaTypeInstantaneousQuantitiesPerPhase phase_c;
+	GeisaTypeInstantaneousQuantitiesPerPhase phase_n;
+	GeisaTypeInstantaneousQuantitiesOther other;
+	GeisaInstantaneousQuantities response;
 	uint8_t *message = NULL;
 
 	while (running) {
 		geisa_get_instantaneous_data(&response, &phase_a, &phase_b,
 					     &phase_c, &phase_n, &other);
-		message = malloc(
-			instantaneous_quantities__get_packed_size(&response));
+		message =
+			malloc(geisa_instantaneous_quantities__get_packed_size(
+				&response));
 		if (message == NULL) {
 			fprintf(stderr, "[Instantaneous] Failed to allocate "
 					"memory for instantaneous data\n");
 			sleep(1);
 			continue;
 		}
-		instantaneous_quantities__pack(&response, message);
-		api_publish(
-			mosq, "geisa/api/instantaneous-data",
-			instantaneous_quantities__get_packed_size(&response),
-			message, 0);
+		geisa_instantaneous_quantities__pack(&response, message);
+		api_publish(mosq, "geisa/api/instantaneous/data",
+			    geisa_instantaneous_quantities__get_packed_size(
+				    &response),
+			    message, 0);
 		free(message);
 		sleep(1);
 	}

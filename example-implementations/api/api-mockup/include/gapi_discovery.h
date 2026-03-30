@@ -24,6 +24,6 @@ void api_discovery_init(struct mosquitto *mosq);
  *
  * @return Pointer to PlatformDiscoveryWaveform structure
  */
-PlatformDiscoveryWaveform get_waveform_info();
+GeisaPlatformDiscoveryWaveform get_waveform_info();
 
 #endif // GAPI_DISCOVERY_H
