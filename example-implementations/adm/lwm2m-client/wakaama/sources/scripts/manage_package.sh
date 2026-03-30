@@ -127,16 +127,26 @@ EOF
         rm -rf "$CONFIG_SRC"
         chmod 600 "$PACKAGE_IMAGE"
 
-        mount -t squashfs "$BASE_IMAGE" "${LXC_BASE_DIR}"
-        mount -t squashfs "$PACKAGE_IMAGE" "${LXC_APP_DIR}"
-        mount -t squashfs "$CONFIG_IMAGE" "${LXC_CONFIG_DIR}"
-
-        mount -t overlay overlay \
-            -olowerdir="${LXC_BASE_DIR}:${LXC_APP_DIR}:${LXC_CONFIG_DIR}",upperdir="$LXC_PERSISTENT_DIR",workdir="$LXC_WORK_DIR" \
-            "$LXC_ROOTFS_DIR"
+        if ! mountpoint -q "${LXC_BASE_DIR}"; then
+            mount -t squashfs "$BASE_IMAGE" "${LXC_BASE_DIR}"
+        fi
+        if ! mountpoint -q "${LXC_APP_DIR}"; then
+            mount -t squashfs "$PACKAGE_IMAGE" "${LXC_APP_DIR}"
+        fi
+        if ! mountpoint -q "${LXC_CONFIG_DIR}"; then
+            mount -t squashfs "$CONFIG_IMAGE" "${LXC_CONFIG_DIR}"
+        fi
+        if ! mountpoint -q "${LXC_ROOTFS_DIR}"; then
+            mount -t overlay overlay \
+                -olowerdir="${LXC_BASE_DIR}:${LXC_APP_DIR}:${LXC_CONFIG_DIR}",upperdir="$LXC_PERSISTENT_DIR",workdir="$LXC_WORK_DIR" \
+                "$LXC_ROOTFS_DIR"
+        fi
 
         mkdir -p "${LXC_ROOTFS_DIR}/tmp"
-        mount -t tmpfs -o size="${TMPFS_SIZE_KIB}k" tmpfs "${LXC_ROOTFS_DIR}/tmp"
+
+        if ! mountpoint -q "${LXC_ROOTFS_DIR}/tmp"; then
+            mount -t tmpfs -o size="${TMPFS_SIZE_KIB}k" tmpfs "${LXC_ROOTFS_DIR}/tmp"
+        fi
 
         mkdir -p "/platform/persistent"
         if [ ! -f "/platform/persistent/${PACKAGE_NAME}-${PACKAGE_VERSION}.img" ]; then
@@ -172,12 +182,21 @@ EOF
         PACKAGE_IMAGE="${PACKAGE_DIR}/${PACKAGE_NAME}-${PACKAGE_VERSION}.squashfs"
         CONFIG_IMAGE="${PACKAGE_DIR}/${PACKAGE_NAME}-${PACKAGE_VERSION}-config.squashfs"
 
-        umount "${LXC_ROOTFS_DIR}/home/geisa" 2>/dev/null || true
-        umount "${LXC_ROOTFS_DIR}/tmp" 2>/dev/null || true
-        umount "${LXC_ROOTFS_DIR}" 2>/dev/null || true
-        umount "${LXC_BASE_DIR}" 2>/dev/null || true
-        umount "${LXC_APP_DIR}" 2>/dev/null || true
-        umount "${LXC_CONFIG_DIR}" 2>/dev/null || true
+        if mountpoint -q "${LXC_ROOTFS_DIR}/home/geisa"; then
+            umount "${LXC_ROOTFS_DIR}/home/geisa"
+        fi
+        if mountpoint -q "${LXC_ROOTFS_DIR}/tmp"; then
+            umount "${LXC_ROOTFS_DIR}/tmp"
+        fi
+        if mountpoint -q "${LXC_ROOTFS_DIR}"; then
+            umount "${LXC_ROOTFS_DIR}"
+        fi
+        if mountpoint -q "${LXC_APP_DIR}"; then
+            umount "${LXC_APP_DIR}"
+        fi
+        if mountpoint -q "${LXC_CONFIG_DIR}"; then
+            umount "${LXC_CONFIG_DIR}"
+        fi
 
         rm -rf "$LXC_ROOT_DIR"
         rm -f "$PACKAGE_IMAGE"
