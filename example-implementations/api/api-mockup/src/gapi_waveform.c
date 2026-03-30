@@ -46,6 +46,7 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 
 	fprintf(stdout, "[Waveform] Received waveform data request from %s\n",
 		app_id);
+	fflush(stdout);
 	request = waveform__req__unpack(NULL, payloadlen, payload);
 	if (request == NULL) {
 		fprintf(stderr,

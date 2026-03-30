@@ -30,6 +30,7 @@ static void on_connect(struct mosquitto *mosq, void *obj, int return_code)
 	(void)obj;
 	if (return_code == 0) {
 		fprintf(stdout, "[connected] OK\n");
+		fflush(stdout);
 		isConnected = true;
 	} else {
 		fprintf(stderr, "[connect] failed, return_code=%d\n",
@@ -44,6 +45,7 @@ static void on_disconnect(struct mosquitto *mosq, void *obj, int return_code)
 	(void)obj;
 	(void)mosq;
 	fprintf(stdout, "[disconnected] return_code=%d\n", return_code);
+	fflush(stdout);
 	isConnected = false;
 }
 

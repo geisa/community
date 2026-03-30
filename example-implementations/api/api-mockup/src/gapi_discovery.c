@@ -133,6 +133,7 @@ static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 	(void)topic;
 
 	fprintf(stdout, "[Discovery] Received platform discovery request\n");
+	fflush(stdout);
 	request = platform_discovery__req__unpack(NULL, payloadlen, payload);
 	if (request == NULL) {
 		fprintf(stderr, "[Discovery] Error unpacking platform "
@@ -169,6 +170,7 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 
 	fprintf(stdout, "[Manifest] Received app manifest request from %s\n",
 		app_id);
+	fflush(stdout);
 	request = application_manifest__req__unpack(NULL, payloadlen, payload);
 	if (request == NULL) {
 		fprintf(stderr,
