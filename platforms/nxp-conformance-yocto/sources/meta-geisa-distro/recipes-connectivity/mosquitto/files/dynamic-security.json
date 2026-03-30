@@ -34,80 +34,75 @@
 			"rolename":	"AllowGeisaAPITopics",
 			"acls":	[{
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/platform-discovery-rsp",
+					"topic":	"geisa/api/platform/discovery/rsp/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/app-manifest-rsp/#",
+					"topic":	"geisa/api/app/manifest/rsp/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/app-status/#",
+					"topic":	"geisa/api/platform/app/status/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/platform-status",
+					"topic":	"geisa/api/platform/status",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/instantaneous-data",
+					"topic":	"geisa/api/instantaneous/data",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/waveform-rsp/#",
+					"topic":	"geisa/api/waveform/rsp/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/message-rsp/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribeLiteral",
-					"topic":	"geisa/api/platform-discovery-req",
+					"topic":	"geisa/api/message/rsp/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"subscribePattern",
-					"topic":	"geisa/api/app-manifest-req/#",
+					"topic":	"geisa/api/platform/discovery/req/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"subscribePattern",
-					"topic":	"geisa/api/waveform-req/#",
+					"topic":	"geisa/api/app/manifest/req/#",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"subscribePattern",
-					"topic":	"geisa/api/message-req/#",
+					"topic":	"geisa/api/waveform/req/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"geisa/api/message/req/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"geisa/api/app/platform/status/#",
 					"priority":	0,
 					"allow":	true
 				}]
 		}, {
 			"rolename":	"AllowGeisaAppsTopics",
 			"acls":	[{
-					"acltype":	"publishClientSend",
-					"topic":	"geisa/api/platform-discovery-req",
+					"acltype":	"subscribeLiteral",
+					"topic":	"geisa/api/platform/status",
 					"priority":	0,
 					"allow":	true
 				}, {
 					"acltype":	"subscribeLiteral",
-					"topic":	"geisa/api/platform-discovery-rsp",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribeLiteral",
-					"topic":	"geisa/api/platform-status",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribeLiteral",
-					"topic":	"geisa/api/instantaneous-data",
+					"topic":	"geisa/api/instantaneous/data",
 					"priority":	0,
 					"allow":	true
 				}]
