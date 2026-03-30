@@ -33,13 +33,16 @@ register_app_to_mqtt_broker() {
     local role="AllowGeisa${appid}Topics"
     $mosq_ctrl createRole "$role"
 
-    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/app-manifest-req/$appid" allow
-    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/app-manifest-rsp/$appid" allow
-    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/app-status/$appid" allow
-    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/waveform-req/$appid" allow
-    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/waveform-rsp/$appid" allow
-    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/message-req/$appid" allow
-    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/message-rsp/$appid" allow
+    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/app/manifest/req/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/app/manifest/rsp/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/app/platform/status/$appid" allow
+    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/waveform/req/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/waveform/rsp/$appid" allow
+    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/message/req/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/message/rsp/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/platform/app/status/$appid" allow
+    $mosq_ctrl addRoleACL "$role" subscribeLiteral "geisa/api/platform/discovery/req/$appid" allow
+    $mosq_ctrl addRoleACL "$role" publishClientSend "geisa/api/platform/discovery/rsp/$appid" allow
 
     $mosq_ctrl addClientRole "$appid" "$role"
 }
@@ -54,13 +57,16 @@ deregister_app_to_mqtt_broker() {
     $mosq_ctrl removeGroupClient GeisaApps "$appid"
     $mosq_ctrl removeClientRole "$appid" "$role"
 
-    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/app-manifest-req/$appid"
-    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/app-manifest-rsp/$appid"
-    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/app-status/$appid"
-    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/waveform-req/$appid"
-    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/waveform-rsp/$appid"
-    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/message-req/$appid"
-    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/message-rsp/$appid"
+    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/app/manifest/req/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/app/manifest/rsp/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/app/platform/status/$appid"
+    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/waveform/req/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/waveform/rsp/$appid"
+    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/message/req/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/message/rsp/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/platform/app/status/$appid"
+    $mosq_ctrl removeRoleACL "$role" subscribeLiteral "geisa/api/platform/discovery/req/$appid"
+    $mosq_ctrl removeRoleACL "$role" publishClientSend "geisa/api/platform/discovery/rsp/$appid"
 
 
     $mosq_ctrl deleteRole "$role"
