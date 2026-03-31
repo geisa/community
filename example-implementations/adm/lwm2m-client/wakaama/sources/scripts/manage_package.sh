@@ -199,6 +199,7 @@ EOF
         fi
 
         rm -rf "$LXC_ROOT_DIR"
+        rm -rf "$PACKAGE_DIR"
         rm -f "$PACKAGE_IMAGE"
         rm -f "$CONFIG_IMAGE"
         rm -f "$PERSISTENT_IMG"
