@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Usage:
-#   manage_package.sh install <package_name> <package_version> <package_id> <persistent_size_kib> <tmpfs_size_kib>
+#   manage_package.sh install <package_name> <package_version> <userid> <persistent_size_kib> <tmpfs_size_kib>
 #   manage_package.sh uninstall <package_name> <package_version>
 #   manage_package.sh verify <package_name> <package_version> <package_manifest> <signature>
 #   manage_package.sh activate <package_name>
@@ -76,16 +76,16 @@ deregister_app_to_mqtt_broker() {
 case "$MODE" in
     install)
         PACKAGE_VERSION="$1"
-        PACKAGE_ID="$2"
+        USERID="$2"
         PERSISTENT_SIZE_KIB="${3:-131072}"
         TMPFS_SIZE_KIB="${4:-131072}"
 
-        if [ -z "$PACKAGE_NAME" ] || [ -z "$PACKAGE_ID" ] || [ -z "$PERSISTENT_SIZE_KIB" ] || [ -z "$TMPFS_SIZE_KIB" ]; then
-            echo "Usage: $0 install <package_name> <package_version> <package_id> <persistent_size_kib> <tmpfs_size_kib> [base_image.squashfs]"
+        if [ -z "$PACKAGE_NAME" ] || [ -z "$USERID" ] || [ -z "$PERSISTENT_SIZE_KIB" ] || [ -z "$TMPFS_SIZE_KIB" ]; then
+            echo "Usage: $0 install <package_name> <package_version> <userid> <persistent_size_kib> <tmpfs_size_kib> [base_image.squashfs]"
             exit 1
         fi
 
-        echo "Installing package: $PACKAGE_NAME version: $PACKAGE_VERSION with ID: $PACKAGE_ID"
+        echo "Installing package: $PACKAGE_NAME version: $PACKAGE_VERSION with ID: $USERID"
 
         BASE_IMAGE="/platform/base/geisa-application-base-$(uname -n).rootfs.squashfs"
 
@@ -112,13 +112,13 @@ case "$MODE" in
 
         # Prepare config image for application (with a minimal GEISA MQTT config)
         CONFIG_SRC="/tmp/${PACKAGE_NAME}-${PACKAGE_VERSION}/cfg"
-        mkdir -p "$CONFIG_SRC/opt/geisa"
-        PACKAGE_TOKEN=$(openssl rand -hex 32)
-        cat > "$CONFIG_SRC/opt/geisa/mqtt.conf" <<EOF
-GEISA_MQTT_HOST="127.0.0.1"
-GEISA_MQTT_PORT="1883"
-GEISA_PACKAGE_ID="${PACKAGE_ID}"
-GEISA_PACKAGE_TOKEN="${PACKAGE_TOKEN}"
+        mkdir -p "$CONFIG_SRC/etc/geisa"
+        PASSWORD=$(openssl rand -hex 32)
+        cat > "$CONFIG_SRC/etc/geisa/mqtt.conf" <<EOF
+HOST=127.0.0.1
+PORT=1883
+USERID=${USERID}
+PASSWORD=${PASSWORD}
 EOF
 
         CONFIG_IMAGE="${PACKAGE_DIR}/${PACKAGE_NAME}-${PACKAGE_VERSION}-config.squashfs"
@@ -217,22 +217,22 @@ EOF
 
 
     activate)
-        MQTT_CONF="${LXC_ROOTFS_DIR}/opt/geisa/mqtt.conf"
+        MQTT_CONF="${LXC_ROOTFS_DIR}/etc/geisa/mqtt.conf"
 
         if [ ! -f "$MQTT_CONF" ]; then
             echo "Error: $MQTT_CONF not found."
             exit 1
         fi
 
-        PACKAGE_ID=$(grep '^GEISA_PACKAGE_ID=' "$MQTT_CONF" | cut -d'=' -f2)
-        PACKAGE_TOKEN=$(grep '^GEISA_PACKAGE_TOKEN=' "$MQTT_CONF" | cut -d'=' -f2)
+        USERID=$(grep '^USERID=' "$MQTT_CONF" | cut -d'=' -f2)
+        PASSWORD=$(grep '^PASSWORD=' "$MQTT_CONF" | cut -d'=' -f2)
 
-        if [ -z "$PACKAGE_ID" ] || [ -z "$PACKAGE_TOKEN" ]; then
-            echo "Error: PACKAGE_ID or PACKAGE_TOKEN not found in $MQTT_CONF."
+        if [ -z "$USERID" ] || [ -z "$PASSWORD" ]; then
+            echo "Error: USERID or PASSWORD not found in $MQTT_CONF."
             exit 2
         fi
 
-        register_app_to_mqtt_broker "$PACKAGE_ID" "$PACKAGE_TOKEN"
+        register_app_to_mqtt_broker "$USERID" "$PASSWORD"
         if ! lxc-execute -P /platform/lxc -n "${PACKAGE_NAME}"; then
             echo "Error: lxc-execute failed for ${PACKAGE_NAME}."
             exit 3
@@ -244,20 +244,20 @@ EOF
 
 
     deactivate)
-        MQTT_CONF="${LXC_ROOTFS_DIR}/opt/geisa/mqtt.conf"
+        MQTT_CONF="${LXC_ROOTFS_DIR}/etc/geisa/mqtt.conf"
 
         if [ ! -f "$MQTT_CONF" ]; then
             echo "Error: $MQTT_CONF not found."
             exit 1
         fi
 
-        PACKAGE_ID=$(grep '^GEISA_PACKAGE_ID=' "$MQTT_CONF" | cut -d'=' -f2)
-        if [ -z "$PACKAGE_ID" ]; then
-            echo "Error: PACKAGE_ID not found in $MQTT_CONF."
+        USERID=$(grep '^USERID=' "$MQTT_CONF" | cut -d'=' -f2)
+        if [ -z "$USERID" ]; then
+            echo "Error: USERID not found in $MQTT_CONF."
             exit 2
         fi
 
-        deregister_app_to_mqtt_broker "$PACKAGE_ID"
+        deregister_app_to_mqtt_broker "$USERID"
 
         # Stop application container
         if lxc-info -P /platform/lxc -n "${PACKAGE_NAME}" | grep -q "RUNNING"; then
@@ -271,7 +271,7 @@ EOF
     *)
         echo "Unknown mode: $MODE"
         echo "Usage:"
-        echo "  $0 install <package_name> <package_version> <package_id> <persistent_size_kib> <tmpfs_size_kib>"
+        echo "  $0 install <package_name> <package_version> <userid> <persistent_size_kib> <tmpfs_size_kib>"
         echo "  $0 uninstall <package_name> <package_version>"
         echo "  $0 verify <package_name> <package_version> <package_manifest> <signature>"
         echo "  $0 activate <package_name>"
