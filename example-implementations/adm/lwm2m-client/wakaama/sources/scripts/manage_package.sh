@@ -41,8 +41,8 @@ register_app_to_mqtt_broker() {
     $mosq_ctrl addRoleACL $role publishClientSend "geisa/api/message/req/$appid" allow
     $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/message/rsp/$appid" allow
     $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/platform/app/status/$appid" allow
-    $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/platform/discovery/req/$appid" allow
-    $mosq_ctrl addRoleACL $role publishClientSend "geisa/api/platform/discovery/rsp/$appid" allow
+    $mosq_ctrl addRoleACL $role publishClientSend "geisa/api/platform/discovery/req/$appid" allow
+    $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/platform/discovery/rsp/$appid" allow
 
     $mosq_ctrl addClientRole $appid $role
 }
