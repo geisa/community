@@ -9,7 +9,7 @@ SRC_URI = " \
     git://github.com/geisa/adm-mockup.git;protocol=https;branch=main \
 "
 
-SRCREV = "896cf08eb872616bcd6c38ef71e1f3bfedce0c71"
+SRCREV = "61ca0782494bdd1fe1089b405756ed400cf07646"
 
 RDEPENDS:${PN} = "e2fsprogs-mke2fs squashfs-tools"
 
