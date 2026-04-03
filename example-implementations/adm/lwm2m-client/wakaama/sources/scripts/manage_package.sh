@@ -191,6 +191,9 @@ EOF
         if mountpoint -q "${LXC_ROOTFS_DIR}"; then
             umount "${LXC_ROOTFS_DIR}"
         fi
+        if mountpoint -q "${LXC_BASE_DIR}"; then
+            umount "${LXC_BASE_DIR}"
+        fi
         if mountpoint -q "${LXC_APP_DIR}"; then
             umount "${LXC_APP_DIR}"
         fi
