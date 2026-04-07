@@ -65,8 +65,8 @@ deregister_app_to_mqtt_broker() {
     $mosq_ctrl removeRoleACL $role publishClientSend "geisa/api/message/req/$appid"
     $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/message/rsp/$appid"
     $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/platform/app/status/$appid"
-    $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/platform/discovery/req/$appid"
-    $mosq_ctrl removeRoleACL $role publishClientSend "geisa/api/platform/discovery/rsp/$appid"
+    $mosq_ctrl removeRoleACL $role publishClientSend "geisa/api/platform/discovery/req/$appid"
+    $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/platform/discovery/rsp/$appid"
 
 
     $mosq_ctrl deleteRole $role
