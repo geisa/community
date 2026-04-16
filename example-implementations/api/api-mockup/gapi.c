@@ -40,6 +40,16 @@ int main()
 	while (running) {
 		mosquitto_loop(mosq, -1, 1);
 		sleep(1);
+		if (!isConnected) {
+			printf("Disconnected from broker, try reconnecing\n");
+			ret = mosquitto_reconnect(mosq);
+			sleep(2);
+			if (ret != MOSQ_ERR_SUCCESS) {
+				printf("Failed to reconnect, exiting\n");
+				running = false;
+				ret = EXIT_FAILURE;
+			}
+		}
 	}
 
 	pthread_join(instantaneous_thread, NULL);
