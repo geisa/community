@@ -78,7 +78,7 @@ struct mosquitto *api_communication_init(const char *broker, int port)
 
 	mosquitto_lib_init();
 
-	mosq = mosquitto_new(NULL, true, NULL);
+	mosq = mosquitto_new("gapi", false, NULL);
 	if (!mosq) {
 		fprintf(stderr, "Error: mosquitto_new() failed\n");
 		goto cleanup;
