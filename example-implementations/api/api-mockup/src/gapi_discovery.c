@@ -7,9 +7,7 @@
 #include "gapi_discovery.h"
 
 // NOLINTBEGIN(cppcoreguidelines-interfaces-global-init,cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-static GeisaPlatformDiscoveryGEISA geisa_platform_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__geisa__descriptor),
+static GeisaPlatformDiscovery_GEISA geisa_platform_info = {
 	.ver_major = 0,
 	.ver_minor = 1,
 	.ver_rev = 7,
@@ -19,12 +17,10 @@ static GeisaPlatformDiscoveryGEISA geisa_platform_info = {
 	.pillar_vee = false,
 };
 
-static const GeisaPlatformDiscoveryType top_type_platform_info =
-	GEISA_PLATFORM_DISCOVERY__TYPE__DEVICE_TYPE_ELECTRIC_METER;
+static const GeisaPlatformDiscovery_DeviceType top_type_platform_info =
+	GeisaPlatformDiscovery_DeviceType_TYPE_ELECTRIC_METER;
 
-static GeisaPlatformDiscoveryModule top_module_platform_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__module__descriptor),
+static const GeisaPlatformDiscovery_Module top_module_platform_info = {
 	.type = top_type_platform_info,
 	.manufacturer = "SCE",
 	.model = "GEISA-1",
@@ -33,12 +29,10 @@ static GeisaPlatformDiscoveryModule top_module_platform_info = {
 	.fw_revision = "1.0.0",
 };
 
-static const GeisaPlatformDiscoveryType sub_type_platform_info =
-	GEISA_PLATFORM_DISCOVERY__TYPE__DEVICE_TYPE_METROLOGY_PROCESSOR;
+static const GeisaPlatformDiscovery_DeviceType sub_type_platform_info =
+	GeisaPlatformDiscovery_DeviceType_TYPE_METROLOGY_PROCESSOR;
 
-static GeisaPlatformDiscoveryModule sub_module1_platform_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__module__descriptor),
+static GeisaPlatformDiscovery_Module sub_module_platform_info = {
 	.type = sub_type_platform_info,
 	.manufacturer = "SCE",
 	.model = "GEISA-2",
@@ -47,64 +41,54 @@ static GeisaPlatformDiscoveryModule sub_module1_platform_info = {
 	.fw_revision = "1.1.0",
 };
 
-static GeisaPlatformDiscoveryModule *sub_modules_platform_info[] = {
-	&sub_module1_platform_info};
-
-static GeisaPlatformDiscoveryDevice device_platform_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__device__descriptor),
-	.top_module = &top_module_platform_info,
-	.n_sub_module = 1,
-	.sub_module = sub_modules_platform_info,
+static GeisaPlatformDiscovery_Device device_platform_info = {
+	.top_module = top_module_platform_info,
+	.has_top_module = true,
+	.sub_module_count = 1,
+	.sub_module = &sub_module_platform_info,
 };
 
-static GeisaPlatformDiscoveryOperator operator_platform_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__operator__descriptor),
+static GeisaPlatformDiscovery_Operator operator_platform_info = {
 	.operator_name = "SCE",
 	.operator_identifier = "SCE001",
 };
 
-static GeisaPlatformDiscoveryMetrology metrology_platform_info =
-	GEISA_PLATFORM_DISCOVERY__METROLOGY__INIT;
-static GeisaPlatformDiscoverySensor sensor_platform_info =
-	GEISA_PLATFORM_DISCOVERY__SENSOR__INIT;
-static GeisaPlatformDiscoveryNetwork network_platform_info =
-	GEISA_PLATFORM_DISCOVERY__NETWORK__INIT;
+static GeisaPlatformDiscovery_Metrology metrology_platform_info =
+	GeisaPlatformDiscovery_Metrology_init_default;
+static GeisaPlatformDiscovery_Sensor sensor_platform_info =
+	GeisaPlatformDiscovery_Sensor_init_default;
+static GeisaPlatformDiscovery_Network network_platform_info =
+	GeisaPlatformDiscovery_Network_init_default;
 
-static const GeisaWaveformDatatype waveform_data_type_platform_info =
-	GEISA_WAVEFORM__DATATYPE__DATA_INT32;
+static const GeisaWaveform_Datatype waveform_data_type_platform_info =
+	GeisaWaveform_Datatype_DATA_INT32;
 
-static GeisaPlatformDiscoveryWaveformInstance waveform_platform_instance1_info = {
-	.base = PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__waveform__instance__descriptor),
-	.instance_id = 1,
-	.data_connection = "/data/waveform/instance1.socket",
+static GeisaPlatformDiscovery_Waveform_Instance waveform_platform_instances = {
+	.stream_id = "api-mockup-waveform",
+	.name = "API Mockup Waveform",
+	.description = "Example waveform instance for API mockup application",
 	.datatype = waveform_data_type_platform_info,
 	.voltage_multiplier = 0.1,
 	.current_multiplier = 0.01,
 	.num_voltage_ch = 1,
 	.num_current_ch = 1,
 	.num_other_ch = 0,
-	.sample_rate_is_cycle_locked = true,
+	.total_channel_count = 2,
+	.cycle_aligned = true,
+	.zero_crossing_aligned = true,
 	.sample_rate = 7680,
-	.frame_is_cycle_aligned = true,
-	.frame_duration_samples = 200,
+	.samples_per_cycle = 1280,
+	.nominal_frequency_hz = 60,
+	.expected_frame_period_ms = 1000,
 	.voltage_filter_lowpass = 0,
 	.voltage_filter_highpass = 0,
 	.current_filter_lowpass = 0,
 	.current_filter_highpass = 0,
 };
 
-static GeisaPlatformDiscoveryWaveformInstance *waveform_platform_instances[] = {
-	&waveform_platform_instance1_info,
-};
-
-static GeisaPlatformDiscoveryWaveform waveform_platform_info = {
-	PROTOBUF_C_MESSAGE_INIT(
-		&geisa_platform_discovery__waveform__descriptor),
-	.n_instances = 1,
-	.instances = waveform_platform_instances,
+static GeisaPlatformDiscovery_Waveform waveform_platform_info = {
+	.streams_count = 1,
+	.streams = &waveform_platform_instances,
 };
 
 char *deployment_manifest =
@@ -188,18 +172,25 @@ char *deployment_manifest =
 // NOLINTEND(cppcoreguidelines-interfaces-global-init,cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 
 static void
-api_platform_discovery_build_response(GeisaPlatformDiscoveryRsp *response)
+api_platform_discovery_build_response(GeisaPlatformDiscovery_Rsp *response)
 {
-	response->geisa = &geisa_platform_info;
-	response->device = &device_platform_info;
-	response->operator_ = &operator_platform_info;
-	response->metrology = &metrology_platform_info;
-	response->sensor = &sensor_platform_info;
-	response->network = &network_platform_info;
-	response->waveform = &waveform_platform_info;
+	response->geisa = geisa_platform_info;
+	response->has_geisa = true;
+	response->device = device_platform_info;
+	response->has_device = true;
+	response->operator = operator_platform_info;
+	response->has_operator = true;
+	response->metrology = metrology_platform_info;
+	response->has_metrology = true;
+	response->sensor = sensor_platform_info;
+	response->has_sensor = true;
+	response->network = network_platform_info;
+	response->has_network = true;
+	response->waveform = waveform_platform_info;
+	response->has_waveform = true;
 }
 
-GeisaPlatformDiscoveryWaveform get_waveform_info()
+GeisaPlatformDiscovery_Waveform get_waveform_info()
 {
 	return waveform_platform_info;
 }
@@ -209,12 +200,17 @@ static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 					       const int payloadlen,
 					       const uint8_t *payload)
 {
-	GeisaPlatformDiscoveryReq *request = NULL;
-	GeisaPlatformDiscoveryRsp response =
-		GEISA_PLATFORM_DISCOVERY__RSP__INIT;
+	GeisaPlatformDiscovery_Req request =
+		GeisaPlatformDiscovery_Req_init_default;
+	GeisaPlatformDiscovery_Rsp response =
+		GeisaPlatformDiscovery_Rsp_init_default;
 	uint8_t *message = NULL;
 	char *rsp_topic = NULL;
 	char *app_id = NULL;
+	pb_istream_t istream;
+	pb_ostream_t ostream;
+	bool status = false;
+	size_t encoded_size = 0;
 
 	app_id = basename((char *)topic);
 
@@ -222,18 +218,27 @@ static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 		"[Discovery] Received platform discovery request from %s\n",
 		app_id);
 	fflush(stdout);
-	request = geisa_platform_discovery__req__unpack(NULL, payloadlen,
-							payload);
-	if (request == NULL) {
-		fprintf(stderr, "[Discovery] Error unpacking platform "
+
+	istream = pb_istream_from_buffer(payload, payloadlen);
+	status = pb_decode(&istream, GeisaPlatformDiscovery_Req_fields,
+			   &request);
+	if (!status) {
+		fprintf(stderr, "[Discovery] Error decoding platform "
 				"discovery request\n");
 		return;
 	}
-	geisa_platform_discovery__req__free_unpacked(request, NULL);
+	pb_release(GeisaPlatformDiscovery_Req_fields, &request);
 
 	api_platform_discovery_build_response(&response);
-	message = malloc(
-		geisa_platform_discovery__rsp__get_packed_size(&response));
+	status = pb_get_encoded_size(
+		&encoded_size, GeisaPlatformDiscovery_Rsp_fields, &response);
+	if (!status) {
+		fprintf(stderr, "[Discovery] Error calculating size of "
+				"platform discovery response\n");
+		return;
+	}
+
+	message = malloc(encoded_size);
 	if (message == NULL) {
 		fprintf(stderr, "[Discovery] Error allocating memory for "
 				"platform discovery response\n");
@@ -249,10 +254,19 @@ static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 		return;
 	}
 
-	geisa_platform_discovery__rsp__pack(&response, message);
-	api_publish(mosq, rsp_topic,
-		    geisa_platform_discovery__rsp__get_packed_size(&response),
-		    message, 1);
+	ostream = pb_ostream_from_buffer(message, encoded_size);
+	status = pb_encode(&ostream, GeisaPlatformDiscovery_Rsp_fields,
+			   &response);
+	if (!status) {
+		fprintf(stderr, "[Discovery] Error encoding platform "
+				"discovery response\n");
+		free(rsp_topic);
+		free(message);
+		return;
+	}
+
+	api_publish(mosq, rsp_topic, encoded_size, message, 1);
+
 	free(rsp_topic);
 	free(message);
 }
@@ -261,27 +275,34 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 				     const int payloadlen,
 				     const uint8_t *payload)
 {
-	GeisaApplicationDeploymentManifestReq *request = NULL;
-	GeisaApplicationDeploymentManifestRsp response =
-		GEISA_APPLICATION_DEPLOYMENT_MANIFEST__RSP__INIT;
+	GeisaApplicationDeploymentManifest_Req request =
+		GeisaApplicationDeploymentManifest_Req_init_default;
+	GeisaApplicationDeploymentManifest_Rsp response =
+		GeisaApplicationDeploymentManifest_Rsp_init_default;
+	size_t encoded_size = 0;
 	uint8_t *message = NULL;
 	char *rsp_topic = NULL;
 	char *app_id = NULL;
+	pb_istream_t istream;
+	pb_ostream_t ostream;
+	bool status = false;
 
 	app_id = basename((char *)topic);
 
 	fprintf(stdout, "[Manifest] Received app manifest request from %s\n",
 		app_id);
 	fflush(stdout);
-	request = geisa_application_deployment_manifest__req__unpack(
-		NULL, payloadlen, payload);
-	if (request == NULL) {
+
+	istream = pb_istream_from_buffer(payload, payloadlen);
+	status = pb_decode(&istream,
+			   GeisaApplicationDeploymentManifest_Req_fields,
+			   &request);
+	if (!status) {
 		fprintf(stderr,
-			"[Manifest] Error unpacking app manifest request\n");
+			"[Manifest] Error decoding app manifest request\n");
 		return;
 	}
-	geisa_application_deployment_manifest__req__free_unpacked(request,
-								  NULL);
+	pb_release(GeisaApplicationDeploymentManifest_Req_fields, &request);
 
 	if (asprintf(&rsp_topic, "geisa/api/app/manifest/rsp/%s", app_id) ==
 	    -1) {
@@ -292,9 +313,16 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 	}
 
 	response.manifest = deployment_manifest;
-	message = malloc(
-		geisa_application_deployment_manifest__rsp__get_packed_size(
-			&response));
+	status = pb_get_encoded_size(
+		&encoded_size, GeisaApplicationDeploymentManifest_Rsp_fields,
+		&response);
+	if (!status) {
+		fprintf(stderr, "[Manifest] Error calculating size of "
+				"app manifest response\n");
+		return;
+	}
+
+	message = malloc(encoded_size);
 	if (message == NULL) {
 		fprintf(stderr,
 			"[Manifest] Error allocating memory for response "
@@ -302,11 +330,20 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 		free(rsp_topic);
 		return;
 	}
-	geisa_application_deployment_manifest__rsp__pack(&response, message);
-	api_publish(mosq, rsp_topic,
-		    geisa_application_deployment_manifest__rsp__get_packed_size(
-			    &response),
-		    message, 1);
+
+	ostream = pb_ostream_from_buffer(message, encoded_size);
+	status = pb_encode(&ostream,
+			   GeisaApplicationDeploymentManifest_Rsp_fields,
+			   &response);
+	if (!status) {
+		fprintf(stderr, "[Manifest] Error encoding app manifest "
+				"response\n");
+		free(rsp_topic);
+		free(message);
+		return;
+	}
+
+	api_publish(mosq, rsp_topic, encoded_size, message, 1);
 	free(rsp_topic);
 	free(message);
 }

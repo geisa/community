@@ -1,3 +1,6 @@
 [submodule "schemas"]
 	path = schemas
 	url = https://github.com/geisa/schemas.git
+[submodule "nanopb"]
+	path = nanopb
+	url = https://github.com/nanopb/nanopb.git

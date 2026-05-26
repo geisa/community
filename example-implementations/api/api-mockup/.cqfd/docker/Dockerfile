@@ -17,8 +17,13 @@ RUN set -x \
         clang-format \
         clang-tidy \
         libmosquitto-dev \
+        libnanopb-dev \
         libprotobuf-c-dev \
         pkg-config \
         protobuf-compiler \
-        protobuf-c-compiler \
+        python3-pip \
     && rm -rf /var/lib/apt/lists/
+
+RUN set -x \
+    && pip3 install --no-cache-dir --break-system-packages \
+        nanopb

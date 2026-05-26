@@ -9,7 +9,10 @@
 #define _GNU_SOURCE
 
 #include "gapi_mosquitto.h"
-#include "schemas/waveform.pb-c.h"
+#include "pb.h"
+#include "pb_decode.h"
+#include "pb_encode.h"
+#include "schemas/waveform.pb.h"
 #include <libgen.h>
 
 /**

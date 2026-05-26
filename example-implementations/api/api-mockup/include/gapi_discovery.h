@@ -9,7 +9,11 @@
 #define _GNU_SOURCE
 
 #include "gapi_mosquitto.h"
-#include "schemas/discovery.pb-c.h"
+#include "pb.h"
+#include "pb_decode.h"
+#include "pb_encode.h"
+#include "schemas/discovery.pb.h"
+#include "schemas/manifest.pb.h"
 #include <libgen.h>
 
 /**
@@ -24,6 +28,6 @@ void api_discovery_init(struct mosquitto *mosq);
  *
  * @return Pointer to PlatformDiscoveryWaveform structure
  */
-GeisaPlatformDiscoveryWaveform get_waveform_info();
+GeisaPlatformDiscovery_Waveform get_waveform_info();
 
 #endif // GAPI_DISCOVERY_H

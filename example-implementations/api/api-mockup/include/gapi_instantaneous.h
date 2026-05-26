@@ -8,7 +8,9 @@
 #define GAPI_INSTANTANEOUS_H
 
 #include "gapi_mosquitto.h"
-#include "schemas/metered_quantities.pb-c.h"
+#include "pb.h"
+#include "pb_encode.h"
+#include "schemas/metered_quantities.pb.h"
 #include <pthread.h>
 #include <time.h>
 

@@ -7,57 +7,72 @@
 #include "gapi_waveform.h"
 #include "gapi_discovery.h"
 
-static void api_platform_waveform_build_response(GeisaWaveformRsp *response,
-						 int32_t instance_id,
-						 bool activate)
+static void
+api_platform_waveform_build_response(GeisaWaveform_Rsp *response,
+				     char *stream_id,
+				     GeisaWaveform_RequestType request_type)
 {
-	GeisaPlatformDiscoveryWaveform waveform_platform_info;
-	(void)activate;
+	GeisaPlatformDiscovery_Waveform waveform_platform_info;
+	(void)request_type;
 
 	waveform_platform_info = get_waveform_info();
-	if (waveform_platform_info.n_instances == 0) {
-		response->status =
-			GEISA_WAVEFORM__STATUS__WAVEFORM_ERR_NO_RESOURCES;
+
+	if (waveform_platform_info.streams_count == 0) {
+		response->waveform_status =
+			GeisaWaveform_Status_WAVEFORM_ERR_NO_RESOURCES;
 		return;
 	}
 
-	if (instance_id < 0 ||
-	    instance_id > (int32_t)waveform_platform_info.n_instances) {
-		response->status =
-			GEISA_WAVEFORM__STATUS__WAVEFORM_ERR_INVALID_ID;
+	if (stream_id == NULL) {
+		response->waveform_status =
+			GeisaWaveform_Status_WAVEFORM_ERR_INVALID_STREAM_ID;
 		return;
 	}
 
-	response->status = GEISA_WAVEFORM__STATUS__WAVEFORM_SUCCESS;
+	for (size_t i = 0; i < waveform_platform_info.streams_count; i++) {
+		if (strcmp(waveform_platform_info.streams[i].stream_id,
+			   stream_id) == 0) {
+			response->stream_id = stream_id;
+			response->waveform_status =
+				GeisaWaveform_Status_WAVEFORM_SUCCESS;
+			break;
+		}
+	}
+
+	if (response->waveform_status !=
+	    GeisaWaveform_Status_WAVEFORM_SUCCESS) {
+		response->waveform_status =
+			GeisaWaveform_Status_WAVEFORM_ERR_UNAVAILABLE;
+	}
 }
 
 static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 				     const int payloadlen,
 				     const uint8_t *payload)
 {
-	GeisaWaveformReq *request = NULL;
-	GeisaWaveformRsp response = GEISA_WAVEFORM__RSP__INIT;
-
-	int32_t instance_id = 0;
+	GeisaWaveform_Req request = GeisaWaveform_Req_init_default;
+	GeisaWaveform_Rsp response = GeisaWaveform_Rsp_init_default;
+	size_t encoded_size = 0;
 	uint8_t *message = NULL;
 	char *rsp_topic = NULL;
-	bool activate = false;
 	char *app_id = NULL;
+	pb_istream_t istream;
+	pb_ostream_t ostream;
+	bool status = false;
 
 	app_id = basename((char *)topic);
 
 	fprintf(stdout, "[Waveform] Received waveform data request from %s\n",
 		app_id);
 	fflush(stdout);
-	request = geisa_waveform__req__unpack(NULL, payloadlen, payload);
-	if (request == NULL) {
+
+	istream = pb_istream_from_buffer(payload, payloadlen);
+	status = pb_decode(&istream, GeisaWaveform_Req_fields, &request);
+	if (!status) {
 		fprintf(stderr,
-			"[Waveform] Error unpacking app manifest request\n");
+			"[Waveform] Error decoding waveform app request\n");
 		return;
 	}
-	instance_id = request->instance_id;
-	activate = request->activate;
-	geisa_waveform__req__free_unpacked(request, NULL);
 
 	if (asprintf(&rsp_topic, "geisa/api/waveform/rsp/%s", app_id) == -1) {
 		fprintf(stderr, "[Waveform] Error allocating memory for "
@@ -65,8 +80,20 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 		return;
 	}
 
-	api_platform_waveform_build_response(&response, instance_id, activate);
-	message = malloc(geisa_waveform__rsp__get_packed_size(&response));
+	api_platform_waveform_build_response(&response, request.stream_id,
+					     request.request_type);
+	pb_release(GeisaWaveform_Req_fields, &request);
+
+	status = pb_get_encoded_size(&encoded_size, GeisaWaveform_Rsp_fields,
+				     &response);
+	if (!status) {
+		fprintf(stderr, "[Waveform] Error calculating size of response "
+				"message\n");
+		free(rsp_topic);
+		return;
+	}
+
+	message = malloc(encoded_size);
 	if (message == NULL) {
 		fprintf(stderr,
 			"[Waveform] Error allocating memory for response "
@@ -74,10 +101,17 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 		free(rsp_topic);
 		return;
 	}
-	geisa_waveform__rsp__pack(&response, message);
-	api_publish(mosq, rsp_topic,
-		    geisa_waveform__rsp__get_packed_size(&response), message,
-		    1);
+
+	ostream = pb_ostream_from_buffer(message, encoded_size);
+	status = pb_encode(&ostream, GeisaWaveform_Rsp_fields, &response);
+	if (!status) {
+		fprintf(stderr, "[Waveform] Error encoding response message\n");
+		free(message);
+		free(rsp_topic);
+		return;
+	}
+
+	api_publish(mosq, rsp_topic, encoded_size, message, 1);
 	free(message);
 }
 
