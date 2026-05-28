@@ -67,3 +67,34 @@ or with cqfd:
 ```bash
 cqfd -b lint
 ```
+
+## Testing
+
+To validate the GEISA API Mockup application easily, a test script has been done to print some of the informations received.
+The test script is compiled at the same time as the application and is available in the build directory.
+After launching the test application, you can run the following command to trigger API calls:
+
+* To test the discovery API:
+
+```bash
+mosquitto_pub -u testapp -P testapp -h localhost -t geisa/api/platform/discovery/req/testapp -f /tmp/discovery.binpb
+```
+
+* To test the manifest API:
+
+```bash
+mosquitto_pub -u testapp -P testapp -h localhost -t geisa/api/app/manifest/req/testapp -f /tmp/manifest.binpb
+```
+
+* To test the waveform API:
+  * First, you need to create the binpb file with the information you want, for example:
+
+```bash
+printf 'stream_id: "api-mockup-waveform"\nrequest_type: 1\n'   | protoc --encode=GeisaWaveform_Req waveform.proto > waveform.binpb
+```
+
+  * Then, you can trigger the API call with the following command:
+
+```bash
+mosquitto_pub -u testapp -P testapp -h localhost -t geisa/api/waveform/req/testapp -f /tmp/waveform.binpb
+```
