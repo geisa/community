@@ -84,6 +84,7 @@ void handle_discovery(const void *payload, size_t len)
 	if (!msg.has_geisa) {
 		printf("GEISA field is missing in the response\n");
 	}
+	printf("Status: %s\n", msg.status.message);
 	printf("GEISA: ver_major=%d ver_minor=%d\n", msg.geisa.ver_major,
 	       msg.geisa.ver_minor);
 	printf("Device: top_model=%s sub_model=%s\n",
@@ -91,6 +92,16 @@ void handle_discovery(const void *payload, size_t len)
 	printf("waveform: data_connection=%s, sample_rate=%d\n",
 	       msg.waveform.streams[0].description,
 	       msg.waveform.streams[0].sample_rate);
+	printf("Metrology: meter_rating_class:%s, neutral_connected:%d\n",
+	       msg.metrology.meter_rating_class,
+	       msg.metrology.neutral_connected);
+	printf("Sensors: sensor1_name:%s sensor1_type:%d\n",
+	       msg.sensor.sensors[0].name, msg.sensor.sensors[0].sensor_type);
+	printf("Sensors: sensor2_model:%s sensor2_latitude:%f\n",
+	       msg.sensor.sensors[1].model,
+	       msg.sensor.sensors[1].geolocation.latitude);
+	printf("Network: interface1_id:%s\n",
+	       msg.network.interfaces[0].interface_id);
 
 	pb_release(GeisaPlatformDiscovery_Rsp_fields, &msg);
 }
@@ -109,6 +120,7 @@ void handle_manifest(const void *payload, size_t len)
 		printf("Failed to decode ApplicationManifestRsps\n");
 		return;
 	}
+	printf("Status: %s\n", msg.status.message);
 	printf("manifest:%s\n", msg.manifest);
 
 	pb_release(GeisaApplicationDeploymentManifest_Rsp_fields, &msg);

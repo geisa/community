@@ -53,12 +53,69 @@ static GeisaPlatformDiscovery_Operator operator_platform_info = {
 	.operator_identifier = "SCE001",
 };
 
-static GeisaPlatformDiscovery_Metrology metrology_platform_info =
-	GeisaPlatformDiscovery_Metrology_init_default;
-static GeisaPlatformDiscovery_Sensor sensor_platform_info =
-	GeisaPlatformDiscovery_Sensor_init_default;
-static GeisaPlatformDiscovery_Network network_platform_info =
-	GeisaPlatformDiscovery_Network_init_default;
+static GeisaPlatformDiscovery_Metrology metrology_platform_info = {
+	.meter_rating_class = "A",
+	.meter_form = "1S",
+	.phase_count = 3,
+	.neutral_connected = true,
+	.nominal_phase_angle_deg = 120,
+	.nominal_frequency_hz = 60,
+	.nominal_phase_to_phase_voltage_v = 208,
+	.nominal_phase_to_neutral_voltage_v = 120,
+};
+
+static GeisaSensorDescriptor sensors_platform_info_descriptors[] = {
+	{
+		.sensor_type = GeisaSensorType_GEISA_SENSOR_TYPE_TEMPERATURE,
+		.name = "Ambient Temperature",
+		.has_name = true,
+		.unit = "Celsius",
+		.supports_read = true,
+		.supports_publish = false,
+	},
+	{
+		.sensor_type = GeisaSensorType_GEISA_SENSOR_TYPE_HUMIDITY,
+		.manufacturer = "SCE",
+		.has_manufacturer = true,
+		.model = "HUMID-1000",
+		.has_model = true,
+		.geolocation =
+			{
+				.latitude = 34.0522,
+				.longitude = -118.2437,
+			},
+		.has_geolocation = true,
+		.unit = "Percent",
+		.supports_read = true,
+		.supports_publish = false,
+	},
+};
+
+static GeisaPlatformDiscovery_Sensor sensor_platform_info = {
+	.sensors_count = 2,
+	.sensors = sensors_platform_info_descriptors,
+};
+
+static GeisaPlatformDiscovery_Network_Instance network_interfaces_platform_info[] = {
+	{
+		.interface_id = "eth0",
+		.network_class =
+			GeisaPlatformDiscovery_NetworkClass_NETWORK_CLASS_INTERNET,
+		.owner =
+			GeisaPlatformDiscovery_NetworkOwner_NETWORK_OWNER_OPERATOR,
+		.technology =
+			GeisaPlatformDiscovery_NetworkTechnology_NETWORK_TECHNOLOGY_ETHERNET,
+		.supports_ipv4 = true,
+		.supports_ipv6 = false,
+		.has_name = true,
+		.name = "Ethernet 0",
+	},
+};
+
+static GeisaPlatformDiscovery_Network network_platform_info = {
+	.interfaces_count = 1,
+	.interfaces = network_interfaces_platform_info,
+};
 
 static const GeisaWaveform_Datatype waveform_data_type_platform_info =
 	GeisaWaveform_Datatype_DATA_INT32;
@@ -91,17 +148,30 @@ static GeisaPlatformDiscovery_Waveform waveform_platform_info = {
 	.streams = &waveform_platform_instances,
 };
 
+static GeisaStatus geisa_discovery_success_status = {
+	.code = GeisaStatusCode_GEISA_STATUS_SUCCESS,
+	.message = "Platform discovery successful",
+};
+
+static GeisaStatus geisa_discovery_payload_status = {
+	.code = GeisaStatusCode_GEISA_STATUS_CODE_REQUEST_MALFORMED_PAYLOAD,
+	.message = "Malformed payload in platform discovery request",
+};
+
+static GeisaStatus geisa_manifest_success_status = {
+	.code = GeisaStatusCode_GEISA_STATUS_SUCCESS,
+	.message = "App manifest retrieval successful",
+};
+
+static GeisaStatus geisa_manifest_payload_status = {
+	.code = GeisaStatusCode_GEISA_STATUS_CODE_REQUEST_MALFORMED_PAYLOAD,
+	.message = "Malformed payload in app manifest request",
+};
+
 char *deployment_manifest =
 	"{"
 	"\"geisa-application-manifest\":{"
 	"\"manifest\":{"
-	"\"app-id\":\"com.example.sce.app\","
-	"\"author\":\"SCE\","
-	"\"name\":\"API-mockup example\","
-	"\"description\":\"API-mockup example\","
-	"\"app-version\":\"1.2.3-beta\","
-	"\"manifest-version\":\"1.0.0\","
-
 	"\"api-access\":{"
 	"\"actuator\":true,"
 	"\"messaging\":true,"
@@ -109,6 +179,13 @@ char *deployment_manifest =
 	"\"sensor\":true,"
 	"\"waveform\":false"
 	"},"
+
+	"\"app-id\":\"com.example.sce.app\","
+	"\"author\":\"SCE\","
+	"\"name\":\"API-mockup example\","
+	"\"description\":\"API-mockup example\","
+	"\"app-version\":\"1.2.3-beta\","
+	"\"manifest-version\":\"1.0.0\","
 
 	"\"artifacts\":[{"
 	"\"image-name\":\"api_mockup_v1.2.3.img\","
@@ -138,7 +215,20 @@ char *deployment_manifest =
 	"\"communication\":{"
 	"\"FAN\":true,"
 	"\"HAN\":false,"
-	"\"messaging\":{\"daily-messages\":5000}"
+	"\"messaging\":{\"daily-messages\":5000},"
+	"\"operator\":{"
+	"\"daily-volume\": 5000000,"
+	"\"inbound\": [\"TCP:10.1.5.22:8080\"],"
+	"\"outbound\": [\"TCP:10.1.5.1:443\"]"
+	"},"
+	"\"internet\": {"
+	"\"daily-volume\": 1000000,"
+	"\"outbound\": [\"TCP:8.8.8.8:53\"]"
+	"},"
+	"\"local\": {"
+	"\"daily-volume\": 500000,"
+	"\"inbound\": [\"TCP:127.0.0.1:6500\"]"
+	"}"
 	"},"
 
 	"\"external-dependencies\":["
@@ -174,6 +264,8 @@ char *deployment_manifest =
 static void
 api_platform_discovery_build_response(GeisaPlatformDiscovery_Rsp *response)
 {
+	response->status = geisa_discovery_success_status;
+	response->has_status = true;
 	response->geisa = geisa_platform_info;
 	response->has_geisa = true;
 	response->device = device_platform_info;
@@ -225,11 +317,13 @@ static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 	if (!status) {
 		fprintf(stderr, "[Discovery] Error decoding platform "
 				"discovery request\n");
-		return;
+		response.status = geisa_discovery_payload_status;
+		response.has_status = true;
+	} else {
+		api_platform_discovery_build_response(&response);
 	}
 	pb_release(GeisaPlatformDiscovery_Req_fields, &request);
 
-	api_platform_discovery_build_response(&response);
 	status = pb_get_encoded_size(
 		&encoded_size, GeisaPlatformDiscovery_Rsp_fields, &response);
 	if (!status) {
@@ -300,7 +394,12 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 	if (!status) {
 		fprintf(stderr,
 			"[Manifest] Error decoding app manifest request\n");
-		return;
+		response.status = geisa_manifest_payload_status;
+		response.has_status = true;
+	} else {
+		response.status = geisa_manifest_success_status;
+		response.has_status = true;
+		response.manifest = deployment_manifest;
 	}
 	pb_release(GeisaApplicationDeploymentManifest_Req_fields, &request);
 
@@ -312,7 +411,6 @@ static void api_manifest_req_handler(struct mosquitto *mosq, const char *topic,
 		return;
 	}
 
-	response.manifest = deployment_manifest;
 	status = pb_get_encoded_size(
 		&encoded_size, GeisaApplicationDeploymentManifest_Rsp_fields,
 		&response);

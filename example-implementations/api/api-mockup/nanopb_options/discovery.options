@@ -2,3 +2,5 @@
 GeisaPlatformDiscovery_Device.sub_module type:FT_POINTER
 GeisaPlatformDiscovery_Waveform_Instance.description max_size:64
 GeisaPlatformDiscovery_Waveform.streams type:FT_POINTER
+GeisaPlatformDiscovery_Sensor.sensors type:FT_POINTER
+GeisaPlatformDiscovery_Network.interfaces type:FT_POINTER
