@@ -5,6 +5,7 @@
  */
 #include "gapi_discovery.h"
 #include "gapi_instantaneous.h"
+#include "gapi_manifest.h"
 #include "gapi_mosquitto.h"
 #include "gapi_waveform.h"
 
@@ -31,6 +32,7 @@ int main()
 	}
 
 	api_discovery_init(mosq);
+	api_manifest_init(mosq);
 	ret = api_instantaneous_init(&instantaneous_thread, mosq);
 	if (ret != EXIT_SUCCESS) {
 		goto deinit;

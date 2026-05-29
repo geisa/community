@@ -13,7 +13,6 @@
 #include "pb_decode.h"
 #include "pb_encode.h"
 #include "schemas/discovery.pb.h"
-#include "schemas/manifest.pb.h"
 #include <libgen.h>
 
 /**
