@@ -58,5 +58,6 @@ int main()
 
 deinit:
 	api_communication_deinit(mosq);
+	api_waveform_deinit();
 	return ret;
 }

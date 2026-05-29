@@ -13,7 +13,11 @@
 #include "pb_decode.h"
 #include "pb_encode.h"
 #include "schemas/waveform.pb.h"
+#include <errno.h>
 #include <libgen.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
 /**
  * @brief Initialize API waveform data messages
@@ -21,5 +25,10 @@
  * @param mosq Pointer to the mosquitto instance
  */
 void api_waveform_init(struct mosquitto *mosq);
+
+/**
+ * @brief Deinitialize API waveform data messages
+ */
+void api_waveform_deinit();
 
 #endif // GAPI_WAVEFORM_H

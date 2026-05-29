@@ -138,7 +138,8 @@ void handle_waveform(const void *payload, size_t len)
 		printf("Failed to decode WaveformRsp\n");
 		return;
 	}
-	printf("waveform status: %d\n", msg.waveform_status);
+	printf("waveform status: %d, subscribed:%d, expected_frame_period_ms: %d\n", msg.waveform_status,
+	       msg.subscribed, msg.expected_frame_period_ms);
 
 	pb_release(GeisaWaveform_Rsp_fields, &msg);
 }
