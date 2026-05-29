@@ -102,8 +102,6 @@ static void geisa_get_instantaneous_data(GeisaInstantaneousQuantities *response)
 	other.Neutral_Imputed_microAmps = 5.5F;
 	other.Load_Side_microVolts = 123.0F;
 
-	// NOLINTEND(readability-magic-numbers,cppcoreguidelines-avoid-magic-numbers)
-
 	response->timestamp = timestamp;
 	response->phase_A = phase_a;
 	response->has_phase_A = true;
@@ -115,6 +113,10 @@ static void geisa_get_instantaneous_data(GeisaInstantaneousQuantities *response)
 	response->has_phase_N = true;
 	response->other = other;
 	response->has_other = true;
+	response->frequency_hz = 60.0F;
+	response->temperature_celsius = 25.0F;
+
+	// NOLINTEND(readability-magic-numbers,cppcoreguidelines-avoid-magic-numbers)
 }
 
 static void *gapi_instantaneous_thread(void *arg)
