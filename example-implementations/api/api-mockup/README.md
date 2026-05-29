@@ -44,6 +44,14 @@ To build the GEISA API Mockup application using cqfd, run the following command 
 cqfd run
 ```
 
+## Build the application for arm64
+To be able to build the application for arm64 architecture, so that you can test directly on an arm64 device, you can use the following commands:
+
+```bash
+cqfd -b build_arm64 init
+cqfd -b build_arm64
+```
+
 ## Launch the application
 
 To launch the GEISA API Mockup application, simply run the following command:
