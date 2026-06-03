@@ -66,6 +66,7 @@ static GeisaPlatformDiscovery_Metrology metrology_platform_info = {
 
 static GeisaSensorDescriptor sensors_platform_info_descriptors[] = {
 	{
+		.sensor_id = "ambient-temp-1",
 		.sensor_type = GeisaSensorType_GEISA_SENSOR_TYPE_TEMPERATURE,
 		.name = "Ambient Temperature",
 		.has_name = true,
@@ -74,6 +75,7 @@ static GeisaSensorDescriptor sensors_platform_info_descriptors[] = {
 		.supports_publish = false,
 	},
 	{
+		.sensor_id = "ambient-humidity-1",
 		.sensor_type = GeisaSensorType_GEISA_SENSOR_TYPE_HUMIDITY,
 		.manufacturer = "SCE",
 		.has_manufacturer = true,
