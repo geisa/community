@@ -122,7 +122,8 @@ static void geisa_get_instantaneous_data(GeisaInstantaneousQuantities *response)
 static void *gapi_instantaneous_thread(void *arg)
 {
 	struct mosquitto *mosq = (struct mosquitto *)arg;
-	GeisaInstantaneousQuantities response;
+	GeisaInstantaneousQuantities response =
+		GeisaInstantaneousQuantities_init_default;
 	size_t encoded_size = 0;
 	uint8_t *message = NULL;
 	pb_ostream_t ostream;
