@@ -41,7 +41,7 @@ lint:
 
 clean:
 	rm -rf $(BUILDIR)
-	rm nanopb/*.o
+	rm -f nanopb/*.o
 
 $(BUILDIR)/test_app: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ test/test_app.c $(PB_C:.c=.o) $(NANOPB_CORE:.c=.o) $(LDLIBS)
