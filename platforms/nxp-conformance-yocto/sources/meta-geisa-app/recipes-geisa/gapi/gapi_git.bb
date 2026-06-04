@@ -14,7 +14,9 @@ SRCREV = "${AUTOREV}"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "pkgconfig-native protobuf-c protobuf-c-native mosquitto"
+DEPENDS = "protobuf-native nanopb-generator-native nanopb-runtime mosquitto"
+
+RDEPENDS:${PN} = "nanopb-runtime"
 
 TARGET_CC_ARCH += "${LDFLAGS}"
 
