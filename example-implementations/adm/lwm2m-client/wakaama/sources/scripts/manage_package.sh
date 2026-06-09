@@ -138,7 +138,7 @@ EOF
         fi
         if ! mountpoint -q "${LXC_ROOTFS_DIR}"; then
             mount -t overlay overlay \
-                -olowerdir="${LXC_BASE_DIR}:${LXC_APP_DIR}:${LXC_CONFIG_DIR}",upperdir="$LXC_PERSISTENT_DIR",workdir="$LXC_WORK_DIR" \
+                -olowerdir="${LXC_CONFIG_DIR}:${LXC_APP_DIR}:${LXC_BASE_DIR}",upperdir="$LXC_PERSISTENT_DIR",workdir="$LXC_WORK_DIR" \
                 "$LXC_ROOTFS_DIR"
         fi
 
