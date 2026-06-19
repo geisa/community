@@ -20,6 +20,7 @@ LXC_APP_DIR="${LXC_ROOT_DIR}/app"
 LXC_PERSISTENT_DIR="${LXC_ROOT_DIR}/persistent"
 LXC_WORK_DIR="${LXC_ROOT_DIR}/work"
 LXC_ROOTFS_DIR="${LXC_ROOT_DIR}/rootfs"
+GEISA_WAVEFORM_SOCKET_DIR="run/geisa/waveform/${PACKAGE_NAME}"
 
 register_app_to_mqtt_broker() {
     local appid="$1"
@@ -157,12 +158,15 @@ EOF
         mkdir -p "${LXC_ROOTFS_DIR}/home/geisa"
         mount -o loop "/platform/persistent/${PACKAGE_NAME}-${PACKAGE_VERSION}.img" "${LXC_ROOTFS_DIR}/home/geisa"
 
+        mkdir -p "/${GEISA_WAVEFORM_SOCKET_DIR}"
+
         cat > "${LXC_ROOT_DIR}/config" <<EOF
 lxc.rootfs.path = ${LXC_ROOTFS_DIR}
 lxc.uts.name = ${PACKAGE_NAME}
 lxc.execute.cmd = /usr/bin/${PACKAGE_NAME}
 lxc.autodev = 1
 lxc.mount.auto = proc sys
+lxc.mount.entry = /${GEISA_WAVEFORM_SOCKET_DIR} ${GEISA_WAVEFORM_SOCKET_DIR} none bind,create=dir 0 0
 EOF
         echo "Installed $PACKAGE_NAME version $PACKAGE_VERSION"
         ;;
@@ -206,6 +210,7 @@ EOF
         rm -f "$PACKAGE_IMAGE"
         rm -f "$CONFIG_IMAGE"
         rm -f "$PERSISTENT_IMG"
+        rm -rf "/$GEISA_WAVEFORM_SOCKET_DIR"
 
         echo "Uninstalled $PACKAGE_NAME version $PACKAGE_VERSION"
         ;;
