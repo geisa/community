@@ -590,7 +590,6 @@ void api_waveform_init(struct mosquitto *mosq)
 
 void api_waveform_deinit()
 {
-	int socket_cleanup_count = w_socket_count;
 	char *socket_path = NULL;
 
 	fprintf(stdout, "[Waveform] Cleaning up waveform sockets\n");
@@ -601,7 +600,7 @@ void api_waveform_deinit()
 		waveform_thread_started = false;
 	}
 
-	for (int i = 0; i < socket_cleanup_count; i++) {
+	for (int i = w_socket_count - 1; i >= 0; i--) {
 		if (asprintf(&socket_path, "/run/geisa/waveform/%s/%s.sock",
 			     w_sockets[i].app_id,
 			     w_sockets[i].stream_id) == -1) {
