@@ -122,32 +122,58 @@ static GeisaPlatformDiscovery_Network network_platform_info = {
 static const GeisaWaveform_Datatype waveform_data_type_platform_info =
 	GeisaWaveform_Datatype_DATA_INT32;
 
-static GeisaPlatformDiscovery_Waveform_Instance waveform_platform_instances = {
-	.stream_id = "api-mockup-waveform",
-	.name = "API Mockup Waveform",
-	.description = "Example waveform instance for API mockup application",
-	.datatype = waveform_data_type_platform_info,
-	.voltage_multiplier = 0.1,
-	.current_multiplier = 0.01,
-	.num_voltage_ch = 1,
-	.num_current_ch = 1,
-	.num_other_ch = 0,
-	.total_channel_count = 2,
-	.cycle_aligned = true,
-	.zero_crossing_aligned = true,
-	.sample_rate = 7680,
-	.samples_per_cycle = 1280,
-	.nominal_frequency_hz = 60,
-	.expected_frame_period_ms = 1000,
-	.voltage_filter_lowpass = 0,
-	.voltage_filter_highpass = 0,
-	.current_filter_lowpass = 0,
-	.current_filter_highpass = 0,
+static GeisaPlatformDiscovery_Waveform_Instance waveform_platform_instances[] = {
+	{
+		.stream_id = "api-mockup-waveform",
+		.name = "API Mockup Waveform",
+		.description =
+			"Example waveform instance for API mockup application",
+		.datatype = waveform_data_type_platform_info,
+		.voltage_multiplier = 0.1,
+		.current_multiplier = 0.01,
+		.num_voltage_ch = 1,
+		.num_current_ch = 1,
+		.num_other_ch = 0,
+		.total_channel_count = 2,
+		.cycle_aligned = true,
+		.zero_crossing_aligned = true,
+		.sample_rate = 7680,
+		.samples_per_cycle = 1280,
+		.nominal_frequency_hz = 60,
+		.expected_frame_period_ms = 1000,
+		.voltage_filter_lowpass = 0,
+		.voltage_filter_highpass = 0,
+		.current_filter_lowpass = 0,
+		.current_filter_highpass = 0,
+	},
+	{
+		.stream_id = "api-mockup-waveform-reduced",
+		.name = "API Mockup Waveform Reduced",
+		.description =
+			"Example waveform instance with reduced sample rate",
+		.datatype = waveform_data_type_platform_info,
+		.voltage_multiplier = 0.1,
+		.current_multiplier = 0.01,
+		.num_voltage_ch = 1,
+		.num_current_ch = 1,
+		.num_other_ch = 0,
+		.total_channel_count = 2,
+		.cycle_aligned = true,
+		.zero_crossing_aligned = true,
+		.sample_rate = 1920,
+		.samples_per_cycle = 320,
+		.nominal_frequency_hz = 60,
+		.expected_frame_period_ms = 1000,
+		.voltage_filter_lowpass = 0,
+		.voltage_filter_highpass = 0,
+		.current_filter_lowpass = 0,
+		.current_filter_highpass = 0,
+	},
 };
 
 static GeisaPlatformDiscovery_Waveform waveform_platform_info = {
-	.streams_count = 1,
-	.streams = &waveform_platform_instances,
+	.streams_count = 2,
+	.streams = waveform_platform_instances,
 };
 
 static GeisaStatus geisa_discovery_success_status = {
