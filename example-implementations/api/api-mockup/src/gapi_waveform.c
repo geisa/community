@@ -8,6 +8,8 @@
 #include "gapi_discovery.h"
 
 enum { MAX_WAVEFORM_SOCKETS = 16 };
+enum { MAX_CONNECTION_SOCKFD = 10 };
+enum { EPOLL_TIMEOUT_MS = 1000 };
 
 typedef struct {
 	char *app_id;
@@ -17,6 +19,81 @@ typedef struct {
 
 static SocketRecord w_sockets[MAX_WAVEFORM_SOCKETS];
 static int w_socket_count = 0;
+static int waveform_epoll_fd = -1;
+static pthread_t waveform_thread;
+static bool waveform_thread_started = false;
+static volatile bool waveform_running = false;
+static pthread_mutex_t waveform_socket_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static SocketRecord *find_socket_by_fd(int file_descriptor)
+{
+	for (int i = 0; i < w_socket_count; i++) {
+		if (w_sockets[i].fd == file_descriptor) {
+			return &w_sockets[i];
+		}
+	}
+	return NULL;
+}
+
+static void accept_pending_connections(SocketRecord *record)
+{
+	for (;;) {
+		int conn_fd = accept4(record->fd, NULL, NULL,
+				      SOCK_NONBLOCK | SOCK_CLOEXEC);
+
+		if (conn_fd >= 0) {
+			fprintf(stdout,
+				"[Waveform] Connection accepted for app %s stream %s\n",
+				record->app_id, record->stream_id);
+			close(conn_fd);
+			continue;
+		}
+
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			break;
+		}
+
+		fprintf(stderr, "[Waveform] Error accepting connection: %s\n",
+			strerror(errno));
+		break;
+	}
+}
+
+static void *waveform_event_loop(void *arg)
+{
+	(void)arg;
+
+	while (waveform_running) {
+		struct epoll_event events[MAX_WAVEFORM_SOCKETS];
+		int nfds = epoll_wait(waveform_epoll_fd, events,
+				      MAX_WAVEFORM_SOCKETS, EPOLL_TIMEOUT_MS);
+
+		if (nfds < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			fprintf(stderr, "[Waveform] epoll_wait failed: %s\n",
+				strerror(errno));
+			break;
+		}
+
+		for (int i = 0; i < nfds; i++) {
+			if (!(events[i].events & EPOLLIN)) {
+				continue;
+			}
+
+			pthread_mutex_lock(&waveform_socket_lock);
+			SocketRecord *record =
+				find_socket_by_fd(events[i].data.fd);
+			if (record != NULL) {
+				accept_pending_connections(record);
+			}
+			pthread_mutex_unlock(&waveform_socket_lock);
+		}
+	}
+
+	return NULL;
+}
 
 static int add_socket(const char *app_id, const char *stream_id,
 		      int file_descriptor)
@@ -93,12 +170,25 @@ static int handle_socket_creation(char *app_id, char *stream_id,
 		return 1;
 	}
 
-	file_descriptor = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+	if (waveform_epoll_fd == -1) {
+		fprintf(stderr, "[Waveform] epoll not initialized\n");
+		return 2;
+	}
+
+	file_descriptor = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
 	if (file_descriptor == -1) {
 		fprintf(stderr,
 			"[Waveform] Error creating socket for app %s and stream"
 			"%s\n",
 			app_id, stream_id);
+		return 2;
+	}
+
+	if (fcntl(file_descriptor, F_SETFL, O_NONBLOCK) == -1) {
+		fprintf(stderr,
+			"[Waveform] Error configuring socket for app %s and stream %s\n",
+			app_id, stream_id);
+		close(file_descriptor);
 		return 2;
 	}
 
@@ -131,7 +221,18 @@ static int handle_socket_creation(char *app_id, char *stream_id,
 		return 2;
 	}
 
+	if (listen(file_descriptor, MAX_CONNECTION_SOCKFD) < 0) {
+		fprintf(stderr,
+			"[Waveform] Error listening on socket for app %s and stream "
+			"%s\n",
+			app_id, stream_id);
+		close(file_descriptor);
+		return 2;
+	}
+
+	pthread_mutex_lock(&waveform_socket_lock);
 	if (add_socket(app_id, stream_id, file_descriptor) != 0) {
+		pthread_mutex_unlock(&waveform_socket_lock);
 		fprintf(stderr,
 			"[Waveform] Error tracking socket for app %s stream "
 			"%s\n",
@@ -140,6 +241,20 @@ static int handle_socket_creation(char *app_id, char *stream_id,
 		unlink(socket_path);
 		return 2;
 	}
+
+	struct epoll_event event = {0};
+	event.events = EPOLLIN;
+	event.data.fd = file_descriptor;
+	if (epoll_ctl(waveform_epoll_fd, EPOLL_CTL_ADD, file_descriptor,
+		      &event) == -1) {
+		remove_socket(app_id, stream_id);
+		pthread_mutex_unlock(&waveform_socket_lock);
+		fprintf(stderr,
+			"[Waveform] Error registering waveform socket with epoll\n");
+		unlink(socket_path);
+		return 2;
+	}
+	pthread_mutex_unlock(&waveform_socket_lock);
 
 	fprintf(stdout,
 		"[Waveform] %s successfully subscribed on stream "
@@ -153,8 +268,18 @@ static int handle_socket_removal(char *app_id, char *stream_id,
 				 char *socket_path)
 {
 	int ret = 0;
+	int idx = -1;
+	int file_descriptor = -1;
 
+	pthread_mutex_lock(&waveform_socket_lock);
+	idx = find_socket(app_id, stream_id);
+	if (idx != -1) {
+		file_descriptor = w_sockets[idx].fd;
+		epoll_ctl(waveform_epoll_fd, EPOLL_CTL_DEL, file_descriptor,
+			  NULL);
+	}
 	ret = remove_socket(app_id, stream_id);
+	pthread_mutex_unlock(&waveform_socket_lock);
 	if (ret == -1) {
 		fprintf(stderr,
 			"[Waveform] App %s is not subscribed to stream "
@@ -441,6 +566,26 @@ void api_waveform_init(struct mosquitto *mosq)
 	if (stat("/run/geisa/waveform/", &statbuf) == -1) {
 		mkdir("/run/geisa/waveform", permissions);
 	}
+
+	waveform_epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+	if (waveform_epoll_fd == -1) {
+		fprintf(stderr,
+			"[Waveform] Failed to create epoll instance: %s\n",
+			strerror(errno));
+		return;
+	}
+	waveform_running = true;
+
+	if (pthread_create(&waveform_thread, NULL, waveform_event_loop, NULL) ==
+	    0) {
+		waveform_thread_started = true;
+	} else {
+		fprintf(stderr,
+			"[Waveform] Failed to create waveform event thread\n");
+		waveform_running = false;
+		close(waveform_epoll_fd);
+		waveform_epoll_fd = -1;
+	}
 }
 
 void api_waveform_deinit()
@@ -449,6 +594,12 @@ void api_waveform_deinit()
 	char *socket_path = NULL;
 
 	fprintf(stdout, "[Waveform] Cleaning up waveform sockets\n");
+
+	if (waveform_thread_started) {
+		waveform_running = false;
+		pthread_join(waveform_thread, NULL);
+		waveform_thread_started = false;
+	}
 
 	for (int i = 0; i < socket_cleanup_count; i++) {
 		if (asprintf(&socket_path, "/run/geisa/waveform/%s/%s.sock",
@@ -462,5 +613,10 @@ void api_waveform_deinit()
 		remove_socket(w_sockets[i].app_id, w_sockets[i].stream_id);
 		unlink(socket_path);
 		free(socket_path);
+	}
+
+	if (waveform_epoll_fd != -1) {
+		close(waveform_epoll_fd);
+		waveform_epoll_fd = -1;
 	}
 }

@@ -14,7 +14,11 @@
 #include "pb_encode.h"
 #include "schemas/waveform.pb.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
