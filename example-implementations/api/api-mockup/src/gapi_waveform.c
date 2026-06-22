@@ -297,8 +297,6 @@ static void waveform_handle_stream_request(
 			GeisaWaveform_Status_WAVEFORM_ERR_NOT_SUPPORTED;
 		break;
 	}
-
-	free(socket_path);
 }
 
 static GeisaStatus geisa_waveform_success_status = {
@@ -388,6 +386,7 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 	if (asprintf(&rsp_topic, "geisa/api/waveform/rsp/%s", app_id) == -1) {
 		fprintf(stderr, "[Waveform] Error allocating memory for "
 				"response topic\n");
+		free(response.socket_path);
 		return;
 	}
 
@@ -396,6 +395,7 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 	if (!status) {
 		fprintf(stderr, "[Waveform] Error calculating size of response "
 				"message\n");
+		free(response.socket_path);
 		free(rsp_topic);
 		return;
 	}
@@ -405,6 +405,7 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 		fprintf(stderr,
 			"[Waveform] Error allocating memory for response "
 			"message\n");
+		free(response.socket_path);
 		free(rsp_topic);
 		return;
 	}
@@ -413,12 +414,14 @@ static void api_waveform_req_handler(struct mosquitto *mosq, const char *topic,
 	status = pb_encode(&ostream, GeisaWaveform_Rsp_fields, &response);
 	if (!status) {
 		fprintf(stderr, "[Waveform] Error encoding response message\n");
+		free(response.socket_path);
 		free(message);
 		free(rsp_topic);
 		return;
 	}
 
 	api_publish(mosq, rsp_topic, encoded_size, message, 1);
+	free(response.socket_path);
 	free(message);
 }
 
