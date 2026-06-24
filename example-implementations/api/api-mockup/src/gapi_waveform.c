@@ -445,12 +445,16 @@ static void api_platform_waveform_build_response(
 	if (waveform_platform_info.streams_count == 0) {
 		response->waveform_status =
 			GeisaWaveform_Status_WAVEFORM_ERR_NO_RESOURCES;
+		fprintf(stderr,
+			"[Waveform] No waveform streams available in platform waveform info\n");
 		return;
 	}
 
 	if (stream_id == NULL) {
 		response->waveform_status =
 			GeisaWaveform_Status_WAVEFORM_ERR_INVALID_STREAM_ID;
+		fprintf(stderr,
+			"[Waveform] Stream ID is NULL in waveform request\n");
 		return;
 	}
 
@@ -468,6 +472,9 @@ static void api_platform_waveform_build_response(
 	    GeisaWaveform_Status_WAVEFORM_STATUS_UNSPECIFIED) {
 		response->waveform_status =
 			GeisaWaveform_Status_WAVEFORM_ERR_UNAVAILABLE;
+		fprintf(stderr,
+			"[Waveform] Stream ID %s not found in platform waveform info\n",
+			stream_id);
 	}
 }
 
