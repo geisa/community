@@ -16,6 +16,90 @@ static GeisaStatus geisa_actuator_payload_status = {
 	.message = "Malformed payload in actuator request",
 };
 
+static GeisaStatus geisa_actuator_invalid_status = {
+	.code = GeisaStatusCode_GEISA_STATUS_CODE_REQUEST_INVALID_ARGUMENT,
+	.message = "Invalid actuator target",
+};
+
+static GeisaActuatorStatus actuator_statuses[_GeisaTypeActuator_ARRAYSIZE] = {
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_UNSPECIFIED] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_UNSPECIFIED,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_SERVICE_SWITCH] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_SERVICE_SWITCH,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_DER_SWITCH] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_DER_SWITCH,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_0] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_0,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_1] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_1,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_2] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_2,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+	[GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_3] =
+		{
+			.actuator =
+				GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_3,
+			.on = _GeisaTypeOnOff_MIN,
+		},
+};
+
+static bool actuator_is_valid(GeisaTypeActuator actuator)
+{
+	switch (actuator) {
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_UNSPECIFIED:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_SERVICE_SWITCH:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_DER_SWITCH:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_0:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_1:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_2:
+	case GeisaTypeActuator_GEISA_TYPE_ACTUATOR_LC_RELAY_3:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static void actuator_status_apply(const GeisaActuatorStatus *status)
+{
+	if (status == NULL || !actuator_is_valid(status->actuator)) {
+		return;
+	}
+
+	actuator_statuses[status->actuator] = *status;
+}
+
+static int actuator_status_find(GeisaTypeActuator actuator)
+{
+	if (!actuator_is_valid(actuator)) {
+		return -1;
+	}
+
+	return (int)actuator;
+}
+
 static void api_actuator_set_req_handler(struct mosquitto *mosq,
 					 const char *topic,
 					 const int payloadlen,
@@ -45,8 +129,9 @@ static void api_actuator_set_req_handler(struct mosquitto *mosq,
 		response.status = geisa_actuator_payload_status;
 		response.has_status = true;
 	} else {
-		fprintf(stdout, "[Actuator] Received actuator set request\n");
-		fflush(stdout);
+		for (pb_size_t i = 0; i < request.new_settings_count; i++) {
+			actuator_status_apply(&request.new_settings[i]);
+		}
 		response.status = geisa_actuator_success_status;
 		response.has_status = true;
 	}
@@ -105,6 +190,7 @@ static void api_actuator_get_req_handler(struct mosquitto *mosq,
 	pb_ostream_t ostream;
 	bool status = false;
 	size_t encoded_size = 0;
+	int actuator_idx = -1;
 
 	app_id = basename((char *)topic);
 
@@ -120,10 +206,17 @@ static void api_actuator_get_req_handler(struct mosquitto *mosq,
 		response.status = geisa_actuator_payload_status;
 		response.has_status = true;
 	} else {
-		fprintf(stdout, "[Actuator] Received actuator get request\n");
-		fflush(stdout);
-		response.status = geisa_actuator_success_status;
-		response.has_status = true;
+		actuator_idx = actuator_status_find(request.actuator);
+		if (actuator_idx < 0) {
+			response.status = geisa_actuator_invalid_status;
+			response.has_status = true;
+		} else {
+			response.status = geisa_actuator_success_status;
+			response.has_status = true;
+			response.actuator_status =
+				actuator_statuses[actuator_idx];
+			response.has_actuator_status = true;
+		}
 	}
 	pb_release(GeisaActuatorGet_Req_fields, &request);
 
