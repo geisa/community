@@ -1,6 +1,7 @@
 #include "pb.h"
 #include "pb_decode.h"
 #include "pb_encode.h"
+#include "schemas/actuator.pb.h"
 #include "schemas/discovery.pb.h"
 #include "schemas/manifest.pb.h"
 #include "schemas/metered_quantities.pb.h"
@@ -27,6 +28,10 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 				    "geisa/api/app/manifest/rsp/testapp", 0);
 		mosquitto_subscribe(mosq, NULL,
 				    "geisa/api/waveform/rsp/testapp", 0);
+		mosquitto_subscribe(mosq, NULL,
+				    "geisa/api/actuator/get/rsp/testapp", 0);
+		mosquitto_subscribe(mosq, NULL,
+				    "geisa/api/actuator/set/rsp/testapp", 0);
 	} else {
 		printf("Connection failed: %d\n", rc);
 	}
@@ -144,6 +149,44 @@ void handle_waveform(const void *payload, size_t len)
 	pb_release(GeisaWaveform_Rsp_fields, &msg);
 }
 
+void handle_actuator_get_response(const void *payload, size_t len)
+{
+	bool status;
+	pb_istream_t istream;
+	GeisaActuatorGet_Rsp msg = GeisaActuatorGet_Rsp_init_default;
+
+	istream = pb_istream_from_buffer(payload, len);
+	status = pb_decode(&istream, GeisaActuatorGet_Rsp_fields, &msg);
+	if (!status) {
+		printf("Failed to decode ActuatorGetRsp\n");
+		return;
+	}
+	printf("actuator get response status: %d, message: %s\n",
+	       msg.status.code,
+	       msg.status.message);
+
+	pb_release(GeisaActuatorGet_Rsp_fields, &msg);
+}
+
+void handle_actuator_set_response(const void *payload, size_t len)
+{
+	bool status;
+	pb_istream_t istream;
+	GeisaActuatorSet_Rsp msg = GeisaActuatorSet_Rsp_init_default;
+
+	istream = pb_istream_from_buffer(payload, len);
+	status = pb_decode(&istream, GeisaActuatorSet_Rsp_fields, &msg);
+	if (!status) {
+		printf("Failed to decode ActuatorSetRsp\n");
+		return;
+	}
+	printf("actuator set response status: %d, message: %s\n",
+	       msg.status.code,
+	       msg.status.message);
+
+	pb_release(GeisaActuatorSet_Rsp_fields, &msg);
+}
+
 void on_message(struct mosquitto *mosq, void *obj,
 		const struct mosquitto_message *msg)
 {
@@ -160,6 +203,10 @@ void on_message(struct mosquitto *mosq, void *obj,
 		handle_manifest(msg->payload, msg->payloadlen);
 	} else if (strcmp(msg->topic, "geisa/api/waveform/rsp/testapp") == 0) {
 		handle_waveform(msg->payload, msg->payloadlen);
+	} else if (strcmp(msg->topic, "geisa/api/actuator/get/rsp/testapp") == 0) {
+		handle_actuator_get_response(msg->payload, msg->payloadlen);
+	} else if (strcmp(msg->topic, "geisa/api/actuator/set/rsp/testapp") == 0) {
+		handle_actuator_set_response(msg->payload, msg->payloadlen);
 	} else {
 		printf("Unknown topic\n");
 	}
