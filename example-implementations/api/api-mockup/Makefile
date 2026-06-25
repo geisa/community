@@ -13,7 +13,7 @@ OBJ := $(patsubst src/%.c,$(BUILDIR)/%.o,$(SRC)) $(PB_C:.c=.o) $(NANOPB_CORE:.c=
 CFLAGS := -O2 -Wall -std=c11 -Wextra -pedantic -Werror -Iinclude -I$(BUILDIR) -I/usr/include/nanopb -DPB_ENABLE_MALLOC
 LDLIBS := -lmosquitto
 
-all: $(BUILDIR)/gapi $(BUILDIR)/test_app
+all: $(BUILDIR)/gapi $(BUILDIR)/test_app $(BUILDIR)/test_app_actuator
 .PHONY: schemas build_dir clean
 
 build_dir:
@@ -45,3 +45,6 @@ clean:
 
 $(BUILDIR)/test_app: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ test/test_app.c $(PB_C:.c=.o) $(NANOPB_CORE:.c=.o) $(LDLIBS)
+
+$(BUILDIR)/test_app_actuator: $(OBJ)
+	$(CC) $(CFLAGS) -o $@ test/test_app_actuator.c $(PB_C:.c=.o) $(NANOPB_CORE:.c=.o) $(LDLIBS)

@@ -164,6 +164,16 @@ void handle_actuator_get_response(const void *payload, size_t len)
 	printf("actuator get response status: %d, message: %s\n",
 	       msg.status.code,
 	       msg.status.message);
+	if (msg.has_actuator_status) {
+		printf("actuator get response actuator: %d, on: %d, position_present: %d",
+		       msg.actuator_status.actuator,
+		       msg.actuator_status.on,
+		       msg.actuator_status.position_present);
+		if (msg.actuator_status.position_present) {
+			printf(", position: %d", msg.actuator_status.position);
+		}
+		printf("\n");
+	}
 
 	pb_release(GeisaActuatorGet_Rsp_fields, &msg);
 }

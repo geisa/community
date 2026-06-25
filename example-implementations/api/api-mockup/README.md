@@ -106,3 +106,11 @@ printf 'stream_id: "api-mockup-waveform"\nrequest_type: 1\n'   | protoc --encode
 ```bash
 mosquitto_pub -u testapp -P testapp -h localhost -t geisa/api/waveform/req/testapp -f /tmp/waveform.binpb
 ```
+
+* To test the actuator API, there is a dedicated test application that can sends API requests:
+
+```bash
+usage: /tmp/test_app_actuator --get <actuator> | --set <actuator> <on|off> [position]
+```
+
+The response will be printed by the test_app application
