@@ -68,6 +68,16 @@
 					"priority":	0,
 					"allow":	true
 				}, {
+					"acltype":	"publishClientSend",
+					"topic":	"geisa/api/actuator/get/rsp/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"publishClientSend",
+					"topic":	"geisa/api/actuator/set/rsp/#",
+					"priority":	0,
+					"allow":	true
+				}, {
 					"acltype":	"subscribePattern",
 					"topic":	"geisa/api/platform/discovery/req/#",
 					"priority":	0,
@@ -90,6 +100,16 @@
 				}, {
 					"acltype":	"subscribePattern",
 					"topic":	"geisa/api/app/platform/status/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"geisa/api/actuator/get/req/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"geisa/api/actuator/set/req/#",
 					"priority":	0,
 					"allow":	true
 				}]
