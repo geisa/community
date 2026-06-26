@@ -78,6 +78,16 @@
 					"priority":	0,
 					"allow":	true
 				}, {
+					"acltype":	"publishClientSend",
+					"topic":	"geisa/api/sensor",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"publishClientSend",
+					"topic":	"geisa/api/sensor-rsp/#",
+					"priority":	0,
+					"allow":	true
+				}, {
 					"acltype":	"subscribePattern",
 					"topic":	"geisa/api/platform/discovery/req/#",
 					"priority":	0,
@@ -112,6 +122,11 @@
 					"topic":	"geisa/api/actuator/set/req/#",
 					"priority":	0,
 					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"geisa/api/sensor-req/#",
+					"priority":	0,
+					"allow":	true
 				}]
 		}, {
 			"rolename":	"AllowGeisaAppsTopics",
@@ -123,6 +138,11 @@
 				}, {
 					"acltype":	"subscribeLiteral",
 					"topic":	"geisa/api/instantaneous/data",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribeLiteral",
+					"topic":	"geisa/api/sensor",
 					"priority":	0,
 					"allow":	true
 				}]
