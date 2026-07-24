@@ -29,6 +29,7 @@ typedef struct {
 static sensor_t sensors[] = {
 	{"ambient-temp-1", 25.0},
 	{"ambient-humidity-1", 45.0},
+	{"contact-closure-1", 0.0},
 };
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 

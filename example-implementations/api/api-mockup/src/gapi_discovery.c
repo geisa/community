@@ -91,6 +91,15 @@ static GeisaSensorDescriptor sensors_platform_info_descriptors[] = {
 		.supports_read = true,
 		.supports_publish = false,
 	},
+	{
+		.sensor_id = "contact-closure-1",
+		.sensor_type = GeisaSensorType_GEISA_SENSOR_TYPE_CONTACT_STATE,
+		.name = "Contact Closure",
+		.has_name = true,
+		.unit = "State",
+		.supports_read = false,
+		.supports_publish = false,
+	},
 };
 
 static GeisaPlatformDiscovery_Sensor sensor_platform_info = {
