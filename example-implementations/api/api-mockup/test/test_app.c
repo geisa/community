@@ -6,6 +6,7 @@
 #include "schemas/manifest.pb.h"
 #include "schemas/metered_quantities.pb.h"
 #include "schemas/waveform.pb.h"
+#include "schemas/sensor.pb.h"
 #include <mosquitto.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,8 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 				    "geisa/api/actuator/get/rsp/testapp", 0);
 		mosquitto_subscribe(mosq, NULL,
 				    "geisa/api/actuator/set/rsp/testapp", 0);
+		mosquitto_subscribe(mosq, NULL,
+				    "geisa/api/sensor-rsp/testapp", 0);
 	} else {
 		printf("Connection failed: %d\n", rc);
 	}
@@ -149,6 +152,49 @@ void handle_waveform(const void *payload, size_t len)
 	pb_release(GeisaWaveform_Rsp_fields, &msg);
 }
 
+void handle_sensor_response(const void *payload, size_t len)
+{
+	bool status;
+	pb_istream_t istream;
+	GeisaSensorReadings_Rsp msg = GeisaSensorReadings_Rsp_init_default;
+
+	istream = pb_istream_from_buffer(payload, len);
+	status = pb_decode(&istream, GeisaSensorReadings_Rsp_fields, &msg);
+	if (!status) {
+		printf("Failed to decode SensorReadings_Rsp: %s\n", PB_GET_ERROR(&istream));
+		return;
+	}
+
+	printf("Sensor response status: %d, message: %s\n", msg.status.code, msg.status.message);
+	for (pb_size_t i = 0; i < msg.readings_count; i++) {
+		GeisaSensorReading *r = &msg.readings[i];
+		printf("Reading[%d]: id=%s timestamp_ms=%llu unit=%s\n",
+			(int)i, r->sensor_id, (unsigned long long)r->timestamp_ms, r->unit);
+		for (pb_size_t j = 0; j < r->values_count; j++) {
+			GeisaSensorValue *v = &r->values[j];
+			switch (v->which_value) {
+			case GeisaSensorValue_double_value_tag:
+				printf("  value: double=%f\n", v->value.double_value);
+				break;
+			case GeisaSensorValue_int64_value_tag:
+				printf("  value: int64=%lld\n", (long long)v->value.int64_value);
+				break;
+			case GeisaSensorValue_bool_value_tag:
+				printf("  value: bool=%d\n", v->value.bool_value);
+				break;
+			case GeisaSensorValue_string_value_tag:
+				printf("  value: string=%s\n", v->value.string_value);
+				break;
+			default:
+				printf("  value: unknown\n");
+				break;
+			}
+		}
+	}
+
+	pb_release(GeisaSensorReadings_Rsp_fields, &msg);
+}
+
 void handle_actuator_get_response(const void *payload, size_t len)
 {
 	bool status;
@@ -217,6 +263,8 @@ void on_message(struct mosquitto *mosq, void *obj,
 		handle_actuator_get_response(msg->payload, msg->payloadlen);
 	} else if (strcmp(msg->topic, "geisa/api/actuator/set/rsp/testapp") == 0) {
 		handle_actuator_set_response(msg->payload, msg->payloadlen);
+	} else if (strcmp(msg->topic, "geisa/api/sensor-rsp/testapp") == 0) {
+		handle_sensor_response(msg->payload, msg->payloadlen);
 	} else {
 		printf("Unknown topic\n");
 	}

@@ -113,4 +113,11 @@ mosquitto_pub -u testapp -P testapp -h localhost -t geisa/api/waveform/req/testa
 usage: /tmp/test_app_actuator --get <actuator> | --set <actuator> <on|off> [position]
 ```
 
+* To test the sensor API, there is a dedicated test application that can sends API requests:
+
+```bash
+usage: /tmp/test_app_sensor [sensor_id ...]
+```
+When not providing any sensor_id, the application will send a request to get all the sensors available. Otherwise, it will send a request to get the specified sensors.
+
 The response will be printed by the test_app application
