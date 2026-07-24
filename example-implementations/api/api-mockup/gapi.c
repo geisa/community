@@ -8,6 +8,7 @@
 #include "gapi_instantaneous.h"
 #include "gapi_manifest.h"
 #include "gapi_mosquitto.h"
+#include "gapi_sensor.h"
 #include "gapi_waveform.h"
 
 volatile bool running = true;
@@ -40,6 +41,7 @@ int main()
 	}
 	api_waveform_init(mosq);
 	api_actuator_init(mosq);
+	api_sensor_init(mosq);
 
 	while (running) {
 		mosquitto_loop(mosq, -1, 1);

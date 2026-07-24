@@ -214,6 +214,11 @@ GeisaPlatformDiscovery_Waveform get_waveform_info()
 	return waveform_platform_info;
 }
 
+GeisaPlatformDiscovery_Sensor get_sensors_info()
+{
+	return sensor_platform_info;
+}
+
 static void api_platform_discovery_req_handler(struct mosquitto *mosq,
 					       const char *topic,
 					       const int payloadlen,
