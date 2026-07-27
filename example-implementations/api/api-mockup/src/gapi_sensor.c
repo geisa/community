@@ -71,11 +71,12 @@ static int sensor_find(const char *sensor_id)
 
 static void get_all_sensors_info(GeisaSensorReadings_Rsp *response,
 				 GeisaPlatformDiscovery_Sensor sensors_desc,
-				 GeisaSensorDescriptor sensor_desc,
-				 size_t readings_idx, uint64_t now_ms,
-				 GeisaSensorReading *readings,
+				 uint64_t now_ms, GeisaSensorReading *readings,
 				 GeisaSensorValue *values)
 {
+	GeisaSensorDescriptor sensor_desc = GeisaSensorDescriptor_init_default;
+	size_t readings_idx = 0;
+
 	for (size_t i = 0;
 	     i < sensor_count && readings_idx < MAX_SENSORS_READINGS; i++) {
 		sensor_desc = sensors_desc.sensors[i];
@@ -107,13 +108,16 @@ static void get_all_sensors_info(GeisaSensorReadings_Rsp *response,
 	response->readings = readings;
 }
 
-static void get_requested_sensors_info(
-	GeisaSensorReadings_Rsp *response,
-	GeisaPlatformDiscovery_Sensor sensors_desc,
-	GeisaSensorDescriptor sensor_desc, size_t readings_idx, uint64_t now_ms,
-	GeisaSensorReading *readings, GeisaSensorValue *values,
-	const GeisaSensorReadings_Req *request)
+static void
+get_requested_sensors_info(GeisaSensorReadings_Rsp *response,
+			   GeisaPlatformDiscovery_Sensor sensors_desc,
+			   uint64_t now_ms, GeisaSensorReading *readings,
+			   GeisaSensorValue *values,
+			   const GeisaSensorReadings_Req *request)
 {
+	GeisaSensorDescriptor sensor_desc = GeisaSensorDescriptor_init_default;
+	size_t readings_idx = 0;
+
 	for (pb_size_t i = 0; i < request->sensor_id_count &&
 			      readings_idx < MAX_SENSORS_READINGS;
 	     i++) {
@@ -156,15 +160,13 @@ static bool geisa_sensor_build_response(const GeisaSensorReadings_Req *request,
 	static GeisaSensorValue values[MAX_SENSORS_READINGS];
 	GeisaPlatformDiscovery_Sensor sensors_desc =
 		GeisaPlatformDiscovery_Sensor_init_default;
-	GeisaSensorDescriptor sensor_desc = GeisaSensorDescriptor_init_default;
 
-	size_t readings_idx = 0;
 	uint64_t now_ms = (uint64_t)time(NULL) * SEC_IN_MS;
 	sensors_desc = get_sensors_info();
 
 	if (request->sensor_id_count == 0) {
-		get_all_sensors_info(response, sensors_desc, sensor_desc,
-				     readings_idx, now_ms, readings, values);
+		get_all_sensors_info(response, sensors_desc, now_ms, readings,
+				     values);
 		return true;
 	}
 
@@ -187,9 +189,8 @@ static bool geisa_sensor_build_response(const GeisaSensorReadings_Req *request,
 		}
 	}
 
-	get_requested_sensors_info(response, sensors_desc, sensor_desc,
-				   readings_idx, now_ms, readings, values,
-				   request);
+	get_requested_sensors_info(response, sensors_desc, now_ms, readings,
+				   values, request);
 	return true;
 }
 
