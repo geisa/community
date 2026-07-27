@@ -44,6 +44,8 @@ register_app_to_mqtt_broker() {
     $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/platform/app/status/$appid" allow
     $mosq_ctrl addRoleACL $role publishClientSend "geisa/api/platform/discovery/req/$appid" allow
     $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/platform/discovery/rsp/$appid" allow
+    $mosq_ctrl addRoleACL $role subscribeLiteral "geisa/api/sensor-rsp/$appid" allow
+    $mosq_ctrl addRoleACL $role publishClientSend "geisa/api/sensor-req/$appid" allow
 
     $mosq_ctrl addClientRole $appid $role
 }
@@ -68,6 +70,8 @@ deregister_app_to_mqtt_broker() {
     $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/platform/app/status/$appid"
     $mosq_ctrl removeRoleACL $role publishClientSend "geisa/api/platform/discovery/req/$appid"
     $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/platform/discovery/rsp/$appid"
+    $mosq_ctrl removeRoleACL $role subscribeLiteral "geisa/api/sensor-rsp/$appid"
+    $mosq_ctrl removeRoleACL $role publishClientSend "geisa/api/sensor-req/$appid"
 
 
     $mosq_ctrl deleteRole $role
