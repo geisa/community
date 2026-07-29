@@ -1,6 +1,6 @@
 [submodule "sources/poky"]
 	path = sources/poky
-	url = git://git.yoctoproject.org/poky
+	url = https://git.yoctoproject.org/poky
     branch = scarthgap
 [submodule "sources/meta-openembedded"]
 	path = sources/meta-openembedded
@@ -8,15 +8,15 @@
     branch = scarthgap
 [submodule "sources/meta-virtualization"]
 	path = sources/meta-virtualization
-	url = git://git.yoctoproject.org/meta-virtualization
+	url = https://git.yoctoproject.org/meta-virtualization
     branch = scarthgap
 [submodule "sources/meta-freescale"]
 	path = sources/meta-freescale
-	url = git://git.yoctoproject.org/meta-freescale
+	url = https://git.yoctoproject.org/meta-freescale
     branch = scarthgap
 [submodule "sources/meta-arm"]
 	path = sources/meta-arm
-	url = git://git.yoctoproject.org/meta-arm
+	url = https://git.yoctoproject.org/meta-arm
     branch = scarthgap
 [submodule "sources/meta-imx"]
 	path = sources/meta-imx
