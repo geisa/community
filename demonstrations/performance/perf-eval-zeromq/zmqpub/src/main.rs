@@ -48,9 +48,9 @@ fn main() {
 
     // Call the benchmark logic with the parsed arguments
     benchmark_logic(
-        args.socket_location, 
-        args.period, 
-        args.message_size, 
+        args.socket_location,
+        args.period,
+        args.message_size,
         args.number_of_messages)
         .expect("Failed to run benchmark logic");
 }
@@ -59,7 +59,7 @@ fn main() {
 fn benchmark_logic(socket_location: String, period: u64, message_size: usize, number_of_messages: u32) -> Result<()> {
     let ctx = Context::new();
     let socket = ctx.socket(PUB).expect("Failed to create socket");
-    
+
     let socketuri = format!("ipc://{}", socket_location);
     socket.bind(&socketuri).expect("Failed to bind socket");
 
@@ -104,7 +104,7 @@ fn benchmark_logic(socket_location: String, period: u64, message_size: usize, nu
         let now: SystemTime = SystemTime::now();
         let now: DateTime<Utc> = now.into();
         let now_micros: i64 = now.timestamp_micros();
-        
+
         let message = Message {
             message_type: message_type,
             timestamp_micros: now_micros,

@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     // Call the benchmark logic with the parsed arguments
 
     benchmark_logic(
-        args.socket_location, 
+        args.socket_location,
         args.enable_latency_measurement)
         .expect("Failed to run benchmark logic");
     Ok(())
@@ -66,7 +66,7 @@ fn benchmark_logic(socket_location: String, enable_latency_measurement: bool) ->
     loop {
         let serialized_zeromq_message: zmq::Message = socket.recv_msg(0).expect("Failed to receive message");
         let serialized_message = serialized_zeromq_message.as_str().expect("Failed to convert message to string");
-        
+
         let deserialized_message: Message = serde_json::from_str(&serialized_message)?;
 
         match deserialized_message.message_type.as_str() {
@@ -111,7 +111,7 @@ fn benchmark_logic(socket_location: String, enable_latency_measurement: bool) ->
     let analysis_duration: i64 = analysis_end_dt.timestamp_micros() - analysis_begin_dt.timestamp_micros();
     let total_data_bytes = message_count * message_size;
     let throughput_bytes_per_second = (message_count * message_size) as f64 / (analysis_duration as f64 / 1_000_000.0);
-    let throughput_messages_per_second = message_count as f64 / (analysis_duration as f64 / 1_000_000.0);  
+    let throughput_messages_per_second = message_count as f64 / (analysis_duration as f64 / 1_000_000.0);
 
 
 

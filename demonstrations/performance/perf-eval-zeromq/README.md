@@ -1,100 +1,107 @@
-# perf-eval-zeromq
-Contains work meant to evaluate messaging options for GEISA
+# ZeroMQ Performance Evaluation
 
-## Intro
+Rust publisher and subscriber programs for evaluating ZeroMQ throughput and
+latency on constrained edge hardware.
 
-This project contains a few rust programs that are meant to provide some analysis for helping make technical decisions
+## Relationship to GEISA
 
+This project contains performance experiments created during GEISA messaging
+architecture work.
 
-## How to run locally
-You'll need to have rust and cargo installed to easily run/debug locally.  Once you do:
+The publisher sends timestamped data to the subscriber, which reports
+throughput and optional latency measurements. The programs were used to
+evaluate ZeroMQ as a possible communication mechanism for GEISA-related
+workloads.
 
-To run zmqsub:
-```
-cd zmqsub
-cargo run
-```
-To see command line options
-```
-cargo run -- --help
-```
-Ex: to enable latency analysis
-```
-cargo run -- -e
-```
+## Project Information
 
-To run zmqpub:
-```
+- **Status:** Maintenance Limited
+- **Maintainer:** Rick Steurer (`@ricksteu-utilidata`), original author
+- **License:** Apache-2.0
+- **GEISA versions tested or supported:** Not tied to a specific GEISA release
+- **Support:** Best-effort
+
+## Building or Using the Project
+
+The project contains two independent Rust programs:
+
+- `zmqpub` — publishes timestamped data
+- `zmqsub` — receives data and reports performance information
+
+Both projects retain their original `Cargo.lock` files.
+
+Build each program from the project directory:
+
+```console
 cd zmqpub
-cargo run
+cargo build --locked --release
+
+cd ../zmqsub
+cargo build --locked --release
 ```
 
-## How to target RPi Zero (original):
-First, see:
-https://rust-lang.github.io/rustup/cross-compilation.html
+Run the subscriber first:
 
-
-For rpi zero 2:
+```console
+cd zmqsub
+cargo run --locked -- -e
 ```
+
+Then run the publisher from another terminal:
+
+```console
+cd zmqpub
+cargo run --locked
+```
+
+Use `--help` to view the available options:
+
+```console
+cargo run --locked -- --help
+```
+
+## Cross-Compilation
+
+For a 64-bit Raspberry Pi target:
+
+```console
 rustup target add aarch64-unknown-linux-gnu
+cargo build --locked --release --target aarch64-unknown-linux-gnu
 ```
 
-Then there are some build chain dependencies that you'll need to install locally if you don't want to use the cross project (see below).  Once the build chain dependencies are installed, you should be able to do this:
+For targets that are difficult to build with a locally configured
+cross-toolchain, the `cross` project may be used:
 
-```
-cargo build --target aarch64-unknown-linux-gnu --release
-```
-
-
-I was able to cross compile directly for rpi zero 2, but not for the rpi zero (original).   I tried every possible thing under the sun almost.   Then, turned to the cross project, which worked.  
-https://github.com/cross-rs/cross
-
-Once installed and working, do this for each program:
-```
-cross build --release --target=arm-unknown-linux-gnueabihf
+```console
+cross build --locked --release --target arm-unknown-linux-gnueabihf
 ```
 
-Then scp the binaries to your rpi zero
+Copy the resulting binaries using paths and addresses appropriate for the
+local environment. For example:
 
+```console
+scp zmqpub/target/aarch64-unknown-linux-gnu/release/zmqpub \
+  user@edge-device:~/zmqpub
 
-## How to use zmqsub and zmqpub
-
-They each have prompts that let you choose input values
-Basically zmqpub sends data to zmqsub
-
-The data contains timestamps that allow for calculating throughput and latency
-There is no multithreading or anything fancy.   Just one program sending messages to another.
-
-To run the geisa zeromq benchmark programs:
-
-1. SCP both zmqsub and zmqpub to any location on the rpi zero.  Examples:
-
-```
-scp /home/rick/Projects/geisa-messaging-benchmarking/zmqpub/target/aarch64-unknown-linux-gnu/release/zmqpub pi@10.112.1.154:~/Projects/zmqpub
-scp /home/rick/Projects/geisa-messaging-benchmarking/zmqsub/target/aarch64-unknown-linux-gnu/release/zmqsub pi@10.112.1.154:~/Projects/zmqsub
+scp zmqsub/target/aarch64-unknown-linux-gnu/release/zmqsub \
+  user@edge-device:~/zmqsub
 ```
 
-You may need to chmod them:
-```
-chmod +x zmqsub
-chmod +x zmqpub
+The binaries may need executable permission after transfer:
+
+```console
+chmod +x zmqpub zmqsub
 ```
 
-2. To see command line options::
-```
-./zmqsub --help
-./zmqpub --help
-```
+## Known Limitations
 
-3. Start the subscriber program first:
-```
-./zmqsub -e
-```
-
-
-3. Then start the publisher program:
-```
-./zmqpub
-```
-
-4. When it's done, zmqsub will spit out an analysis.
+- The programs provide focused performance measurements rather than a complete
+  messaging benchmark suite.
+- Results vary with hardware, operating system, Rust toolchain, ZeroMQ version,
+  message configuration, and system load.
+- The programs use local ZeroMQ IPC transport.
+- Cross-compilation requires an appropriate target toolchain or `cross`
+  environment.
+- Benchmark results were not regenerated as part of the Community migration.
+- Maintenance is limited, and broad dependency modernization is outside the
+  migration scope.

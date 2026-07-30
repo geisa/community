@@ -9,3 +9,6 @@
 
 # IPC timing demonstrations
 /demonstrations/performance/ipc-timings/ @nmcentire400 @swegener-rtp
+
+# ZeroMQ performance evaluation
+/demonstrations/performance/perf-eval-zeromq/ @ricksteu-utilidata @swegener-rtp
