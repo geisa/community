@@ -15,3 +15,6 @@
 
 # Systemd application isolation demonstration
 /demonstrations/application-isolation-security-systemd-demo/ @blthayer @swegener-rtp
+
+# Wakaama ADM client mockup
+/example-implementations/adm/lwm2m-client/wakaama/ @ndam-sfl @kevlhop @swegener-rtp

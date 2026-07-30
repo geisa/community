@@ -1,0 +1,71 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-02B36C)](https://opensource.org/license/bsd-3-clause)
+
+# GEISA ADM Client Mockup - a GEISA Application and Device Management Client mockup implementation
+
+GEISA ADM Client Mockup is designed to be able to run conformance tests. It aims to provide a mockup implementation of the GEISA Application and Device Management client as defined in the
+[GEISA Specification](https://github.com/geisa/specification).
+
+The GEISA Specification is an effort by the Grid Edge Interoperability and Security Alliance to define a consistent, secure, and interoperable computing environment for embedded devices at the very edge of the electric utility grid, like electric meters and distribution automation devices, for the benefit of utilities, platform vendors, and software vendors. If you would like to get involved, please head over to our Wiki page for details on participation (https://lfenergy.org/projects/geisa/).  Follow the onboarding link for details about participating in our community process.
+
+## Building the application
+
+### Build using CMake and make
+To build the GEISA ADM client mockup, follow these steps:
+
+1. Clone the Wakaama repository:
+
+    ```bash
+    git clone https://github.com/eclipse-wakaama/wakaama.git
+    cd wakaama
+    ```
+
+2. Build the Wakaama static library with the following flags:
+
+    ```bash
+    mkdir -p build
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+        -DWAKAAMA_MODE_CLIENT=ON \
+        -DWAKAAMA_MODE_SERVER=OFF \
+        -DWAKAAMA_MODE_BOOTSTRAP_SERVER=OFF \
+        -DWAKAAMA_CLIENT_INITIATED_BOOTSTRAP=ON \
+        -DWAKAAMA_DATA_SENML_JSON=ON \
+        -DWAKAAMA_DATA_SENML_CBOR=ON \
+        -DWAKAAMA_LOG_LEVEL=INFO \
+        -DWAKAAMA_TRANSPORT=TINYDTLS \
+        -DWAKAAMA_UNIT_TESTS=OFF \
+        -DWAKAAMA_CLI=OFF \
+        -DWAKAAMA_PLATFORM=POSIX \
+        -DWAKAAMA_ENABLE_EXAMPLES=OFF
+    cmake --build build
+    ```
+
+3. Place the Wakaama headers and library in the appropriate directories:
+For example, it is assumed by default that users have placed them at:
+    - Headers: `/usr/include/wakaama`
+    - TinyDTLS headers: `/usr/include/tinydtls`
+    - Static library: `/usr/lib/wakaama/libwakaama_static.a`
+
+4. Build the application:
+
+    ```bash
+    mkdir -p build
+    cmake -S . -B build -DWAKAAMA_INCLUDE_DIR=<wakaama_header_dir> \
+        -DWAKAAMA_TINYDTLS_INCLUDE_DIR=<tinydtls_header_dir> \
+        -DWAKAAMA_LIB_DIR=<static_library_dir>
+        -DGEISA_PACKAGE_SCRIPT_PATH=<script_path_dir>
+
+    cmake --build build
+    ```
+
+## Launch the application
+
+To launch the GEISA ADM Mockup application, first copy the generated client onto your target platform, then run the following command:
+
+```bash
+./admclient -4 -h <lwm2m_server_ip>
+```
+
+Where:
+  -4: IPv4 (-6 can be used for IPv6)
+  -h <lwm2m_server_ip>: IP of your LWM2M server, if launched from a different host
