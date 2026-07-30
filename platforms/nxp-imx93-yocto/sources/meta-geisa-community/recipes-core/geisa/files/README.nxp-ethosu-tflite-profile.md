@@ -20,8 +20,9 @@ locally before building the development image:
   --origin 'source URL or internal acquisition record'
 ```
 
-The helper validates the top-level layout, copies the archive to this directory,
-and records the supplied origin and SHA-256 in an ignored local file. BitBake
+The helper accepts either a root-level profile tree or a tree under
+`nxp-ethosu-tflite/`, validates every listed member before copying, and records
+the selected layout, supplied origin, and SHA-256 in an ignored local file. BitBake
 includes the parsed archive SHA-256 and input state in the profile task
 signature, rechecks the archive before installation, and records only the SHA-
 256 in the installed profile. A future public distribution requires an explicit

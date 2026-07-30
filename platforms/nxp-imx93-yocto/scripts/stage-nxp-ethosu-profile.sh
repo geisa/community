@@ -5,6 +5,9 @@ set -euo pipefail
 platform_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 destination="${platform_root}/sources/meta-geisa-community/recipes-core/geisa/files"
 archive="${1:-}"
+member_list="$(mktemp "${TMPDIR:-/tmp}/geisa-profile-members.XXXXXX")"
+normalized_list="$(mktemp "${TMPDIR:-/tmp}/geisa-profile-normalized.XXXXXX")"
+trap 'rm -f "${member_list}" "${normalized_list}"' EXIT
 
 usage() {
     echo "usage: $0 ARCHIVE --origin DESCRIPTION" >&2
@@ -15,18 +18,44 @@ usage() {
 shift
 [ "${1:-}" = "--origin" ] && [ -n "${2:-}" ] || usage
 origin="$2"
+[ "${origin#*$'\n'}" = "${origin}" ] || {
+    echo "origin must be a single line" >&2
+    exit 1
+}
 
-# The recipe expects one top-level directory and a profile descriptor.
-tar -tzf "${archive}" | grep -qx 'nxp-ethosu-tflite/' || {
-    echo "missing nxp-ethosu-tflite/ top-level directory" >&2
+# Validate names before copying. The source archive is never extracted here.
+tar -tzf "${archive}" > "${member_list}" || {
+    echo "cannot list archive members" >&2
     exit 1
 }
-tar -tzf "${archive}" | grep -qx 'nxp-ethosu-tflite/profile.json' || {
-    echo "missing nxp-ethosu-tflite/profile.json" >&2
-    exit 1
-}
-if tar -tzf "${archive}" | grep -qv '^nxp-ethosu-tflite/'; then
-    echo "archive contains paths outside nxp-ethosu-tflite/" >&2
+
+while IFS= read -r member || [ -n "${member}" ]; do
+    path="${member%/}"
+    while [ "${path#./}" != "${path}" ]; do path="${path#./}"; done
+    [ -n "${path}" ] && [ "${path}" != "." ] || continue
+    case "${path}" in
+        /*|.|..|../*|*/../*|*/..|*'//'*)
+            echo "unsafe archive member: ${member}" >&2
+            exit 1
+            ;;
+    esac
+    printf '%s\n' "${path}" >> "${normalized_list}"
+done < "${member_list}"
+
+if grep -Fxq 'nxp-ethosu-tflite/profile.json' "${normalized_list}"; then
+    layout="directory-prefixed"
+    if grep -Evqx 'nxp-ethosu-tflite(/.*)?' "${normalized_list}"; then
+        echo "archive contains members outside nxp-ethosu-tflite/" >&2
+        exit 1
+    fi
+elif grep -Fxq 'profile.json' "${normalized_list}"; then
+    layout="root-level"
+    if grep -Eq '^nxp-ethosu-tflite(/|$)' "${normalized_list}"; then
+        echo "archive mixes root-level and nxp-ethosu-tflite/ members" >&2
+        exit 1
+    fi
+else
+    echo "archive is missing profile.json" >&2
     exit 1
 fi
 
@@ -35,6 +64,7 @@ install -m 0644 "${archive}" "${destination}/nxp-ethosu-tflite.tar.gz"
 {
     printf 'origin: %s\n' "${origin}"
     printf 'sha256: %s\n' "$(sha256sum "${destination}/nxp-ethosu-tflite.tar.gz" | awk '{print $1}')"
+    printf 'layout: %s\n' "${layout}"
 } > "${destination}/nxp-ethosu-tflite.local-origin.txt"
 
 echo "Staged local profile input; both output files are ignored by Git."

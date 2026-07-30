@@ -19,6 +19,7 @@ python __anonymous() {
     state = "missing archive and checksum/origin metadata"
     actual = ""
     expected = ""
+    layout = ""
 
     if os.path.isfile(archive):
         digest = hashlib.sha256()
@@ -33,14 +34,21 @@ python __anonymous() {
             for line in record:
                 if line.startswith("sha256: "):
                     expected = line.split(":", 1)[1].strip()
-                    break
+                elif line.startswith("layout: "):
+                    layout = line.split(":", 1)[1].strip()
         state = "missing archive"
 
     if actual and expected:
-        state = "matched" if actual == expected else "checksum mismatch"
+        if actual != expected:
+            state = "checksum mismatch"
+        elif layout not in ("directory-prefixed", "root-level"):
+            state = "missing or invalid archive layout metadata"
+        else:
+            state = "matched"
 
     d.setVar("GEISA_NXP_ETHOSU_TFLITE_PROFILE_ARCHIVE_SHA256", actual)
     d.setVar("GEISA_NXP_ETHOSU_TFLITE_PROFILE_EXPECTED_SHA256", expected)
+    d.setVar("GEISA_NXP_ETHOSU_TFLITE_PROFILE_LAYOUT", layout)
     d.setVar("GEISA_NXP_ETHOSU_TFLITE_PROFILE_INPUT_STATE", state)
 }
 
@@ -57,9 +65,45 @@ do_install() {
     if [ "${actual}" != "${GEISA_NXP_ETHOSU_TFLITE_PROFILE_ARCHIVE_SHA256}" ]; then
         bbfatal "NXP Ethos-U/TFLite profile archive changed after parsing; rerun BitBake"
     fi
-    tar -xzf "${archive}" -C ${WORKDIR}
+
+    members="${T}/nxp-ethosu-tflite.members"
+    normalized="${T}/nxp-ethosu-tflite.normalized"
+    tar -tzf "${archive}" > "${members}" || bbfatal "Cannot list NXP Ethos-U/TFLite profile archive"
+    : > "${normalized}"
+    while IFS= read -r member || [ -n "${member}" ]; do
+        path="${member%/}"
+        while [ "${path#./}" != "${path}" ]; do path="${path#./}"; done
+        [ -n "${path}" ] && [ "${path}" != "." ] || continue
+        case "${path}" in
+            /*|.|..|../*|*/../*|*/..|*'//'*)
+                bbfatal "Unsafe NXP Ethos-U/TFLite archive member: ${member}"
+                ;;
+        esac
+        printf '%s\n' "${path}" >> "${normalized}"
+    done < "${members}"
+
+    if grep -Fxq 'nxp-ethosu-tflite/profile.json' "${normalized}"; then
+        layout="directory-prefixed"
+        grep -Evqx 'nxp-ethosu-tflite(/.*)?' "${normalized}" \
+            && bbfatal "NXP Ethos-U/TFLite archive has members outside its profile tree"
+    elif grep -Fxq 'profile.json' "${normalized}"; then
+        layout="root-level"
+        grep -Eq '^nxp-ethosu-tflite(/|$)' "${normalized}" \
+            && bbfatal "NXP Ethos-U/TFLite archive mixes supported layouts"
+    else
+        bbfatal "NXP Ethos-U/TFLite archive is missing profile.json"
+    fi
+    [ "${layout}" = "${GEISA_NXP_ETHOSU_TFLITE_PROFILE_LAYOUT}" ] \
+        || bbfatal "NXP Ethos-U/TFLite archive layout changed after parsing; rerun BitBake"
+
+    input="${WORKDIR}/nxp-ethosu-tflite-input"
+    rm -rf "${input}"
+    install -d "${input}"
+    tar -xzf "${archive}" -C "${input}"
+    source_root="${input}"
+    [ "${layout}" = "root-level" ] || source_root="${input}/nxp-ethosu-tflite"
     install -d -m 0755 ${D}/platform/profiles/nxp-ethosu-tflite
-    cp -a ${WORKDIR}/nxp-ethosu-tflite/. ${D}/platform/profiles/nxp-ethosu-tflite/
+    cp -a "${source_root}/." ${D}/platform/profiles/nxp-ethosu-tflite/
     printf '%s\n' "${GEISA_NXP_ETHOSU_TFLITE_PROFILE_ARCHIVE_SHA256}" \
         > ${D}/platform/profiles/nxp-ethosu-tflite/.geisa-source-archive.sha256
     chown -R 0:0 ${D}/platform/profiles/nxp-ethosu-tflite
@@ -72,5 +116,6 @@ SKIP_FILEDEPS:${PN} = "1"
 do_install[vardeps] += " \
     GEISA_NXP_ETHOSU_TFLITE_PROFILE_ARCHIVE_SHA256 \
     GEISA_NXP_ETHOSU_TFLITE_PROFILE_EXPECTED_SHA256 \
+    GEISA_NXP_ETHOSU_TFLITE_PROFILE_LAYOUT \
     GEISA_NXP_ETHOSU_TFLITE_PROFILE_INPUT_STATE \
 "
