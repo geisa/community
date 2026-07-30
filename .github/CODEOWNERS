@@ -1,2 +1,5 @@
 # Repository-wide fallback owner.
 * @swegener-rtp
+
+# Protobuf demonstrations.
+/demonstrations/protobuf-demos/ @blthayer @swegener-rtp
