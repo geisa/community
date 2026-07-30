@@ -49,7 +49,7 @@ EOF
 make_tool ip <<'EOF'
 #!/bin/sh
 case "$*" in
-  '-o -4 addr show') printf '2: end0    inet 10.0.0.188/24 brd 10.0.0.255 scope global end0\n' ;;
+  '-o -4 addr show') printf '2: end0    inet 192.0.2.188/24 brd 192.0.2.255 scope global end0\n' ;;
   '-o link show') printf '1: lo: <LOOPBACK,UP> mtu 65536 state UNKNOWN mode DEFAULT\n2: end0: <BROADCAST,UP> mtu 1500 state UP mode DEFAULT\n3: lxcbr0: <NO-CARRIER,BROADCAST> mtu 1500 state DOWN mode DEFAULT\n' ;;
   *) : ;;
 esac
@@ -96,13 +96,42 @@ assert 'GEISA system state: 2026-07-29 12:23:43 UTC'
 assert 'Hostname: geisa-imx93'
 assert 'GEISA account: uid=999(geisa) gid=999(geisa) groups=999(geisa),995(ethosu)'
 assert 'Cgroups: cgroup2fs controllers=cpuset cpu io memory pids'
-assert 'Network: end0 UP 10.0.0.188/24; lxcbr0 DOWN <no IP>'
+assert 'Network: end0 UP 192.0.2.188/24; lxcbr0 DOWN <no IP>'
 assert 'Thermal: cpu-thermal 63.4 C'
 assert 'Alpha (com.example.alpha) state=running'
 assert 'Systemd: failed=0'
 grep -F 'Filesystem Size Used Avail Use% Mounted on' "$output" >/dev/null
 grep -F 'Swap: 0 0 0' "$output" >/dev/null
 grep -F 'geisa-app-alpha RUNNING' "$output" >/dev/null
+
+line_number() {
+    line=$(grep -n -m1 -F "$1" "$output" | cut -d: -f1)
+    [ -n "$line" ] || {
+        echo "missing output marker: $1" >&2
+        exit 1
+    }
+    printf '%s\n' "$line"
+}
+
+assert_before() {
+    first=$(line_number "$1")
+    second=$(line_number "$2")
+
+    [ "$first" -lt "$second" ] || {
+        echo "output order error: '$1' must precede '$2'" >&2
+        exit 1
+    }
+}
+
+assert_before 'Hostname: geisa-imx93' 'Cgroups: cgroup2fs'
+assert_before 'Cgroups: cgroup2fs' 'GEISA account:'
+assert_before 'GEISA account:' 'Network:'
+assert_before 'Network:' 'Thermal:'
+assert_before 'Thermal:' 'LXC:'
+assert_before 'LXC:' 'Managed applications:'
+assert_before 'Managed applications:' 'Systemd: failed=0'
+assert_before 'Systemd: failed=0' 'Filesystems:'
+assert_before 'Filesystems:' 'Resources:'
 
 # A heading without a container row is an explicit empty LXC state.
 make_tool lxc-ls <<'EOF'

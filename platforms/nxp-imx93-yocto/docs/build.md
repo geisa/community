@@ -18,3 +18,11 @@ ACCEPT_FSL_EULA=1 ./scripts/build.sh development
 redistribution rights for generated artifacts or locally staged profile input.
 Use `ACCEPT_FSL_EULA=1 ./scripts/build.sh development -- bitbake -p` for a
 parse-only check.
+
+Development work may build from a deliberately dirty source tree, and the
+image metadata records that state. Before publication, use the reviewed clean
+revision, confirm it with `git status --short`, and retain the source-state
+record alongside the release artifacts.
+
+This platform intentionally stays on the reviewed Scarthgap and NXP 6.6 track.
+Do not combine a BSP or kernel migration with a development-image release build.

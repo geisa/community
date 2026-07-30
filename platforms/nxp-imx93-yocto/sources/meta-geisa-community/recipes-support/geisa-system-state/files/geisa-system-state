@@ -242,15 +242,15 @@ print_debug() {
 
 print_report() {
     print_header
-    print_geisa_identity
-    print_lxc
-    print_managed_apps
     print_cgroup
+    print_geisa_identity
     print_network
     print_thermal
+    print_lxc
+    print_managed_apps
+    print_systemd
     print_filesystems
     print_resources
-    print_systemd
     print_debug
 }
 

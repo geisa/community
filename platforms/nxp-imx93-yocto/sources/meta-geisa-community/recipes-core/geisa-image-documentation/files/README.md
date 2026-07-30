@@ -21,9 +21,15 @@ not the specification or conformance repositories.
 The image is a Yocto/OpenEmbedded `geisa-dev-image` for `geisa-imx93` (AArch64).
 It provides LXC, Mosquitto, GEISA runtime defaults, a managed container root,
 and Ethos-U support packages, along with development tools and utilities. It
-does not include GEISA applications or a conformance framework. The separate
-NXP Ethos-U/TFLite profile input is locally staged and is not redistributed in
-this source tree until its provenance and redistribution terms are verified.
+does not include GEISA applications, a conformance framework, or an
+application-management implementation such as GridOps. Matter, Zigbee, the NXP
+WLAN SDK, and a firmware daemon are also outside this image. The separate NXP
+Ethos-U/TFLite profile input is locally staged and is not redistributed in this
+source tree until its provenance and redistribution terms are verified.
+
+The supported development baseline is Yocto Scarthgap with the pinned NXP
+`lf-6.6.y` kernel source and its 6.6.36-based configuration. A newer BSP or
+kernel migration is a separate future track, not part of this image release.
 
 ## Specification Requirements Versus Image Details
 
@@ -59,6 +65,18 @@ release image.
 This image is intended to support commonly available SD cards while allowing
 additional space for installed applications and platform artifacts.
 
+At boot, a systemd generator derives `/platform` from the active root device.
+It accepts only `/dev/mmcblkXp2` as the root source and mounts the matching
+`/dev/mmcblkXp3`. This prevents a cloned SD card and eMMC device with duplicate
+filesystem labels or identifiers from being cross-mounted. An unsupported or
+malformed root source makes the local-filesystem dependency fail clearly rather
+than selecting another device's platform partition.
+
+On the validated FRDM-i.MX93 SD boot, root mounted from `/dev/mmcblk1p2` and
+`/platform` from `/dev/mmcblk1p3`. The generated `platform.mount` and early
+`geisa-platform-fsck.service` selected that sibling partition and fsck reported
+the filesystem clean.
+
 Managed application packages, installed applications, configuration, state,
 persistent storage, and event records are stored below `/var/lib/geisa` on the
 root filesystem. The larger root partition provides some headroom for those
@@ -92,6 +110,11 @@ limit each application's CPU, memory, and storage. This image uses LXC to run
 an application in its own container and Linux cgroup v2 to apply those limits.
 GEISA does not require LXC or cgroup v2; they are this image's implementation
 choice.
+
+The development kernel also enables checkpoint/restore prerequisites, socket
+diagnostics, trace events, and dynamic kernel probes. CRIU userspace is not
+included and no checkpoint service is enabled; these are on-demand diagnostic
+capabilities for a developer who chooses to install and use compatible tools.
 
 Application packages may declare CPU, memory, storage, and process needs in
 their application manifest. The System Operator can approve or adjust those
@@ -149,6 +172,10 @@ possible.
 `main` contains the current development version. A published release may name
 a tag; to reproduce that release, check out its tag before building. Use
 `git tag --list` to see all available tags.
+
+Development builds may intentionally record a dirty source state while image
+work is in progress. A publication build must begin from the reviewed clean
+source revision and record that revision with the generated artifacts.
 
 ## NXP License Acceptance
 
@@ -314,7 +341,20 @@ findmnt /
 findmnt /platform
 cat /proc/cmdline
 lsblk -f
+systemctl status platform.mount geisa-platform-fsck.service --no-pager
+systemctl --failed --no-pager
+test -r /usr/lib/firmware/regulatory.db
+test -r /usr/lib/firmware/regulatory.db.p7s
+test -r /usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se
+bluetoothctl list
+bluetoothctl show
+dmesg | grep -E 'regulatory\.db|cfg80211|Bluetooth|bluetooth'
 ```
+
+The root and platform sources must have the same `mmcblkX` device number, with
+root on partition 2 and `/platform` on partition 3. For example, SD boot uses
+`/dev/mmcblk1p2` and `/dev/mmcblk1p3`; eMMC boot uses `/dev/mmcblk0p2` and
+`/dev/mmcblk0p3`.
 
 Testing a new image from SD before installing it on eMMC is strongly
 recommended. Use the same verified WIC for both steps so the eMMC installation
@@ -327,8 +367,10 @@ Early boot on the FRDM-i.MX93 can show Ethernet link-up messages, audit notices
 while services load, and deferred-probe notices for display-controller or
 display regulator devices. These messages were present during successful
 Ethernet, container, MQTT, and Ethos-U NPU testing under load and do not
-prevent those functions from operating. Wi-Fi regulatory data and Bluetooth
-operation remain unvalidated in context of this image at this time.
+prevent those functions from operating. The image includes the selected IW612
+Bluetooth firmware package. On the validated FRDM-i.MX93, firmware download,
+controller discovery, and `bluetoothctl show` completed without baud-rate,
+wake-up, power-save, or BlueZ directory-mode failures.
 
 ## Managed Application Container Root Filesystem
 
@@ -441,6 +483,18 @@ A complete installed-package manifest is available on a running image at
 | `/usr/bin/xml`            | Inspect XML                                        |
 | `vela`                    | Compile and check Ethos-U compatible TFLite models |
 
+### Board and Kernel Bring-up
+
+| Tools                            | Use                                                       |
+| -------------------------------- | --------------------------------------------------------- |
+| `can-utils`                      | Inspect and test SocketCAN interfaces and virtual CAN     |
+| `iw`, `rfkill`, `ethtool`         | Inspect wireless, radio state, and Ethernet link settings |
+| `i2c-tools`, `libgpiod-tools`     | Inspect I2C buses and GPIO character devices              |
+| `mmc-utils`, `usbutils`, `dtc`    | Inspect eMMC/SD, USB devices, and device trees            |
+| `nft`                            | Inspect and test nftables policies                        |
+| `perf`, `bpftool`, tracefs        | Profile and inspect kernel performance and BPF state      |
+| `gdb`, `gdbserver`, `strace`      | Debug processes locally or from a development host        |
+
 ### Editors and File Work
 
 | Tools                         | Use                                             |
@@ -489,18 +543,21 @@ marker, and records image identity, build time, partition layout, artifact
 hashes, and Yocto revision state.  `/etc/geisa-image-release` provides a more
 concise human-readable companion file.
 
-Bluetooth remains enabled in the image. The NXP IW612 firmware is proprietary
-and is available through the NXP BSP layers, but this community image does not
-claim to redistribute it unless the final package and license manifests
-explicitly list it. Building optional NXP firmware may require acceptance of
-the applicable NXP license terms.
+The image installs `firmware-nxp-wifi-nxpiw612-sdio` from NXP's pinned
+`imx-firmware` source on the `lf-6.6.52_2.2.0` branch. The package supplies the
+IW612 firmware path `/usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se` and is
+declared `Proprietary` by the BSP recipe. Building it requires the documented
+NXP EULA acceptance. Redistribution authorization remains subject to the NXP
+EULA Component Register and section 2.3, and must be reviewed before a public
+binary release.
 
-`wireless-regdb` provides regional Wi-Fi channel and transmit-power rules. It
-is not currently installed as part of this image, although may be added in a
-future version if there are requests for it. It is only relevant when Wi-Fi is
-enabled; it's expected but untested that normal WiFi will continue to work on
-the board using effectively 'global' mode which may not work in some countries.
-Its absence does not affect image-enabled current Ethernet and Ethos-U usage.
+The selected kernel requires a signed wireless regulatory database. The image
+installs `wireless-regdb-static`, which provides
+`/usr/lib/firmware/regulatory.db` and
+`/usr/lib/firmware/regulatory.db.p7s`; the image build asserts both files when
+the kernel enables signed regulatory databases. A final SD candidate boot must
+also confirm that the kernel loads the database without the former cfg80211
+warning. This is separate from Ethernet and Ethos-U operation.
 
 Community image metadata/docs/scripts are Apache-2.0 only; this does not cover
 all Yocto packages, BSP firmware, models, fixtures, or third-party libraries.

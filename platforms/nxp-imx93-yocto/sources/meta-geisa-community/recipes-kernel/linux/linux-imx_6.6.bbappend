@@ -10,5 +10,6 @@ LINUX_VERSION:geisa-imx93-machine = "6.6.36"
 
 SRC_URI:append = " \
     file://container.cfg \
+    file://development.cfg \
     file://unused-configs.cfg \
 "
