@@ -1,0 +1,14 @@
+[Unit]
+Description=Demonstration of non-isolated service
+
+[Service]
+# General
+Type=simple
+RemainAfterExit=false
+ExecStart=/usr/bin/demo.py unsandboxed
+SyslogIdentifier=demo_unsandboxed
+StandardOutput=journal
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

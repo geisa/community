@@ -12,3 +12,6 @@
 
 # ZeroMQ performance evaluation
 /demonstrations/performance/perf-eval-zeromq/ @ricksteu-utilidata @swegener-rtp
+
+# Systemd application isolation demonstration
+/demonstrations/application-isolation-security-systemd-demo/ @blthayer @swegener-rtp
