@@ -14,7 +14,7 @@ cleanup() {
 	sudo rm -f \
 		/usr/bin/demo.py \
 		/usr/bin/cleanup.py \
-		/etc/systmd/system/demo.service \
+		/etc/systemd/system/demo.service \
 		/etc/systemd/system/demo_unsandboxed.service
 	# No need for --remove because the user was created with
 	# the --system flag.

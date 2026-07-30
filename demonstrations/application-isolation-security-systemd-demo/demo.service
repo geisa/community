@@ -105,7 +105,7 @@ IPAddressDeny=any
 # to even list out the contents of /home,
 # which is great! Without an empty
 # bounding set but with ProtectHome=true,
-# the service sees an empty directory. 
+# the service sees an empty directory.
 CapabilityBoundingSet=
 
 # Restrict access to all namespaces.
