@@ -3,3 +3,6 @@
 
 # Protobuf demonstrations.
 /demonstrations/protobuf-demos/ @blthayer @swegener-rtp
+
+# GEISA technical notes.
+/implementation-guidance/tech-notes/ @nmcentire400 @swegener-rtp

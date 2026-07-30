@@ -1,10 +1,17 @@
 # GEISA Community
 
-The GEISA Community repository contains software, platform foundations, applications, example implementations, demonstrations, tools, documentation, and other resources related to the Grid Edge Interoperability and Security Alliance (GEISA).
+The GEISA Community repository contains software, platform foundations,
+applications, example implementations, demonstrations, tools, documentation,
+and other resources related to the Grid Edge Interoperability and Security
+Alliance (GEISA).
 
-Its purpose is to encourage adoption of GEISA by providing a place where developers, utilities, vendors, researchers, and other members of the community can contribute and share projects that help implement, evaluate, or use GEISA.
+Its purpose is to encourage adoption of GEISA by providing a place where
+developers, utilities, vendors, researchers, and other members of the community
+can contribute and share projects that help implement, evaluate, or use GEISA.
 
-Unlike the GEISA Specification and Conformance repositories, the contents of this repository do not define the GEISA specification or determine GEISA conformance.
+Unlike the GEISA Specification and Conformance repositories, the contents of
+this repository do not define the GEISA specification or determine GEISA
+conformance.
 
 ## GEISA Ecosystem
 
