@@ -1,0 +1,265 @@
+#!/bin/sh
+#
+# geisa-system-state - Lightweight GEISA edge host state reporter.
+#
+# Copyright 2026 PragSol Consulting, LLC
+# Website: https://www.pragsolconsulting.com/
+#
+# Licensed under the Apache License, Version 2.0.
+# SPDX-License-Identifier: Apache-2.0
+#
+# This utility deliberately uses only base-image tools. Each section is
+# independent so an uncommissioned host or an unavailable optional facility
+# never prevents the rest of the health report from being useful.
+
+INTERVAL="${INTERVAL:-2}"
+ONCE=0
+DEBUG=0
+SYSFS_ROOT="${SYSFS_ROOT:-/sys}"
+PROC_ROOT="${PROC_ROOT:-/proc}"
+GEISA_STATE_ROOT="${GEISA_STATE_ROOT:-/var/lib/geisa}"
+
+usage() {
+    cat <<'EOF'
+Usage:
+  geisa-system-state [--once] [--debug]
+
+Environment:
+  INTERVAL=2      Refresh interval in seconds.
+  NO_CLEAR=1      Do not clear screen between interactive samples.
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --once) ONCE=1 ;;
+        --debug) DEBUG=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'unsupported option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+    shift
+done
+
+have() { command -v "$1" >/dev/null 2>&1; }
+read_file() { cat "$1" 2>/dev/null || true; }
+
+format_temp() {
+    raw="$1"
+    if [ -n "$raw" ] && have awk; then
+        awk -v value="$raw" 'BEGIN { printf "%.1f C", value / 1000 }'
+    elif [ -n "$raw" ]; then
+        printf '%s C' "$((raw / 1000))"
+    else
+        printf 'unavailable'
+    fi
+}
+
+print_header() {
+    printf 'GEISA system state: %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || date)"
+    printf 'Hostname: %s\n' "$(hostname 2>/dev/null || printf unknown)"
+}
+
+print_geisa_identity() {
+    printf 'GEISA account: '
+    if have id && id geisa >/dev/null 2>&1; then
+        id geisa 2>/dev/null || printf 'geisa account unavailable\n'
+    else
+        printf 'geisa account unavailable\n'
+    fi
+}
+
+print_cgroup() {
+    printf 'Cgroups: '
+    if [ -d "$SYSFS_ROOT/fs/cgroup" ]; then
+        fs_type="$(stat -fc '%T' "$SYSFS_ROOT/fs/cgroup" 2>/dev/null || printf unknown)"
+        controllers="$(read_file "$SYSFS_ROOT/fs/cgroup/cgroup.controllers")"
+        printf '%s controllers=%s\n' "$fs_type" "${controllers:-unavailable}"
+    else
+        printf 'not mounted\n'
+    fi
+}
+
+print_network() {
+    printf 'Network: '
+    if ! have ip; then
+        printf 'ip unavailable\n'
+        return
+    fi
+
+    rows="$(ip -o -4 addr show 2>/dev/null | awk '{ print $2, $4 }' || true)"
+    links="$(ip -o link show 2>/dev/null || true)"
+    summary=""
+    if [ -n "$links" ]; then
+        interfaces="$(printf '%s\n' "$links" | awk -F': ' '
+            $2 != "" {
+                split($2, fields, " ")
+                if (fields[1] != "lo") {
+                    state = "UNKNOWN"
+                    if (match($0, /state [^ ]+/)) {
+                        state = substr($0, RSTART + 6, RLENGTH - 6)
+                    }
+                    print fields[1] "|" state
+                }
+            }
+        ')"
+        while IFS='|' read -r name state; do
+            [ -n "$name" ] || continue
+            address="$(printf '%s\n' "$rows" | awk -v interface="$name" '$1 == interface { print $2; exit }')"
+            [ -z "$summary" ] || summary="$summary; "
+            summary="${summary}${name} ${state:-UNKNOWN} ${address:-<no IP>}"
+        done <<EOF
+$interfaces
+EOF
+    # Some minimal ip implementations omit link rows; retain useful IPv4 data.
+    elif [ -n "$rows" ]; then
+        while IFS=' ' read -r name address; do
+            [ "$name" = lo ] && continue
+            [ -z "$summary" ] || summary="$summary; "
+            summary="${summary}${name} UNKNOWN ${address}"
+        done <<EOF
+$rows
+EOF
+    else
+        summary="unavailable"
+    fi
+    printf '%s\n' "$summary"
+}
+
+print_thermal() {
+    found=0
+    for zone in "$SYSFS_ROOT"/class/thermal/thermal_zone*; do
+        [ -d "$zone" ] || continue
+        name="$(read_file "$zone/type")"
+        raw="$(read_file "$zone/temp")"
+        [ -n "$name" ] || name="$(basename "$zone")"
+        printf 'Thermal: %s %s\n' "$name" "$(format_temp "$raw")"
+        found=1
+    done
+    [ "$found" -eq 1 ] || printf 'Thermal: unavailable\n'
+}
+
+print_filesystems() {
+    printf '\nFilesystems:\n'
+    if have df; then
+        # A single df call supplies one stable header and only image-relevant mounts.
+        if have findmnt && findmnt -rn -T /platform >/dev/null 2>&1; then
+            df -hP / /platform 2>/dev/null || printf 'unavailable\n'
+        else
+            df -hP / 2>/dev/null || printf 'unavailable\n'
+        fi
+    else
+        printf 'df unavailable\n'
+    fi
+}
+
+print_resources() {
+    printf '\nResources:\n'
+    uptime 2>/dev/null || printf 'uptime unavailable\n'
+    if have free; then
+        free -m 2>/dev/null | sed -n '1,3p' || true
+    else
+        awk '/MemTotal|MemAvailable|SwapTotal|SwapFree/ { print }' "$PROC_ROOT/meminfo" 2>/dev/null || true
+    fi
+}
+
+print_lxc() {
+    printf '\nLXC:\n'
+    if ! have lxc-ls; then
+        printf 'lxc-ls unavailable\n'
+        return
+    fi
+    output="$(lxc-ls --fancy 2>/dev/null || true)"
+    # lxc-ls prints its column heading even when there are no containers.
+    rows="$(printf '%s\n' "$output" | sed -n '2,$p' | sed '/^[[:space:]]*$/d')"
+    if [ -n "$output" ] && [ -n "$rows" ]; then
+        printf '%s\n' "$output"
+    else
+        printf 'none\n'
+    fi
+}
+
+print_managed_apps() {
+    printf '\nManaged applications:\n'
+    registry="$GEISA_STATE_ROOT/app-registry/managed-apps.json"
+    if ! have python3 || [ ! -r "$registry" ]; then
+        printf 'runtime not installed or registry unavailable\n'
+        return
+    fi
+    python3 - "$registry" <<'PYAPPS'
+import json
+import sys
+
+try:
+    with open(sys.argv[1], encoding="utf-8") as source:
+        document = json.load(source)
+except (OSError, ValueError):
+    print("registry unavailable")
+    raise SystemExit(0)
+
+rows = []
+for app in document.get("app_instances", []):
+    if app.get("install_state") != "installed":
+        continue
+    app_id = app.get("app_id") or "unknown"
+    name = app.get("display_name") or app_id
+    rows.append((name, app_id, app.get("execution_state") or "unknown"))
+
+for name, app_id, state in sorted(rows):
+    label = f"{name} ({app_id})" if name != app_id else app_id
+    print(f"{label} state={state}")
+if not rows:
+    print("none installed")
+PYAPPS
+}
+
+print_systemd() {
+    failed=""
+    if have systemctl; then
+        failed="$(systemctl --failed --no-legend 2>/dev/null | sed '/^[[:space:]]*$/d' || true)"
+    fi
+    if [ -z "$failed" ]; then
+        printf '\nSystemd: failed=0\n'
+    else
+        count="$(printf '%s\n' "$failed" | wc -l | tr -d '[:space:]')"
+        printf '\nSystemd: failed=%s\n' "$count"
+        [ "$DEBUG" -eq 1 ] && printf '%s\n' "$failed"
+    fi
+}
+
+print_debug() {
+    [ "$DEBUG" -eq 1 ] || return 0
+    printf '\nDebug network routes:\n'
+    ip route 2>/dev/null || true
+    printf '\nDebug listening sockets:\n'
+    ss -lntup 2>/dev/null || true
+    printf '\nDebug recent warnings/errors:\n'
+    if have journalctl; then
+        journalctl -b -p warning..alert --no-pager -n 40 2>/dev/null || true
+    else
+        dmesg 2>/dev/null | grep -Ei 'warn|error|fail|oom|ethosu|remoteproc|rpmsg|lxc|mosquitto|cgroup' | tail -40 || true
+    fi
+}
+
+print_report() {
+    print_header
+    print_geisa_identity
+    print_lxc
+    print_managed_apps
+    print_cgroup
+    print_network
+    print_thermal
+    print_filesystems
+    print_resources
+    print_systemd
+    print_debug
+}
+
+while :; do
+    # Clear only interactive refreshes. Redirected output remains log-friendly.
+    if [ "$ONCE" -ne 1 ] && [ "${NO_CLEAR:-0}" != 1 ] && [ -t 1 ]; then
+        clear 2>/dev/null || true
+    fi
+    print_report
+    [ "$ONCE" -eq 1 ] && exit 0
+    sleep "$INTERVAL"
+done

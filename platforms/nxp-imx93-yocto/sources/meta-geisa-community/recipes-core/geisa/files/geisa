@@ -1,0 +1,4 @@
+# GEISA image runtime defaults. Site and deployment identity are commissioned
+# after first boot rather than embedded in the image.
+GEISA_RUNTIME_USER=geisa
+GEISA_RUNTIME_GROUP=geisa

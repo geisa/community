@@ -1,0 +1,2 @@
+# Members of the standard administrative group authenticate before using sudo.
+%sudo ALL=(ALL:ALL) ALL
