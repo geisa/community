@@ -1,8 +1,11 @@
 # Repository-wide fallback owner.
 * @swegener-rtp
 
-# Protobuf demonstrations.
+# Protobuf demonstrations
 /demonstrations/protobuf-demos/ @blthayer @swegener-rtp
 
-# GEISA technical notes.
+# GEISA technical notes
 /implementation-guidance/tech-notes/ @nmcentire400 @swegener-rtp
+
+# IPC timing demonstrations
+/demonstrations/performance/ipc-timings/ @nmcentire400 @swegener-rtp
