@@ -1,0 +1,133 @@
+[Unit]
+Description=Application isolation demonstration
+
+[Service]
+# General
+Type=simple
+RemainAfterExit=false
+ExecStart=/usr/bin/demo.py sandboxed
+SyslogIdentifier=demo
+StandardOutput=journal
+StandardError=inherit
+
+# Security:
+User=demo
+Group=demo
+# DynamicUser=true could be useful for services
+# which do not create files on the filesystem.
+
+
+# Directory protections:
+# Note that if ProtectSystem= is set to "strict"
+# and PrivateTmp= is enabled, then /tmp/ and /var/tmp/
+# will be writable.
+ProtectSystem=strict
+PrivateTmp=true
+ProtectHome=true
+RestrictSUIDSGID=true
+# ProtectProc is not effective when a service is
+# run as the root user.
+ProtectProc=invisible
+# From the man pages, note that:
+# "Note that Linux exposes various kernel APIs via /proc/,
+# which are made unavailable with this setting. Since these
+# APIs are used frequently this option is useful only in a few,
+# specific cases, and is not suitable for most non-trivial
+# programs."
+# Enabling "ProcSubset=pid" screws up demonstrating some
+# other features, so we'll leave it off for now.
+# ProcSubset=pid
+# "strict" only came into being in systemd 257,
+# which is not what we're running... so I belive
+# with this setting we get a private, but writeable,
+# mount of /sys/fs/cgroup.
+ProtectControlGroups=true
+
+# Block syslog(2) calls. This blocks a very low
+# level kernel call and for now we won't prove
+# out the restriction in the Python program.
+ProtectKernelLogs=true
+
+ProtectKernelModules=true
+ProtectKernelTunables=true
+
+# System calls
+SystemCallArchitectures=native
+# Initial attempt to set this to
+# @basic-io @file-system caused Python to
+# segfault (I think). So rather than dump
+# a ton of time into finding the perfect set or sets
+# for this demo, just use @system-service, which is
+# "A reasonable set of system calls used by common
+# system services..."
+SystemCallFilter=@system-service
+SystemCallFilter=~@resources @privileged
+
+RestrictRealtime=true
+
+# Set up new user namespace
+# and configure user/group mapping.
+PrivateUsers=true
+
+# Device protections:
+# Note that when access to some but
+# not all devices must be possible,
+# the DeviceAllow= setting might be
+# used instead.
+PrivateDevices=true
+# Since we're protecting all devices,
+# we cannot really prove out the
+# clock protection. Note that
+# Enabling ProtectClock infers/creates
+# a "DeviceAllow=char-rtc r" which
+# lowers our "DeviceAllow" score from
+# systemd-analyze, but lowers the total
+# exposure score. This appears to be a
+# shortcoming of systemd-analyze security:
+# It's docking our score for not setting
+# ProtectClock, but setting ProtectClock
+# actually *allows* a device which was
+# already disallowed via PrivateDevices=true.
+ProtectClock=true
+
+# Network/sockets:
+PrivateNetwork=true
+# Do not allow socket creation:
+RestrictAddressFamilies=none
+# Deny all IPv4 and IPv6 addresses.
+# Difficult to verify/prove out with
+# RestrictAddressFamilies=none.
+IPAddressDeny=any
+
+# Capabilities:
+# Empty set.
+# Adding this broke the service's ability
+# to even list out the contents of /home,
+# which is great! Without an empty
+# bounding set but with ProtectHome=true,
+# the service sees an empty directory. 
+CapabilityBoundingSet=
+
+# Restrict access to all namespaces.
+RestrictNamespaces=true
+
+# Not really something we can easily prove out
+# in the demo service due to the nature of
+# execve
+NoNewPrivileges=true
+LockPersonality=true
+
+# Deny creating mmaps that are writeable and executable.
+MemoryDenyWriteExecute=true
+
+# Clean up IPC objects.
+RemoveIPC=true
+
+# The following umask value results in default file
+# permissions of 600
+UMask=066
+
+ProtectHostname=true
+
+[Install]
+WantedBy=multi-user.target
