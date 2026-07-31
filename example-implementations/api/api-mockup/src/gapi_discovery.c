@@ -5,6 +5,7 @@
  */
 
 #include "gapi_discovery.h"
+#include <libgen.h>
 
 // NOLINTBEGIN(cppcoreguidelines-interfaces-global-init,cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 static GeisaPlatformDiscovery_GEISA geisa_platform_info = {
@@ -218,12 +219,12 @@ api_platform_discovery_build_response(GeisaPlatformDiscovery_Rsp *response)
 	response->has_waveform = true;
 }
 
-GeisaPlatformDiscovery_Waveform get_waveform_info()
+GeisaPlatformDiscovery_Waveform get_waveform_info(void)
 {
 	return waveform_platform_info;
 }
 
-GeisaPlatformDiscovery_Sensor get_sensors_info()
+GeisaPlatformDiscovery_Sensor get_sensors_info(void)
 {
 	return sensor_platform_info;
 }

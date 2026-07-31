@@ -63,7 +63,7 @@ static void on_message(struct mosquitto *mosq, void *obj,
 	}
 }
 
-static void free_topic_handlers()
+static void free_topic_handlers(void)
 {
 	for (int i = 0; i < topic_handler_count; i++) {
 		free(topic_handlers[i].topic);

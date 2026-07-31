@@ -5,6 +5,7 @@
  */
 
 #include "gapi_manifest.h"
+#include <libgen.h>
 
 static GeisaStatus geisa_manifest_success_status = {
 	.code = GeisaStatusCode_GEISA_STATUS_SUCCESS,

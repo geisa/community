@@ -33,6 +33,6 @@ void api_waveform_init(struct mosquitto *mosq);
 /**
  * @brief Deinitialize API waveform data messages
  */
-void api_waveform_deinit();
+void api_waveform_deinit(void);
 
 #endif // GAPI_WAVEFORM_H

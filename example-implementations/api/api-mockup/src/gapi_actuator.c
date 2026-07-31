@@ -5,6 +5,7 @@
  */
 
 #include "gapi_actuator.h"
+#include <libgen.h>
 
 static GeisaStatus geisa_actuator_success_status = {
 	.code = GeisaStatusCode_GEISA_STATUS_SUCCESS,

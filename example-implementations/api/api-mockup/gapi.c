@@ -15,7 +15,7 @@ volatile bool running = true;
 volatile bool isConnected = false;
 #define PORT 1883
 
-int main()
+int main(void)
 {
 	pthread_t instantaneous_thread = 0;
 	const char *broker = "localhost";

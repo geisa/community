@@ -270,7 +270,7 @@ void on_message(struct mosquitto *mosq, void *obj,
 	}
 }
 
-int main()
+int main(void)
 {
 	struct mosquitto *mosq;
 	mosquitto_lib_init();

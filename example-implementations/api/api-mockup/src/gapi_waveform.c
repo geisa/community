@@ -6,6 +6,7 @@
 
 #include "gapi_waveform.h"
 #include "gapi_discovery.h"
+#include <libgen.h>
 
 enum { MAX_WAVEFORM_SOCKETS = 16 };
 enum { MAX_CONNECTION_SOCKFD = 10 };
@@ -595,7 +596,7 @@ void api_waveform_init(struct mosquitto *mosq)
 	}
 }
 
-void api_waveform_deinit()
+void api_waveform_deinit(void)
 {
 	char *socket_path = NULL;
 
