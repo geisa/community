@@ -1,3 +1,5 @@
+<!-- markdownlint-configure-file {"MD013": false, "MD046": false} -->
+
 # GEISA Development Image for NXP i.MX93
 
 Prepared by [PragSol Consulting LLC](https://www.pragsolconsulting.com). This
@@ -8,40 +10,37 @@ information, see <https://lfenergy.org/projects/geisa/>.
 
 This community-contributed development and validation image targets the NXP
 FRDM-i.MX93. It is not an official GEISA-supported deliverable, a conformance
-image or intended for production use. Future maintenance belongs to community
-maintainers, not the GEISA organization. Its source is available at:
+image, or a production image. Its source is available at:
 
 <https://github.com/geisa/community/tree/main/platforms/nxp-imx93-yocto>
 Community questions and issue reports belong in the
-[GEISA Community issue tracker](https://github.com/geisa/community/issues),
-not the specification or conformance repositories.
+[GEISA Community issue tracker](https://github.com/geisa/community/issues).
 
 ## Platform and Image Contents
 
-The image is a Yocto/OpenEmbedded `geisa-dev-image` for `geisa-imx93` (AArch64).
+The image is a Yocto/OpenEmbedded `geisa-dev-image` for `geisa-imx93` (aarch64).
 It provides LXC, Mosquitto, GEISA runtime defaults, a managed container root,
 and Ethos-U support packages, along with development tools and utilities. It
-does not include GEISA applications, a conformance framework, or an
-application-management implementation such as GridOps. Matter, Zigbee, the NXP
-WLAN SDK, and a firmware daemon are also outside this image. The NXP Ethos-U/
-TFLite execution profile is generated during the build from declared Yocto
-package outputs and a checksum-pinned public PyAV wheel; no local profile
-archive is required.
+does not include GEISA applications, the GEISA conformance framework, or a
+GEISA edge-platform or application-management implementation. It is intended
+to support development and testing of those implementations. Matter, Zigbee,
+the NXP WLAN SDK, and firmware daemons are outside the scope of this image.
 
 The stable development baseline is Yocto Scarthgap with the pinned NXP
 `lf-6.6.y` kernel source and its 6.6.36-based configuration. A newer BSP or
-kernel migration is a separate future track, not part of this image release.
+kernel migration may be done via a separate future track, but is not part of
+this image release.
 
 ## Specification Requirements Versus Image Details
 
-| Classification            | Meaning                                                       |
-| ------------------------- | ------------------------------------------------------------- |
-| Specification requirement | LEE `/etc/geisa/mqtt.conf` is available in each app container |
-| Specification requirement | Platform controls CPU, RAM, and persistent/nonpersistent data |
-| Specification requirement | `/tmp` is bounded; `/home/geisa` is persistent and bounded    |
-| Implementation convention | Host `/etc/geisa`, `/opt/geisa`, `/var/lib/geisa`, and LXC    |
-| Image-specific convention | `/platform` holds large and operator/validation artifacts     |
-| Validation recommendation | Record requested, rendered, effective, and observed values    |
+| Classification            | Meaning                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Specification requirement | LEE `/etc/geisa/mqtt.conf` is available in each app container                                                      |
+| Specification requirement | Platform controls CPU, RAM, and persistent/nonpersistent data                                                      |
+| Specification requirement | `/tmp` is bounded; `/home/geisa` is persistent and bounded                                                         |
+| Implementation convention | Host `/etc/geisa`, `/opt/geisa`, `/var/lib/geisa`, and LXC                                                         |
+| Image-specific convention | `/platform` holds large and operator/validation artifacts                                                          |
+| Validation recommendation | Record what the app asked for, what platform configured, what the kernel applied, and what was observed at runtime |
 
 Note that the GEISA specification uses LXC and `/platform` as examples; the
 specification does not mandate the host paths, use of LXC, cgroup v2,
@@ -74,9 +73,10 @@ malformed root source makes the local-filesystem dependency fail clearly rather
 than selecting another device's platform partition.
 
 Managed application packages, installed applications, configuration, state,
-persistent storage, and event records are stored below `/var/lib/geisa` on the
-root filesystem. The larger root partition provides some headroom for those
-runtime paths and for the development toolchain.
+persistent storage, and event records are intended to be stored below
+`/var/lib/geisa` on the root filesystem. The root partition size provides
+some headroom for those runtime paths and for the development toolchain but
+individual use and purpose may obviously drive partitioning changes.
 
 The following locations are part of the image layout. The GEISA-required MQTT
 file is mapped inside each application container; the remaining host locations
@@ -115,22 +115,21 @@ capabilities for a developer who chooses to install and use compatible tools.
 Application packages may declare CPU, memory, storage, and process needs in
 their application manifest. The System Operator can approve or adjust those
 values in a Deployment Manifest, which the platform then uses when configuring
-the application. An EMA/application-management implementation can translate
-the declarations it supports into LXC and cgroup v2 settings. Effective values
-for a running application can be inspected in that application's directory
-below `/sys/fs/cgroup`. Running a real or representative workload can help
-confirm resource use or CPU throttling.
+the application. A GEISA platform implementation can translate the application
+settings it supports into LXC and cgroup v2 limits. For a running application,
+the applied values can be checked in the application's cgroup directory under
+`/sys/fs/cgroup`. Running a real or representative workload can help confirm
+resource use or CPU throttling.
 
 The NXP execution profile is at `/platform/profiles/nxp-ethosu-tflite`.
 Packages should select that profile rather than hard-code host paths.
 Per-application MQTT configuration is provided in the container at
-`/etc/geisa/mqtt.conf`.
-The profile is generated by `geisa-nxp-ethosu-tflite-profile` from the declared
-TensorFlow Lite, Ethos-U, and NumPy package outputs plus an exact PyAV 18.0.0
-wheel fetched by BitBake. Its generated `profile.json` records the source
-inputs and file inventory. See
-[the profile note](docs/nxp-ethosu-tflite-profile.md) for the source and
-redistribution boundary.
+`/etc/geisa/mqtt.conf`.  The profile is generated by
+`geisa-nxp-ethosu-tflite-profile` from the TensorFlow Lite, Ethos-U,
+and NumPy package outputs in addition to the PyAV 18.0.0 wheel fetched by
+BitBake. Its generated `profile.json` records the source inputs and file
+inventory. See [the profile note](docs/nxp-ethosu-tflite-profile.md) for source
+and more details.
 
 ### Application Storage
 
@@ -142,10 +141,10 @@ Application configuration and host-managed runtime state are stored separately
 under `/var/lib/geisa/config/<app-id>` and `/var/lib/geisa/state/<app-id>`.
 
 This image provides the kernel, LXC, cgroup-v2, MQTT, filesystem, execution
-profile, and container-base support needed by a GEISA application-management
-implementation. The implementation selected by the user is responsible for
-translating application declarations into runtime policy and for reporting or
-enforcing the limits it supports.
+profile, and container-base support needed by a GEISA
+EMA/application-management implementation. That implementation is responsible
+for translating the resource settings in an application's Deployment Manifest
+into runtime policy and enforcing the limits it supports.
 
 ## Build Requirements
 
@@ -300,7 +299,7 @@ following U-Boot commands are an example for booting this image from an SD card
 when the SD device is `mmc 1` and its Linux root filesystem is
 `/dev/mmcblk1p2`:
 
-```
+```text
 setenv bootargs console=ttyLP0,115200 earlycon \
   root=/dev/mmcblk1p2 rootwait rw
 fatload mmc 1:1 0x80400000 Image
@@ -314,7 +313,7 @@ or after changing the installed media.
 Before writing an SD card, use `lsblk` to identify the correct removable device
 and verify the downloaded WIC SHA-256. A typical write command is:
 
-```
+```sh
 zstd -dc <image>.wic.zst |
   sudo dd of=<device> bs=16M conv=fsync status=progress
 sync
@@ -326,7 +325,7 @@ partitions. Writing to the wrong device will destroy its existing contents.
 After booting, these commands may be helpful for confirming the active root
 and platform filesystems:
 
-```
+```sh
 findmnt /
 findmnt /platform
 cat /proc/cmdline
@@ -369,9 +368,10 @@ installed separately by a platform's EMA/application management
 implementation.
 
 Tar and SquashFS forms of container root filesystems are stored under
-`/platform/base`. An active application-management implementation may select
-the form it supports. Exact filenames and SHA-256 hashes are intended to be
-recorded in `/etc/geisa/image-manifest.json`.
+`/platform/base`. An active EMA/application-management implementation may
+select the form it supports. The image manifest at
+`/etc/geisa/image-manifest.json` records the exact filenames and SHA-256
+hashes.
 
 ## Ethos-U
 
@@ -450,9 +450,32 @@ Vela offloads only the model operations that it supports. Unsupported layers,
 along with some application preprocessing and postprocessing, may still run on
 the CPU.
 
+### On-device Ethos NPU Smoke Test
+
+`geisa-ethosu-smoke-test` is a small host-side development diagnostic, not a
+GEISA or managed application and not for use as a performance benchmark. It
+uses the Apache-2.0 TensorFlow Lite MobileNet example and Grace Hopper image
+already in the image, compiles the model with Vela for the i.MX93 NPU, then
+runs one inference through `/dev/ethosu0` and `libethosu_delegate.so`.
+
+It will output the model, input, delegate, device, compiled-model path and
+SHA-256, delegation use, result, elapsed time, and finally - `PASS` or `FAIL`.
+It will return success only if the delegate reports delegated nodes and the
+expected result, so a CPU-only fallback will not pass.
+
+    geisa-ethosu-smoke-test
+    geisa-ethosu-smoke-test --profile /platform/profiles/nxp-ethosu-tflite
+
+Use `geisa-ethosu-smoke-test --verbose` to include Vela output. Generated Vela
+files are written to a temporary directory and are removed on exit. Profile
+mode applies the profile's `pythonpath` and `library-path`, uses the
+profile's own `libethosu_delegate.so`, suppresses Python bytecode writes, and
+prints the resolved module and library paths it loaded. See
+`/usr/share/geisa/examples/ethosu-smoke/README` for more details.
+
 ## Tools and Diagnostics
 
-This image is intended to be useful for diagnosis and development, not simply
+This image is intended to be used for diagnosis and development, not simply
 for running prebuilt applications. The tables below identify some of the main
 packages included in this image.
 
@@ -477,18 +500,18 @@ A complete installed-package manifest is available on a running image at
 | Tools                            | Use                                                       |
 | -------------------------------- | --------------------------------------------------------- |
 | `can-utils`                      | Inspect and test SocketCAN interfaces and virtual CAN     |
-| `iw`, `rfkill`, `ethtool`         | Inspect wireless, radio state, and Ethernet link settings |
-| `i2c-tools`, `libgpiod-tools`     | Inspect I2C buses and GPIO character devices              |
-| `mmc-utils`, `usbutils`, `dtc`    | Inspect eMMC/SD, USB devices, and device trees            |
+| `iw`, `rfkill`, `ethtool`        | Inspect wireless, radio state, and Ethernet link settings |
+| `i2c-tools`, `libgpiod-tools`    | Inspect I2C buses and GPIO character devices              |
+| `mmc-utils`, `usbutils`, `dtc`   | Inspect eMMC/SD, USB devices, and device trees            |
 | `nft`                            | Inspect and test nftables policies                        |
-| `perf`, `bpftool`, tracefs        | Profile and inspect kernel performance and BPF state      |
-| `gdb`, `gdbserver`, `strace`      | Debug processes locally or from a development host        |
+| `perf`, `bpftool`, tracefs       | Profile and inspect kernel performance and BPF state      |
+| `gdb`, `gdbserver`, `strace`     | Debug processes locally or from a development host        |
 
 ### Editors and File Work
 
 | Tools                         | Use                                             |
 | ----------------------------- | ----------------------------------------------- |
-| `vim`, `nano`                 | Basic terminal editors                           |
+| `vim`, `nano`                 | Basic terminal editors                          |
 | `bash`/`coreutils`/`timeout`  | Useful portable shell and basic tools           |
 | `find`, `grep`, `sed`, `gawk` | Basic file search/manipulation tools            |
 | `tar`, `gzip`, `zstd`, `xz`   | Inspect and create common archive formats       |
@@ -505,7 +528,7 @@ A complete installed-package manifest is available on a running image at
 | `lxc-{ls,info,start,stop,attach}` | Inspect and control managed LXC containers    |
 | `systemctl`, `journalctl`         | Inspect system and service state              |
 | `htop`/`lsof`/`strace`/`tcpdump`  | Diagnose process, file, syscall, and network  |
-| `openssh-misc`                    | Client helpers, including `ssh-keyscan`        |
+| `openssh-misc`                    | Client helpers, including `ssh-keyscan`       |
 | `geisa-system-state`              | GEISA compact health and warning-state helper |
 
 `geisa-system-state` is a community-contributed on-device diagnostic helper.
@@ -530,7 +553,7 @@ Environment variables:
 
 `/etc/geisa/image-manifest.json` is the authoritative machine-readable image
 marker, and records image identity, build time, partition layout, artifact
-hashes, and Yocto revision state.  `/etc/geisa-image-release` provides a more
+hashes, and Yocto revision state. `/etc/geisa-image-release` provides a more
 concise human-readable companion file.
 
 The image installs `firmware-nxp-wifi-nxpiw612-sdio` from NXP's pinned
@@ -542,16 +565,19 @@ EULA Component Register and section 2.3, and must be reviewed before a public
 binary release.
 
 Built-in cfg80211 requests its signed wireless regulatory database before the
-root filesystem is available. The build therefore embeds `regulatory.db` and
-`regulatory.db.p7s` in the kernel image. `wireless-regdb-static` also keeps
-runtime copies at `/usr/lib/firmware/regulatory.db` and
-`/usr/lib/firmware/regulatory.db.p7s`. A hardware boot of each release-candidate WIC
-should confirm that cfg80211 loads the database without a warning. This is
-separate from Ethernet and Ethos-U operation.
+root filesystem is available and was spamming the console, so the build embeds
+`regulatory.db` and `regulatory.db.p7s` in the kernel image.
+`wireless-regdb-static` also keeps runtime copies at
+`/usr/lib/firmware/regulatory.db` and `/usr/lib/firmware/regulatory.db.p7s`.
+The booted image should now load the database without warnings or console
+messages.
 
-Some build hosts cannot inspect this image's `FEATURE_C12` ext4 filesystem
-with older e2fsprogs. Use an e2fsprogs version that supports its enabled
-features for offline release validation; see `docs/known-issues.md`.
+This image uses ext4's `orphan_file` feature in the build. Ubuntu 22.04 and
+other Linux variants' e2fsprogs may not recognize it and may report
+`FEATURE_C12`, exiting with status 12.
+For offline WIC validation, `scripts/inspect-wic.sh` uses the compatible
+e2fsprogs-native tools produced by this build, or a compatible explicit tool
+directory selected with `GEISA_E2FSPROGS_BIN_DIR`. See `docs/known-issues.md`.
 
 `openssh-misc` supplies OpenSSH client helpers such as `ssh-keyscan`. It does
 not add SSH host or private keys, `known_hosts`, private SSH configuration, or

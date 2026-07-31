@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 PragSol Consulting, LLC
+# Website: https://www.pragsolconsulting.com/
+#
 set -euo pipefail
 [ "${1:-}" = development ] || { echo "usage: ACCEPT_FSL_EULA=1 $0 development [-- bitbake-command ...]" >&2; exit 2; }
 [ "${ACCEPT_FSL_EULA:-}" = 1 ] || { echo "ACCEPT_FSL_EULA=1 is required before building; review sources/meta-freescale/EULA and sources/meta-imx/LICENSE.txt" >&2; exit 2; }

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Copyright (C) 2026 PragSol
+# Copyright (C) 2026 PragSol Consulting, LLC
 #
 # Keep the FRDM-i.MX93 primary Ethernet identity stable for DHCP reservations
 # without baking a globally duplicated MAC address into the publishable image.

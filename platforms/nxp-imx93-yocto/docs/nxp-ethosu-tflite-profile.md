@@ -18,6 +18,17 @@ BitBake. The URL, filename, tag, and SHA-256 are declared in
 build. The profile's `profile.json` records this input and its generated file
 inventory.
 
+The generated `profile.json` currently declares:
+
+- `loader.pythonpath = python`
+- `loader.library-path = ["lib", "python/av.libs"]`
+
+That makes the profile a mixed runtime: it is self-contained for its private
+delegate, TensorFlow Lite, `libethosu`, NumPy, and PyAV payloads, while still
+using the host Python interpreter, `/dev/ethosu0`, and the host kernel/firmware
+stack. The host-side `geisa-ethosu-smoke-test --profile ...` path applies that
+loader metadata directly and reports the module and library paths it loaded.
+
 The PyAV project declares BSD-3-Clause for its wheel metadata. The wheel also
 contains bundled multimedia libraries. The source tree does not redistribute
 the wheel, but a release WIC containing the generated profile must undergo the

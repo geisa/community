@@ -1,31 +1,78 @@
 # Release Process
 
-This initial subtree supports development-image work only. Before a public
-artifact is released, record a source revision and submodule revisions, run a
-normal build, and collect one unambiguous WIC plus its manifests, SPDX archive,
-and checksums.
+This platform currently supports development-image releases for the
+NXP FRDM-i.MX93 only.
 
-Confirm the generated `nxp-ethosu-tflite` profile records the declared Yocto
-inputs and pinned PyAV wheel, then run
-`./scripts/validate-release.sh RELEASE_DIRECTORY`. It verifies staged checksums
-and performs read-only ext4 checks on the WIC. The release must stop if e2fsck
-cannot validate the selected ext4 feature set or reports errors.
+Use the checklist below when preparing a release candidate.
 
-Offline acceptance should also verify that the root filesystem contains the
-platform-mount generator, the selected IW612 firmware path
-`/usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se`, and the kernel regulatory
-database paths `/usr/lib/firmware/regulatory.db` and `regulatory.db.p7s`.
-It also should verify that the kernel image embeds the regulatory database and
-signature needed before the root filesystem is available. Hardware acceptance
-should verify that root and `/platform` come from partitions 2 and 3 of the
-same MMC device, that early platform fsck is clean, and that Bluetooth
-controller discovery succeeds without a regulatory-database warning.
+## 1. Start from a clean source state
 
-The final candidate must also confirm the development-only field tools and
-kernel capabilities selected for this image: `can-utils`, `iw`, `rfkill`,
-`nft`, `perf`, `bpftool`, checkpoint/restore prerequisites, socket diagnostics,
-and trace/probe support. This release stays on the reviewed Scarthgap/NXP 6.6
-baseline; BSP or kernel migration requires a separate acceptance cycle.
+- Build from the reviewed source revision intended for release.
+- Confirm the main repository and submodules are at the expected revisions.
+- Confirm the source tree is clean before the release build.
+- Record the source revision and submodule revisions alongside the release
+  artifacts.
 
-Development builds may contain source-dirty provenance while work is in
-progress. Release artifacts should be built from the reviewed clean source state.
+## 2. Run a normal build
+
+- Run a normal development-image build.
+- Identify the exact candidate WIC.
+- Collect the matching checksums, manifests, SPDX archive, and image metadata.
+- Confirm the generated `nxp-ethosu-tflite` profile records the declared Yocto
+  inputs and the pinned PyAV wheel.
+
+## 3. Run release validation
+
+Run:
+
+```sh
+./scripts/validate-release.sh RELEASE_DIRECTORY
+```
+
+This checks the staged artifact set and performs read-only ext4 validation on
+its WIC contents.
+
+Do not release the image if the selected e2fsck cannot validate the filesystem
+feature set or if it reports filesystem errors.
+
+## 4. Complete offline acceptance checks
+
+Confirm that the candidate root filesystem contains:
+
+- the platform-mount generator
+- the selected IW612 firmware path
+  `/usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se`
+- runtime copies of:
+  - `/usr/lib/firmware/regulatory.db`
+  - `/usr/lib/firmware/regulatory.db.p7s`
+
+Also confirm that the kernel image embeds the signed regulatory database and
+signature required before the root filesystem becomes available.
+
+## 5. Complete hardware acceptance checks
+
+Validate the candidate on FRDM-i.MX93 hardware.
+
+Confirm at minimum:
+
+- root and `/platform` come from partitions 2 and 3 of the same MMC device
+- early platform fsck is clean
+- the boot completes without a regulatory-database warning or console messages
+- Bluetooth controller discovery succeeds
+- the expected development-tool set is present
+- the selected kernel capabilities for this image are present, including:
+  - `can-utils`
+  - `iw`
+  - `rfkill`
+  - `nft`
+  - `perf`
+  - `bpftool`
+  - checkpoint/restore prerequisites
+  - socket diagnostics
+  - trace and probe support
+
+## 6. Keep release scope narrow
+
+This release is intended to stay on the reviewed Scarthgap and NXP 6.6
+baseline. A BSP or kernel migration requires its own review and acceptance
+cycle rather than being mixed into a release of this build.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Copyright (C) 2026 PragSol
+# Copyright (C) 2026 PragSol Consulting, LLC
 #
 
 SUMMARY = "GEISA development-image sudo policy"

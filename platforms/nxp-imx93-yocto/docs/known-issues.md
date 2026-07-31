@@ -5,19 +5,22 @@
 The validated FRDM-i.MX93 first-boot `geisa-platform-fsck.service` selected the
 correct sibling platform partition, returned status 0, and reported it clean.
 Some Ubuntu 22.04 and other older build environments provide e2fsprogs 1.46.5
-or another version that does not recognize the ext4 `FEATURE_C12` feature used
-by this image. Such a tool may exit with status 12; that result is not proof of
-filesystem corruption. Offline validation requires a newer compatible e2fsprogs
-environment. Target-side e2fsck may be used when appropriate.
+or another version that does not recognize the ext4 `orphan_file` feature used
+by this image. It may display this as `FEATURE_C12` and exit with status 12;
+that result is not proof of filesystem corruption. Offline validation requires
+a newer compatible e2fsprogs environment. Target-side e2fsck may be used when
+appropriate.
 
 Earlier observations also involved an ambiguous `LABEL=platform` fstab entry
 when the same WIC was present on both SD and eMMC. The image now derives the
 platform partition from the active MMC root device, so this cross-mount cause
 is addressed independently of the host e2fsprogs compatibility limitation.
 
-`scripts/inspect-wic.sh` now extracts the root and platform partitions and runs
-`e2fsck -fn` without modifying them. A candidate must be checked using an
-e2fsprogs version that supports all enabled filesystem features before release.
+`scripts/inspect-wic.sh` extracts the root and platform partitions and runs
+`e2fsck -fn` without modifying them. It prefers an explicit compatible tool
+directory via `GEISA_E2FSPROGS_BIN_DIR`, then uses this build's e2fsprogs-native
+tools. A candidate must be checked using an e2fsprogs version that supports all
+enabled filesystem features before release.
 
 ## NXP Ethos-U/TFLite profile redistribution
 
@@ -38,9 +41,10 @@ still requires review against the NXP EULA Component Register and section 2.3.
 
 The kernel requires signed `regulatory.db` firmware. The image now selects
 `wireless-regdb-static`, which supplies `regulatory.db` and `regulatory.db.p7s`
-under `/usr/lib/firmware`, and the image build asserts both files. The corrected
-image still needs one hardware boot check confirming the previous kernel load
-warning is absent.
+under `/usr/lib/firmware`, and the image build asserts both files. Hardware
+validation confirmed that the corrected kernel now loads the embedded signed
+database during boot without repeating the earlier `failed to load
+regulatory.db` warning.
 
 ## Production image
 

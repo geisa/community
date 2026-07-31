@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Copyright (C) 2026 PragSol
+# Copyright (C) 2026 PragSol Consulting, LLC
 #
 
 SUMMARY = "GEISA i.MX93 Ethos-U development dependencies"
@@ -17,5 +17,6 @@ RDEPENDS:${PN} = " \
     ethos-u-firmware \
     ethos-u-vela \
     geisa-ethosu-device-permissions \
+    geisa-ethosu-smoke-test \
     tensorflow-lite-ethosu-delegate \
 "

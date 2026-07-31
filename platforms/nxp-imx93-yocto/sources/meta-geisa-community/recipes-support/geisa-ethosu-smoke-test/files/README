@@ -1,0 +1,36 @@
+<!--
+SPDX-License-Identifier: Apache-2.0
+Copyright (C) 2026 PragSol Consulting, LLC
+Website: https://www.pragsolconsulting.com/
+-->
+
+# Ethos-U Smoke Test
+
+`geisa-ethosu-smoke-test` is a host-side development diagnostic. It is not a
+GEISA application, a managed application, or a performance benchmark.
+
+The helper uses the Apache-2.0 TensorFlow Lite 2.16.2 MobileNet example and
+Grace Hopper image already installed by the `tensorflow-lite` package. It
+checks the source model SHA-256, uses Vela for `ethos-u65-256` to create a
+temporary compiled model, loads `/usr/lib/libethosu_delegate.so`, and runs one
+inference through `/dev/ethosu0`. It succeeds only when the delegate reports
+at least one delegated graph node and the expected result is returned.
+
+When you run `geisa-ethosu-smoke-test --profile /platform/profiles/nxp-ethosu-tflite`,
+the helper applies the profile's declared `pythonpath` and `library-path`,
+uses the profile's own `libethosu_delegate.so`, suppresses Python bytecode
+writes, and reports the resolved module and library paths that were loaded.
+
+The CLI reports the compiled-model path and SHA-256, delegated-node evidence,
+the expected and actual result, elapsed time, and a final `PASS` or `FAIL`.
+
+All generated files are removed when the command exits. It requires no network
+access and does not start an LXC container or modify application state.
+
+Run:
+
+    geisa-ethosu-smoke-test
+    geisa-ethosu-smoke-test --profile /platform/profiles/nxp-ethosu-tflite
+
+Use `--verbose` to include Vela output. The exact example model, input, and
+their declared source provenance are provided by the TensorFlow Lite recipe.
