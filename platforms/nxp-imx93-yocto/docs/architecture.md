@@ -31,9 +31,10 @@ steady-state cost while unused. CRIU userspace is intentionally not included.
 
 The development image includes BlueZ and the pinned IW612 firmware package.
 FRDM-i.MX93 hardware validation confirmed firmware download and controller
-discovery. The selected kernel requires signed wireless regulatory firmware;
-the image provides `regulatory.db` and `regulatory.db.p7s` below
-`/usr/lib/firmware`.
+discovery. Built-in cfg80211 requests signed regulatory firmware before
+the root filesystem is available. The development build embeds
+`regulatory.db` and `regulatory.db.p7s` in the kernel image. It retains
+runtime copies below `/usr/lib/firmware`.
 
 The NXP Ethos-U/TFLite profile archive is a local build input rather than a
 tracked source artifact. See the profile-input README before building it into

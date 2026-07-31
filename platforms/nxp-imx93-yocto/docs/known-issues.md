@@ -4,9 +4,11 @@
 
 The validated FRDM-i.MX93 first-boot `geisa-platform-fsck.service` selected the
 correct sibling platform partition, returned status 0, and reported it clean.
-Separately, vm-lts `e2fsck` (1.46.5) cannot read the image's `FEATURE_C12`
-ext4 feature and exits with status 12. That host-tool limitation does not
-contradict the target-side fsck result.
+Some Ubuntu 22.04 and other older build environments provide e2fsprogs 1.46.5
+or another version that does not recognize the ext4 `FEATURE_C12` feature used
+by this image. Such a tool may exit with status 12; that result is not proof of
+filesystem corruption. Offline validation requires a newer compatible e2fsprogs
+environment. Target-side e2fsck may be used when appropriate.
 
 Earlier observations also involved an ambiguous `LABEL=platform` fstab entry
 when the same WIC was present on both SD and eMMC. The image now derives the

@@ -27,7 +27,7 @@ WLAN SDK, and a firmware daemon are also outside this image. The separate NXP
 Ethos-U/TFLite profile input is locally staged and is not redistributed in this
 source tree until its provenance and redistribution terms are verified.
 
-The supported development baseline is Yocto Scarthgap with the pinned NXP
+The stable development baseline is Yocto Scarthgap with the pinned NXP
 `lf-6.6.y` kernel source and its 6.6.36-based configuration. A newer BSP or
 kernel migration is a separate future track, not part of this image release.
 
@@ -71,11 +71,6 @@ It accepts only `/dev/mmcblkXp2` as the root source and mounts the matching
 filesystem labels or identifiers from being cross-mounted. An unsupported or
 malformed root source makes the local-filesystem dependency fail clearly rather
 than selecting another device's platform partition.
-
-On the validated FRDM-i.MX93 SD boot, root mounted from `/dev/mmcblk1p2` and
-`/platform` from `/dev/mmcblk1p3`. The generated `platform.mount` and early
-`geisa-platform-fsck.service` selected that sibling partition and fsck reported
-the filesystem clean.
 
 Managed application packages, installed applications, configuration, state,
 persistent storage, and event records are stored below `/var/lib/geisa` on the
@@ -173,10 +168,6 @@ possible.
 a tag; to reproduce that release, check out its tag before building. Use
 `git tag --list` to see all available tags.
 
-Development builds may intentionally record a dirty source state while image
-work is in progress. A publication build must begin from the reviewed clean
-source revision and record that revision with the generated artifacts.
-
 ## NXP License Acceptance
 
 Some NXP components require acceptance of the applicable license terms. Review
@@ -241,8 +232,6 @@ The package manifest and SPDX archive describe packages and licenses in the
 complete image. Package-level licenses remain authoritative for third-party
 content. On a running image, the installed-package inventory is available at
 `/usr/share/doc/geisa-image/packages.manifest`.
-
-Maintainers preparing a release should follow [RELEASING.md](RELEASING.md).
 
 ## Serial Console Access on the FRDM-i.MX93 board
 
@@ -333,22 +322,21 @@ sync
 Replace `<device>` with the base SD device, e.g. `/dev/sdb`, not one of its
 partitions. Writing to the wrong device will destroy its existing contents.
 
-After booting, these commands are useful for confirming the active root and
-platform filesystems:
+After booting, these commands may be helpful for confirming the active root
+and platform filesystems:
 
 ```
 findmnt /
 findmnt /platform
 cat /proc/cmdline
 lsblk -f
-systemctl status platform.mount geisa-platform-fsck.service --no-pager
-systemctl --failed --no-pager
+systemctl status platform.mount geisa-platform-fsck.service
+systemctl --failed
 test -r /usr/lib/firmware/regulatory.db
 test -r /usr/lib/firmware/regulatory.db.p7s
 test -r /usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se
 bluetoothctl list
 bluetoothctl show
-dmesg | grep -E 'regulatory\.db|cfg80211|Bluetooth|bluetooth'
 ```
 
 The root and platform sources must have the same `mmcblkX` device number, with
@@ -499,7 +487,7 @@ A complete installed-package manifest is available on a running image at
 
 | Tools                         | Use                                             |
 | ----------------------------- | ----------------------------------------------- |
-| `vim`, `nano`                 | Basic editors.  Sorry, not gonna put EMACs on.. |
+| `vim`, `nano`                 | Basic terminal editors                           |
 | `bash`/`coreutils`/`timeout`  | Useful portable shell and basic tools           |
 | `find`, `grep`, `sed`, `gawk` | Basic file search/manipulation tools            |
 | `tar`, `gzip`, `zstd`, `xz`   | Inspect and create common archive formats       |
@@ -516,6 +504,7 @@ A complete installed-package manifest is available on a running image at
 | `lxc-{ls,info,start,stop,attach}` | Inspect and control managed LXC containers    |
 | `systemctl`, `journalctl`         | Inspect system and service state              |
 | `htop`/`lsof`/`strace`/`tcpdump`  | Diagnose process, file, syscall, and network  |
+| `openssh-misc`                    | Client helpers, including `ssh-keyscan`        |
 | `geisa-system-state`              | GEISA compact health and warning-state helper |
 
 `geisa-system-state` is a community-contributed on-device diagnostic helper.
@@ -551,13 +540,21 @@ NXP EULA acceptance. Redistribution authorization remains subject to the NXP
 EULA Component Register and section 2.3, and must be reviewed before a public
 binary release.
 
-The selected kernel requires a signed wireless regulatory database. The image
-installs `wireless-regdb-static`, which provides
-`/usr/lib/firmware/regulatory.db` and
-`/usr/lib/firmware/regulatory.db.p7s`; the image build asserts both files when
-the kernel enables signed regulatory databases. A final SD candidate boot must
-also confirm that the kernel loads the database without the former cfg80211
-warning. This is separate from Ethernet and Ethos-U operation.
+Built-in cfg80211 requests its signed wireless regulatory database before the
+root filesystem is available. The build therefore embeds `regulatory.db` and
+`regulatory.db.p7s` in the kernel image. `wireless-regdb-static` also keeps
+runtime copies at `/usr/lib/firmware/regulatory.db` and
+`/usr/lib/firmware/regulatory.db.p7s`. A hardware boot of each release-candidate WIC
+should confirm that cfg80211 loads the database without a warning. This is
+separate from Ethernet and Ethos-U operation.
+
+Some build hosts cannot inspect this image's `FEATURE_C12` ext4 filesystem
+with older e2fsprogs. Use an e2fsprogs version that supports its enabled
+features for offline release validation; see `docs/known-issues.md`.
+
+`openssh-misc` supplies OpenSSH client helpers such as `ssh-keyscan`. It does
+not add SSH host or private keys, `known_hosts`, private SSH configuration, or
+another SSH server.
 
 Community image metadata/docs/scripts are Apache-2.0 only; this does not cover
 all Yocto packages, BSP firmware, models, fixtures, or third-party libraries.
