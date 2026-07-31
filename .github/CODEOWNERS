@@ -18,3 +18,6 @@
 
 # Wakaama ADM client mockup
 /example-implementations/adm/lwm2m-client/wakaama/ @ndam-sfl @kevlhop @swegener-rtp
+
+# GEISA API mockup
+/example-implementations/api/api-mockup/ @kevlhop @swegener-rtp

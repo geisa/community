@@ -1,0 +1,56 @@
+name: API mockup
+
+on:
+  pull_request:
+    paths:
+      - "example-implementations/api/api-mockup/**"
+      - ".gitmodules"
+      - ".github/workflows/api-mockup.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "example-implementations/api/api-mockup/**"
+      - ".gitmodules"
+      - ".github/workflows/api-mockup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: example-implementations/api/api-mockup
+
+    steps:
+      - name: Check out Community
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential \
+            clang-format \
+            clang-tidy \
+            libmosquitto-dev \
+            pkg-config \
+            protobuf-compiler \
+            python3-pip \
+            python3-venv
+
+      - name: Set up development environment
+        run: make setup-dev
+
+      - name: Build
+        run: |
+          make clean
+          make all
+
+      - name: Check formatting and lint
+        run: make lint

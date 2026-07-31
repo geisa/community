@@ -1,3 +1,9 @@
+[submodule "api-mockup-schemas"]
+	path = example-implementations/api/api-mockup/schemas
+	url = https://github.com/geisa/schemas.git
+[submodule "api-mockup-nanopb"]
+	path = example-implementations/api/api-mockup/nanopb
+	url = https://github.com/nanopb/nanopb.git
 [submodule "platforms/nxp-imx93-yocto/sources/poky"]
 	path = platforms/nxp-imx93-yocto/sources/poky
 	url = https://git.yoctoproject.org/poky
