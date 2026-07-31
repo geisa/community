@@ -1,0 +1,80 @@
+#!/bin/sh
+# Derive /platform from the actual root mount so cloned SD and eMMC images
+# cannot be mixed by identical filesystem labels or partition identifiers.
+set -eu
+
+normal_dir=${1:?missing normal generator output directory}
+findmnt_bin=${GEISA_PLATFORM_FINDMNT:-/usr/bin/findmnt}
+
+link_required() {
+    mkdir -p "${normal_dir}/local-fs.target.requires"
+    ln -sf "../$1" "${normal_dir}/local-fs.target.requires/$1"
+}
+
+fail_closed() {
+    printf '%s\n' "geisa-platform-generator: $*" >&2
+    cat >"${normal_dir}/geisa-platform-root-invalid.service" <<'EOF'
+[Unit]
+Description=GEISA platform mount configuration is invalid
+DefaultDependencies=no
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/false
+EOF
+    link_required geisa-platform-root-invalid.service
+    exit 0
+}
+
+[ -x "${findmnt_bin}" ] || fail_closed "findmnt is unavailable"
+root_source="$(${findmnt_bin} -nr -o SOURCE / 2>/dev/null || true)"
+
+case "${root_source}" in
+    /dev/mmcblk*p2)
+        root_disk=${root_source%p2}
+        index=${root_disk#/dev/mmcblk}
+        ;;
+    *)
+        fail_closed "unsupported root source: ${root_source:-unavailable}"
+        ;;
+esac
+
+case "${index}" in
+    ''|*[!0-9]*)
+        fail_closed "unsupported root source: ${root_source}"
+        ;;
+esac
+
+platform_source="/dev/mmcblk${index}p3"
+platform_device_unit="dev-mmcblk${index}p3.device"
+
+cat >"${normal_dir}/geisa-platform-fsck.service" <<EOF
+[Unit]
+Description=Check GEISA platform filesystem (${platform_source})
+DefaultDependencies=no
+Requires=${platform_device_unit}
+After=${platform_device_unit}
+Before=platform.mount local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/fsck -a ${platform_source}
+SuccessExitStatus=1
+EOF
+
+cat >"${normal_dir}/platform.mount" <<EOF
+[Unit]
+Description=GEISA platform partition (${platform_source})
+Requires=${platform_device_unit} geisa-platform-fsck.service
+After=${platform_device_unit} geisa-platform-fsck.service
+Before=local-fs.target
+
+[Mount]
+What=${platform_source}
+Where=/platform
+Type=ext4
+Options=defaults
+EOF
+
+link_required platform.mount

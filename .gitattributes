@@ -1,0 +1,3 @@
+# This file is patch payload. Its context contains Makefile tabs and historical
+# whitespace that must remain byte-for-byte compatible with pseudo 1.9.3.
+platforms/nxp-imx93-yocto/sources/meta-geisa-community/recipes-devtools/pseudo/files/older-glibc-symbols.patch whitespace=-trailing-space,-space-before-tab

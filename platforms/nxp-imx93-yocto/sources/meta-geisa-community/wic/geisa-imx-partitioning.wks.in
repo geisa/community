@@ -1,0 +1,22 @@
+# short-description: Create SD card image with a boot partition
+# long-description:
+# Create an image that can be written onto a SD card using dd for use
+# with i.MX SoC family
+# It uses u-boot + other binaries gathered together on imx-boot file
+#
+# The disk layout used is:
+#  - ---------- -------------- --------------
+# | | imx-boot |     boot     |    rootfs    |
+#  - ---------- -------------- --------------
+# ^ ^          ^              ^              ^
+# | |          |              |              |
+# 0 |        8MiB          264MiB         264MiB + rootfs + IMAGE_EXTRA_SPACE
+# rootfs and /platform default to GEISA_*_FIXED_SIZE MiB when set by the image.
+#   ${IMX_BOOT_SEEK} 32 or 33kiB, see reference manual
+#
+part u-boot --source rawcopy --sourceparams="file=imx-boot.tagged" --ondisk mmcblk --no-table --align ${IMX_BOOT_SEEK}
+part /boot --source bootimg-partition --ondisk mmcblk --fstype=vfat --label boot --active --align 8192 --fixed-size 256
+part / --source rootfs --exclude-path platform/ --ondisk mmcblk --fstype=ext4 --label root --align 8192 --fixed-size ${GEISA_ROOTFS_FIXED_SIZE}
+part /platform --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/platform --ondisk mmcblk --fstype=ext4 --label platform --align 8192 --use-uuid --fixed-size ${GEISA_PLATFORM_FIXED_SIZE}
+
+bootloader --ptable msdos
