@@ -1,0 +1,12 @@
+# Build products and local inspection/release output are never source inputs.
+build-development/
+release-staging/
+inspection-*/
+
+# Local cache locations are selected through DL_DIR and SSTATE_DIR.
+downloads/
+sstate-cache/
+
+# This closed, locally acquired profile is intentionally never committed.
+sources/meta-geisa-community/recipes-core/geisa/files/nxp-ethosu-tflite.tar.gz
+sources/meta-geisa-community/recipes-core/geisa/files/nxp-ethosu-tflite.local-origin.txt

@@ -4,3 +4,24 @@
 [submodule "api-mockup-nanopb"]
 	path = example-implementations/api/api-mockup/nanopb
 	url = https://github.com/nanopb/nanopb.git
+[submodule "platforms/nxp-imx93-yocto/sources/poky"]
+	path = platforms/nxp-imx93-yocto/sources/poky
+	url = https://git.yoctoproject.org/poky
+[submodule "platforms/nxp-imx93-yocto/sources/meta-arm"]
+	path = platforms/nxp-imx93-yocto/sources/meta-arm
+	url = https://git.yoctoproject.org/meta-arm
+[submodule "platforms/nxp-imx93-yocto/sources/meta-freescale"]
+	path = platforms/nxp-imx93-yocto/sources/meta-freescale
+	url = https://git.yoctoproject.org/meta-freescale
+[submodule "platforms/nxp-imx93-yocto/sources/meta-imx"]
+	path = platforms/nxp-imx93-yocto/sources/meta-imx
+	url = https://github.com/nxp-imx/meta-imx.git
+[submodule "platforms/nxp-imx93-yocto/sources/meta-imx-frdm"]
+	path = platforms/nxp-imx93-yocto/sources/meta-imx-frdm
+	url = https://github.com/nxp-imx-support/meta-imx-frdm.git
+[submodule "platforms/nxp-imx93-yocto/sources/meta-openembedded"]
+	path = platforms/nxp-imx93-yocto/sources/meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded.git
+[submodule "platforms/nxp-imx93-yocto/sources/meta-virtualization"]
+	path = platforms/nxp-imx93-yocto/sources/meta-virtualization
+	url = https://git.yoctoproject.org/meta-virtualization
