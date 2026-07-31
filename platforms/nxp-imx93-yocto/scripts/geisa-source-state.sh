@@ -8,6 +8,7 @@ if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     if [ -n "$(git -C "$repo" status --porcelain=v1 --untracked-files=all)" ]; then
         dirty=true
         digest="$( {
+            cd "$repo"
             git -C "$repo" diff --no-ext-diff --binary HEAD
             git -C "$repo" diff --cached --no-ext-diff --binary HEAD
             git -C "$repo" ls-files --others --exclude-standard -z | LC_ALL=C sort -z | xargs -0 -r sha256sum

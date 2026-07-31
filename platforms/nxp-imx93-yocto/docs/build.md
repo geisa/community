@@ -9,13 +9,13 @@ Initialize submodules, review `sources/meta-freescale/EULA` and
 
 ```sh
 git submodule update --init --recursive
-./scripts/stage-nxp-ethosu-profile.sh /path/to/nxp-ethosu-tflite.tar.gz \
-  --origin 'source URL or acquisition record'
 ACCEPT_FSL_EULA=1 ./scripts/build.sh development
 ```
 
 `ACCEPT_FSL_EULA=1` allows the local build flow only. It does not grant
-redistribution rights for generated artifacts or locally staged profile input.
+redistribution rights for generated artifacts. The build generates the
+Ethos-U/TFLite profile from declared dependencies and a checksum-pinned PyAV
+wheel; see `docs/nxp-ethosu-tflite-profile.md`.
 Use `ACCEPT_FSL_EULA=1 ./scripts/build.sh development -- bitbake -p` for a
 parse-only check.
 

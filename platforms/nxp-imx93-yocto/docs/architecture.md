@@ -36,6 +36,7 @@ the root filesystem is available. The development build embeds
 `regulatory.db` and `regulatory.db.p7s` in the kernel image. It retains
 runtime copies below `/usr/lib/firmware`.
 
-The NXP Ethos-U/TFLite profile archive is a local build input rather than a
-tracked source artifact. See the profile-input README before building it into
-an image.
+The NXP Ethos-U/TFLite profile is generated during the image build from
+declared Yocto runtime outputs and a checksum-pinned PyAV wheel. See
+`docs/nxp-ethosu-tflite-profile.md` for its reproducible source inputs and
+redistribution boundary.

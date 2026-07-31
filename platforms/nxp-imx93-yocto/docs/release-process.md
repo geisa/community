@@ -5,11 +5,13 @@ artifact is released, record a source revision and submodule revisions, run a
 normal build, and collect one unambiguous WIC plus its manifests, SPDX archive,
 and checksums.
 
-Run `./scripts/validate-release.sh RELEASE_DIRECTORY`. It verifies staged
-checksums and performs read-only ext4 checks on the WIC. The release must stop
-if e2fsck cannot validate the selected ext4 feature set or reports errors.
+Confirm the generated `nxp-ethosu-tflite` profile records the declared Yocto
+inputs and pinned PyAV wheel, then run
+`./scripts/validate-release.sh RELEASE_DIRECTORY`. It verifies staged checksums
+and performs read-only ext4 checks on the WIC. The release must stop if e2fsck
+cannot validate the selected ext4 feature set or reports errors.
 
-Offline acceptance should  also verify that the root filesystem contains the
+Offline acceptance should also verify that the root filesystem contains the
 platform-mount generator, the selected IW612 firmware path
 `/usr/lib/firmware/nxp/uartspi_n61x_v1.bin.se`, and the kernel regulatory
 database paths `/usr/lib/firmware/regulatory.db` and `regulatory.db.p7s`.
