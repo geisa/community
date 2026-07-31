@@ -36,10 +36,17 @@ From the root of the Community repository, initialize them with:
 Build from the project directory:
 
     cd example-implementations/api/api-mockup
+    make setup-dev
     make
 
-The build requires a C compiler, make, pkg-config, protoc, Mosquitto development
-files, nanopb runtime development files, and the nanopb Python generator.
+`make setup-dev` creates a project-local Python virtual environment and installs
+the generator requirements for the pinned nanopb submodule. The host also needs
+a C compiler, make, pkg-config, protoc, Python virtual-environment support,
+Mosquitto development files, clang-format, and clang-tidy.
+
+Run the formatting and static-analysis checks with:
+
+    make lint
 
 The original CQFD build environment remains under `.cqfd/` and can also be used
 from the project directory:
@@ -48,7 +55,7 @@ from the project directory:
 
 After building, run the API mockup with:
 
-    ./gapi
+    ./build/gapi
 
 ## Known Limitations
 

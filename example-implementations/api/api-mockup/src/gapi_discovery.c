@@ -43,8 +43,6 @@ static GeisaPlatformDiscovery_Module sub_module_platform_info = {
 };
 
 static GeisaPlatformDiscovery_Device device_platform_info = {
-	.top_module = top_module_platform_info,
-	.has_top_module = true,
 	.sub_module_count = 1,
 	.sub_module = &sub_module_platform_info,
 };
@@ -206,8 +204,12 @@ api_platform_discovery_build_response(GeisaPlatformDiscovery_Rsp *response)
 	response->geisa = geisa_platform_info;
 	response->has_geisa = true;
 	response->device = device_platform_info;
+	response->device.top_module = top_module_platform_info;
+	response->device.has_top_module = true;
 	response->has_device = true;
-	response->operator = operator_platform_info;
+
+	GeisaPlatformDiscovery_Operator *operator_info = &response->operator;
+	*operator_info = operator_platform_info;
 	response->has_operator = true;
 	response->metrology = metrology_platform_info;
 	response->has_metrology = true;

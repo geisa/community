@@ -3,12 +3,12 @@ org='geisa'
 name='api-mockup'
 
 [build]
-command='make'
+command='make setup-dev all'
 
 [lint]
-command='make lint'
+command='make setup-dev lint'
 
 [build_arm64]
-command='make'
+command='make setup-dev all'
 docker_run_args='--platform linux/arm64'
 docker_build_args='--platform linux/arm64'

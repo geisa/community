@@ -74,13 +74,14 @@ static void get_all_sensors_info(GeisaSensorReadings_Rsp *response,
 				 uint64_t now_ms, GeisaSensorReading *readings,
 				 GeisaSensorValue *values)
 {
-	GeisaSensorDescriptor sensor_desc = GeisaSensorDescriptor_init_default;
 	size_t readings_idx = 0;
 
 	for (size_t i = 0;
 	     i < sensor_count && readings_idx < MAX_SENSORS_READINGS; i++) {
-		sensor_desc = sensors_desc.sensors[i];
-		if (sensor_desc.supports_read) {
+		const GeisaSensorDescriptor *sensor_desc =
+			&sensors_desc.sensors[i];
+
+		if (sensor_desc->supports_read) {
 			const sensor_t *sensor = &sensors[i];
 			GeisaSensorReading *read = &readings[readings_idx];
 			GeisaSensorValue *value = &values[readings_idx];
@@ -96,8 +97,10 @@ static void get_all_sensors_info(GeisaSensorReadings_Rsp *response,
 			read->values_count = 1;
 			read->values = value;
 			read->has_unit = true;
-			strncpy(read->unit, sensor_desc.unit,
-				sizeof(read->unit));
+			size_t unit_len = strnlen(sensor_desc->unit,
+						  sizeof(read->unit) - 1);
+			memcpy(read->unit, sensor_desc->unit, unit_len);
+			read->unit[unit_len] = '\0';
 
 			readings_idx++;
 		}
@@ -115,7 +118,6 @@ get_requested_sensors_info(GeisaSensorReadings_Rsp *response,
 			   GeisaSensorValue *values,
 			   const GeisaSensorReadings_Req *request)
 {
-	GeisaSensorDescriptor sensor_desc = GeisaSensorDescriptor_init_default;
 	size_t readings_idx = 0;
 
 	for (pb_size_t i = 0; i < request->sensor_id_count &&
@@ -124,9 +126,9 @@ get_requested_sensors_info(GeisaSensorReadings_Rsp *response,
 
 		const char *req_id = request->sensor_id[i];
 		int idx = sensor_find(req_id);
-		// NOLINTNEXTLINE: Out of bound check is done above
 		const sensor_t *sensor = &sensors[idx];
-		sensor_desc = sensors_desc.sensors[idx];
+		const GeisaSensorDescriptor *sensor_desc =
+			&sensors_desc.sensors[idx];
 
 		GeisaSensorReading *read = &readings[readings_idx];
 		GeisaSensorValue *value = &values[readings_idx];
@@ -142,7 +144,10 @@ get_requested_sensors_info(GeisaSensorReadings_Rsp *response,
 		read->values_count = 1;
 		read->values = value;
 		read->has_unit = true;
-		strncpy(read->unit, sensor_desc.unit, sizeof(read->unit));
+		size_t unit_len =
+			strnlen(sensor_desc->unit, sizeof(read->unit) - 1);
+		memcpy(read->unit, sensor_desc->unit, unit_len);
+		read->unit[unit_len] = '\0';
 
 		readings_idx++;
 	}
