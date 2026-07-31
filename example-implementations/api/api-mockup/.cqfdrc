@@ -1,0 +1,14 @@
+[project]
+org='geisa'
+name='api-mockup'
+
+[build]
+command='make'
+
+[lint]
+command='make lint'
+
+[build_arm64]
+command='make'
+docker_run_args='--platform linux/arm64'
+docker_build_args='--platform linux/arm64'

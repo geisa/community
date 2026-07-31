@@ -1,0 +1,8 @@
+BasedOnStyle: llvm
+IndentWidth: 8
+UseTab: Always
+BreakBeforeBraces: Linux
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ContinuationIndentWidth: 8
+BreakStringLiterals: false
