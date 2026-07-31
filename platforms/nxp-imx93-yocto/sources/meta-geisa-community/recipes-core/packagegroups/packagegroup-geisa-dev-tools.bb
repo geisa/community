@@ -45,6 +45,7 @@ RDEPENDS:${PN} = " \
     lrzsz \
     lsof \
     nftables \
+    openssh-misc \
     perf \
     rfkill \
     gdb \
