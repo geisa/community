@@ -1,0 +1,79 @@
+{
+    // Bitbake
+    "bitbake.workingDirectory": "${workspaceFolder}",
+    "bitbake.pathToBitbakeFolder": "${workspaceFolder}/sources/poky/bitbake",
+    "bitbake.sdkImage": "geisa-imx93-dbg-image",
+    "bitbake.pathToBuildFolder": "",
+    "bitbake.pathToEnvScript": "",
+    "bitbake.buildConfigurations": [
+        {
+            "name": "cqfd release",
+            "bitbake.commandWrapper": "cqfd run -c --",
+        },
+        {
+            "name": "cqfd debug",
+            "commandWrapper": "cqfd -b debug run -c --"
+        }
+    ],
+
+    // Files exclude
+    "files.watcherExclude": {
+        "**/.repo/manifests.git": true,
+        "**/.repo/project*": true,
+        "**/.repo/repo*": true,
+        "**/build/**": true
+    },
+    "files.exclude": {
+        "**/.repo/manifests.git": true,
+        "**/.repo/project*": true,
+        "**/.repo/repo*": true
+    },
+    "search.exclude": {
+        "**/.repo": true,
+        "**/build": true
+    },
+    "C_Cpp.files.exclude": {
+        "**/build": true,
+        "**/.repo": true
+    },
+    "python.analysis.exclude": [
+        "**/build",
+        "**/.repo"
+    ],
+    "git.repositoryScanIgnoredFolders": [
+        "**/build",
+        "**/.repo/manifests.git",
+        "**/.repo/project*",
+        "**/.repo/repo*"
+    ],
+    "git.repositoryScanMaxDepth": 2,
+
+    // Auto-generated
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/sources/poky/bitbake/lib",
+        "${workspaceFolder}/sources/poky/meta/lib"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/sources/poky/bitbake/lib",
+        "${workspaceFolder}/sources/poky/meta/lib"
+    ],
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "gitlens.codeLens.symbolScopes": [
+            "!Module"
+        ],
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off",
+        "files.trimTrailingWhitespace": false
+    },
+    "[shellscript]": {
+        "files.eol": "\n",
+        "files.trimTrailingWhitespace": false
+    },
+    "task.saveBeforeRun": "always",
+    "files.associations": {
+        "*.txt": "diff",
+        "*.conf": "bitbake",
+        "*.inc": "bitbake"
+    }
+}

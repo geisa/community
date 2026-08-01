@@ -1,0 +1,70 @@
+[project]
+org='sce'
+name='geisa-imx93'
+
+[build]
+command='./build.sh'
+files='build/tmp/deploy/images/README.pdf'
+archive='%Po-%Pn-$(scripts/get-version).tar.gz'
+tar_options='-h'
+tar_transform='yes'
+flavors='sfl_ci imx93-devshell imx95-devshell imx93-dev imx93-evk-dev imx95-evk-dev imx93-prod imx93-evk-prod imx95-evk-prod'
+
+[sfl_ci]
+command='./build.sh && \
+    ./build.sh -m geisa-imx95-evk \
+    --distro geisa-dev \
+    -i geisa-dev-image \
+    && ./build.sh -m geisa-imx93-evk \
+    --distro geisa-dev \
+    -i geisa-dev-image'
+
+[imx93-devshell]
+command='./build.sh \
+    --distro geisa-dev \
+    -i geisa-dev-image \
+    -m geisa-imx93 \
+    -- /bin/bash'
+
+[imx95-devshell]
+command='./build.sh \
+    --distro geisa-dev \
+    -i geisa-dev-image \
+    -m geisa-imx95-evk \
+    -- /bin/bash'
+
+[imx93-dev]
+command='./build.sh \
+    -m geisa-imx93 \
+    --distro geisa-dev \
+    -i geisa-dev-image'
+
+[imx93-evk-dev]
+command='./build.sh \
+    -m geisa-imx93-evk \
+    --distro geisa-dev \
+    -i geisa-dev-image'
+
+[imx95-evk-dev]
+command='./build.sh \
+    -m geisa-imx95-evk \
+    --distro geisa-dev \
+    -i geisa-dev-image'
+
+[imx93-prod]
+command='./build.sh \
+    -m geisa-imx93 \
+    --distro geisa-prod \
+    -i geisa-prod-image'
+
+[imx93-evk-prod]
+command='./build.sh \
+    -m geisa-imx93-evk \
+    --distro geisa-prod \
+    -i geisa-prod-image'
+
+[imx95-evk-prod]
+command='./build.sh \
+    -m geisa-imx95-evk \
+    --distro geisa-prod \
+    -i geisa-prod-image'

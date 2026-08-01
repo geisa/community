@@ -1,0 +1,316 @@
+= SCE GEISA Mockup Yocto Platform Developer Guide
+
+IMPORTANT: This guide was imported from the original `geisa/lee-mockup`
+repository. The project now lives under
+`platforms/nxp-conformance-yocto/` in the GEISA Community repository.
+Use `README.md` for current project scope and source-setup instructions.
+The remaining build and flashing details are retained from the original
+project and have not been fully revalidated during migration.
+
+:toc:
+:icons:
+:iconsdir: ./doc/icons/
+:sectnumlevels: 1
+
+The Yocto firmware generation has been tested on Ubuntu 24.04. You can either
+use your host machine's tools, or use
+https://github.com/savoirfairelinux/cqfd[cqfd] to build. More details are given
+in the next sections of this document.
+
+:numbered:
+
+== Environment setup
+
+=== SSH keys
+
+The firmware source code is fetched from several git repositories. Some
+of them are public and require no credentials.
+
+If you don't already have a set of SSH keys in the `~/.ssh` directory of your
+build machine, you can create them by running:
+
+  $ ssh-keygen -t rsa -C <your_email@youremail.com>
+
+
+In the top right corner of Github (your profile picture):
+
+* Click on "Settings"
+* Go to the "SSH and GPG Keys" section.
+* Add the contents of your public SSH key (with the .pub extension). The default
+  SSH public key path should be `~/.ssh/id_rsa.pub`.
+
+== Fetching the source using Git
+
+Clone the GEISA Community repository:
+
+  $ git clone https://github.com/geisa/community.git
+  $ cd community/platforms/nxp-conformance-yocto
+
+This project keeps its Yocto dependencies local to the project instead of
+registering them in the Community repository's root `.gitmodules`.
+
+Initialize the exact imported dependency revisions with:
+
+  $ ./scripts/setup-sources.sh
+
+To inspect the dependency URLs and revisions without cloning them:
+
+  $ ./scripts/setup-sources.sh --dry-run
+
+NOTE: The initial build process can take several hours and consume substantial
+disk space.
+
+== Building a firmware using cqfd
+
+`cqfd` is a quick and convenient way to run commands in the current directory,
+but within a pre-defined Docker container. Using `cqfd` allows you to avoid
+installing anything else than Docker and `repo` on your development machine.
+
+NOTE: We recommend using this method as it greatly simplifies the build
+configuration management process.
+
+=== Yocto SSTATE and Download cache
+
+Yocto provides a way to share build artifacts between multiple workspaces and
+developers through the DL_DIR and SSTATE_DIR environment variables.
+To use them with cqfd, add to your .bashrc:
+
+  export CQFD_EXTRA_RUN_ARGS="$CQFD_EXTRA_RUN_ARGS -v <your_dldir_path>:/mnt/dl -e DL_DIR=/mnt/dl -v <your_sstate_path>:/mnt/sstate -e SSTATE_DIR=/mnt/sstate"
+
+You could also do this configuration in .cqfdrc with docker_run_args under build
+section:
+
+  docker_run_args='-v <your_dldir_path>:/mnt/dl -e DL_DIR=/mnt/dl -v <your_sstate_path>:/mnt/sstate -e SSTATE_DIR=/mnt/sstate'
+
+=== Prerequisites
+
+* Install docker if it is not already done by following the official
+  documentation: https://docs.docker.com/engine/install/
+
+* Install cqfd:
+
+```
+$ git clone https://github.com/savoirfairelinux/cqfd.git
+$ cd cqfd
+$ sudo make install
+```
+
+The project page on https://github.com/savoirfairelinux/cqfd[Github] contains
+detailed information on usage and installation.
+
+* Make sure that docker does not require sudo
+
+Please use the following commands to add your user account to the `docker`
+group:
+
+```
+$ sudo groupadd docker
+$ sudo usermod -aG docker $USER
+```
+
+Log out and log back in, so that your group membership can be re-evaluated.
+
+* QEMU emulation:
+
+To emulate image into QEMU, you need Kernel Virtual Machine (KVM).
+
+* Make sure your CPU supports virtualization:
+
+```
+$ egrep '^flags.*(vmx|svm)' /proc/cpuinfo|wc -l
+```
+
+Command result must be superior to 0.
+
+* Enable virtualization setting in BIOS machine:
+
+For Intel based CPU, virtualization setting is called "Intel VT-x" or
+"Intel Virtualization Technology".
+For AMD based CPU, virtualization setting is called "AMD-V" or
+"SVM mode".
+
+=== Building the firmware
+
+The first step with `cqfd` is to create the build container. For this, use the
+`cqfd init` command:
+
+  $ cd yocto-build/
+  $ cqfd init
+
+NOTE: The step above is only required once, as once the container image has been
+created on your machine, it will become persistent. Further calls to `cqfd init`
+will do nothing, unless the container definition (`.cqfd/docker/Dockerfile`) has
+changed in the source tree.
+
+To build the firmware from using cqfd, simply run execute cqfd
+with the desired flavor:
+
+**Dev build for i.MX93**
+```
+  $ cqfd -b imx93-dev
+```
+
+**Dev build for i.MX93-EVK**
+```
+  $ cqfd -b imx93-evk-dev
+```
+
+**Dev build for i.MX95-EVK**
+```
+  $ cqfd -b imx95-evk-dev
+```
+
+**Prod build for i.MX93**
+```
+  $ cqfd -b imx93-prod
+```
+
+**Prod build for i.MX93-EVK**
+```
+  $ cqfd -b imx93-evk-prod
+```
+
+**Prod build for i.MX95-EVK**
+```
+  $ cqfd -b imx95-evk-prod
+```
+
+== Building the firmware manually
+
+This method relies on the manual installation of all the tools and dependencies
+required on the host machine.
+
+=== Prerequisites on Ubuntu
+
+The following packages need to be installed:
+
+  $ sudo apt-get update && apt-get install -y ca-certificates build-essential
+
+  $ sudo apt-get install -y gawk wget git-core diffstat unzip texinfo gcc-multilib \
+     build-essential chrpath socat cpio python python3 python3-pip python3-pexpect \
+     xz-utils debianutils iputils-ping libsdl1.2-dev xterm repo
+
+=== Building the firmware
+
+The build is started by running the following command:
+
+  $ ./build.sh -i geisa-prod-image -m geisa-imx93
+
+You can also pass custom BitBake commands using the `--` separator:
+
+  $ ./build.sh -i geisa-prod-image -m geisa-imx93 -- bitbake -c clean package_name
+
+Custom commands can be entered using the `devshell` cqfd flavor:
+
+  $ cqfd -b devshell
+
+== Building the dev image
+
+A development image is available, with additional tools and relaxed security features
+available for development. It can be built using cqfd, or manually:
+
+For i.MX93:
+
+  $ cqfd -b imx93-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93
+
+For i.MX93-EVK:
+
+  $ cqfd -b imx93-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx93-evk
+
+For i.MX95:
+
+  $ cqfd -b imx95-evk-dev
+  $ ./build.sh -i geisa-dev-image --distro geisa-dev -m geisa-imx95-evk
+
+== Building an SDK Installer
+
+You can create an SDK matching your system's configuration using with the
+following command:
+
+  $ ./build.sh -i geisa-imx93 -m geisa-imx93 --sdk
+
+NOTE: prefix this command with `cqfd run` if using cqfd.
+
+When the bitbake command completes, the toolchain installer will be in
+`tmp/deploy/sdk/` under your build directory.
+
+== Flashing the firmware to the IMX93-frdm
+
+=== Prerequisites
+
+Download the latest version of uuu here: https://github.com/nxp-imx/mfgtools/releases
+and execute:
+
+   $ chmod a+x uuu
+
+=== Flash the EMMC
+
+Connect the USB1 port to the host machine. Unplug the power adapter and
+configure the board to boot on serial download protocol by configuring the
+switch SW1 on the value 1000. Plug the power adapter.
+To launch the flash execute:
+
+    $ sudo ./uuu -b emmc_all geisa-prod-image-geisa-imx93.rootfs.wic.zst
+
+Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
+switch SW1 on the value 0100. Then plug the power adapter.
+
+== Flashing the firmware to the IMX93-evk
+
+=== Prerequisites
+
+See the prerequisites for flashing the IMX93-frdm.
+
+=== Flash the EMMC
+
+Connect the USB1 port to the host machine. Unplug the power adapter and
+configure the board to boot on serial download protocol by configuring the
+switch SW1301 on the value 1100. Plug the power adapter.
+To launch the flash execute:
+
+    $ sudo ./uuu -b emmc_all geisa-prod-image-geisa-imx93-evk.rootfs.wic.zst
+
+Unplug the power adapter and USB1. Select the boot on EMMC by configuring the
+switch SW1301 on the value 0000. Then plug the power adapter.
+
+== Flashing the firmware to the IMX95-evk
+
+=== Prerequisites
+
+See the prerequisites for flashing the IMX93-frdm.
+
+=== Flash the EMMC
+
+Connect the USB C Debug port (for serial terminal) and USB3.0/2.0C port (for flashing) to the host machine.
+Unplug the power adapter and configure the board to boot on serial download protocol by configuring the
+switch SW7 on the value 1011. Plug the power adapter and turn the board on with the power switch.
+
+To launch the flash execute (note we have to provide a bootloader in this case as well):
+
+    $ sudo ./uuu -b emmc_all imx-boot-geisa-imx95-evk-sd.bin-flash_all geisa-prod-image-geisa-imx95-evk.rootfs.wic.zst
+
+Unplug the power adapter the USB port used for flashing. Select the boot on EMMC by configuring the
+switch SW7 on the value 1010. Then plug the power adapter. For serial console, use ttyUSB0 for cortex-M and ttyUSB2 for
+cortex-A.
+
+== About this documentation
+
+This documentation uses the AsciiDoc documentation generator. It is a convenient
+format that allows using plain-text formatted writing that can later be
+converted to various output formats such as HTML and PDF.
+
+In order to generate an HTML version of this documentation, use the following
+command (the asciidoc package will need to be installed in your Linux
+distribution):
+
+  $ asciidoc README.adoc
+
+This will result in a README.html file being generated in the current directory.
+
+If you prefer a PDF version of the documentation instead, use the following
+command (the dblatex package will need to be installed on your Linux
+distribution):
+
+  $ asciidoctor-pdf README.adoc

@@ -16,6 +16,20 @@ image, or a production image. Its source is available at:
 Community questions and issue reports belong in the
 [GEISA Community issue tracker](https://github.com/geisa/community/issues).
 
+## Related NXP Conformance Platform
+
+The Community repository also contains
+`platforms/nxp-conformance-yocto/`, which preserves the NXP Yocto environment
+developed for GEISA conformance and mock implementation testing.
+
+Use this project, `nxp-imx93-yocto`, as the starting point for general
+FRDM-i.MX93 GEISA application and platform development. Use the conformance
+platform when reproducing or extending its embedded API mockup, ADM client,
+Wakaama integration, Mosquitto policy, and related test environment.
+
+The two projects are intentionally independent. Do not combine their Yocto
+layers, source trees, recipes, or build directories.
+
 ## Platform and Image Contents
 
 The image is a Yocto/OpenEmbedded `geisa-dev-image` for `geisa-imx93` (aarch64).
