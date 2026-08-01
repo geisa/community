@@ -1,18 +1,17 @@
 SUMMARY = "GEISA API daemon"
 DESCRIPTION = "GEISA API daemon that answers to API requests from GEISA application with MQTT."
-HOMEPAGE = "https://github.com/geisa/api-mockup"
+HOMEPAGE = "https://github.com/geisa/community/tree/main/example-implementations/api/api-mockup"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-inherit systemd
+inherit pkgconfig systemd
 
 SRC_URI = " \
-    gitsm://github.com/geisa/api-mockup.git;protocol=https;branch=main \
+    gitsm://github.com/geisa/community.git;protocol=https;branch=main \
     file://gapi.service \
 "
 SRCREV = "${AUTOREV}"
-
-S = "${WORKDIR}/git"
+S = "${WORKDIR}/git/example-implementations/api/api-mockup"
 
 DEPENDS = "protobuf-native nanopb-generator-native nanopb-runtime mosquitto"
 
@@ -21,6 +20,25 @@ RDEPENDS:${PN} = "nanopb-runtime"
 TARGET_CC_ARCH += "${LDFLAGS}"
 
 PARALLEL_MAKE = ""
+
+do_compile() {
+    # The Community API Makefile requires a local development environment for
+    # direct developer builds. Yocto supplies the corresponding tools through
+    # the recipe sysroot, so provide only the guard path and use those tools.
+    install -d ${S}/.venv/bin
+    ln -sf "$(command -v python3)" ${S}/.venv/bin/python
+
+    protoc_cmd="$(command -v protoc)"
+    nanopb_plugin="$(command -v protoc-gen-nanopb)"
+
+    test -n "${protoc_cmd}"
+    test -n "${nanopb_plugin}"
+
+    oe_runmake \
+        PROTOC_CMD="${protoc_cmd}" \
+        NANOPB_PLUGIN="${nanopb_plugin}" \
+        build/gapi
+}
 
 do_install() {
     install -d ${D}${bindir}
