@@ -1,0 +1,12 @@
+[Unit]
+Description=GEISA API daemon
+After=mosquitto.service
+Requires=mosquitto.service
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/gapi
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
