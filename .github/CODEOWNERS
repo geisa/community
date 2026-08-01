@@ -21,3 +21,6 @@
 
 # GEISA API mockup
 /example-implementations/api/api-mockup/ @kevlhop @swegener-rtp
+
+# NXP GEISA conformance Yocto platform
+/platforms/nxp-conformance-yocto/ @kevlhop @ndam-sfl @swegener-rtp

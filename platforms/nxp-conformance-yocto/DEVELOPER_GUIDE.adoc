@@ -1,5 +1,12 @@
 = SCE GEISA Mockup Yocto Platform Developer Guide
 
+IMPORTANT: This guide was imported from the original `geisa/lee-mockup`
+repository. The project now lives under
+`platforms/nxp-conformance-yocto/` in the GEISA Community repository.
+Use `README.md` for current project scope and source-setup instructions.
+The remaining build and flashing details are retained from the original
+project and have not been fully revalidated during migration.
+
 :toc:
 :icons:
 :iconsdir: ./doc/icons/
@@ -34,20 +41,24 @@ In the top right corner of Github (your profile picture):
 
 == Fetching the source using Git
 
-We are using `Git submodules` to synchronize the non-GEISA source code using a .gitmodules
-file, which is in the same repository.
+Clone the GEISA Community repository:
 
-First, clone the repo:
+  $ git clone https://github.com/geisa/community.git
+  $ cd community/platforms/nxp-conformance-yocto
 
-  $ git clone git@github.com:geisa/lee-mockup.git
+This project keeps its Yocto dependencies local to the project instead of
+registering them in the Community repository's root `.gitmodules`.
 
-Then, fetch all non-GEISA repos using git submodule:
+Initialize the exact imported dependency revisions with:
 
-  $ cd yocto-build/
-  $ git submodule update --init --recursive
+  $ ./scripts/setup-sources.sh
 
-NOTE: The initial build process takes approximately 4 to 5 hours on a current
-developer machine and will produce approximately 50GB of data.
+To inspect the dependency URLs and revisions without cloning them:
+
+  $ ./scripts/setup-sources.sh --dry-run
+
+NOTE: The initial build process can take several hours and consume substantial
+disk space.
 
 == Building a firmware using cqfd
 

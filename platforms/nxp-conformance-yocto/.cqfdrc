@@ -68,4 +68,3 @@ command='./build.sh \
     -m geisa-imx95-evk \
     --distro geisa-prod \
     -i geisa-prod-image'
-
