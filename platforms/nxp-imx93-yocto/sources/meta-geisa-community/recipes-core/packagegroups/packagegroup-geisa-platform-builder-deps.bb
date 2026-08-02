@@ -13,6 +13,7 @@ inherit packagegroup
 # that are dynamically renamed by shlib packaging are installed directly by
 # geisa-dev-image while the dev image remains broad.
 RDEPENDS:${PN} = " \
+    iproute2-ip \
     ca-certificates \
     cmake \
     dosfstools \
@@ -31,5 +32,6 @@ RDEPENDS:${PN} = " \
     python3-jsonschema \
     python3-pip \
     python3-protobuf \
+    python3-pyyaml \
     squashfs-tools \
 "
