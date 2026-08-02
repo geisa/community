@@ -16,6 +16,20 @@ image, or a production image. Its source is available at:
 Community questions and issue reports belong in the
 [GEISA Community issue tracker](https://github.com/geisa/community/issues).
 
+## Related NXP Conformance Platform
+
+The Community repository also contains
+`platforms/nxp-conformance-yocto/`, which preserves the NXP Yocto environment
+developed for GEISA conformance and mock implementation testing.
+
+Use this project, `nxp-imx93-yocto`, as the starting point for general
+FRDM-i.MX93 GEISA application and platform development. Use the conformance
+platform when reproducing or extending its embedded API mockup, ADM client,
+Wakaama integration, Mosquitto policy, and related test environment.
+
+The two projects are intentionally independent. Do not combine their Yocto
+layers, source trees, recipes, or build directories.
+
 ## Platform and Image Contents
 
 The image is a Yocto/OpenEmbedded `geisa-dev-image` for `geisa-imx93` (aarch64).
@@ -484,16 +498,18 @@ A complete installed-package manifest is available on a running image at
 
 ### Development and Validation
 
-| Tools                     | Use                                                |
-| ------------------------- | -------------------------------------------------- |
-| `cmake`, `ninja`, `make`  | Configure and build native projects                |
-| `gcc`/`g++`/`pkg-config`  | Compile and locate native dependencies             |
-| `python3`, `pip3`, `venv` | Python tools and isolated environment support      |
-| `node`, `npm`             | Run Node-based development or package tooling      |
-| `git`, `file`, `jq`       | Inspect source, artifacts, and JSON data           |
-| `python3 -m jsonschema`   | Validate JSON documents against a schema           |
-| `/usr/bin/xml`            | Inspect XML                                        |
-| `vela`                    | Compile and check Ethos-U compatible TFLite models |
+| Tools                      | Use                                                    |
+| -------------------------- | ------------------------------------------------------ |
+| `cmake`, `ninja`, `make`   | Configure and build native projects                    |
+| `gcc`/`g++`/`pkg-config`   | Compile and locate native dependencies                 |
+| `protoc`, `protobuf`       | Compile protobuf schemas and use the C++ runtime       |
+| `nanopb_generator`, `nanopb-runtime` | Generate nanopb C sources + matching headers |
+| `python3`, `pip3`, `venv`            | Python tooling- pip, venv, JSON Schema, etc. |
+| `node`, `npm`              | Run Node-based development or package tooling          |
+| `git`, `file`, `jq`        | Inspect source, artifacts, and JSON data               |
+| `python3 -m jsonschema`    | Validate JSON documents against a schema               |
+| `/usr/bin/xml`             | Inspect XML                                            |
+| `vela`                     | Compile and check Ethos-U compatible TFLite models     |
 
 ### Board and Kernel Bring-up
 

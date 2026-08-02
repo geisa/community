@@ -6,6 +6,13 @@
 set -euo pipefail
 out="${1:?output file required}"
 repo="$(cd "$(dirname "$0")/.." && pwd -P)"
+mkdir -p "$(dirname "$out")"
+tmp="${out}.tmp.$$"
+rm -f "$out" "$tmp"
+cleanup() {
+    rm -f "$tmp"
+}
+trap cleanup EXIT HUP INT TERM
 if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     revision="$(git -C "$repo" rev-parse HEAD)"
     dirty=false
@@ -15,8 +22,9 @@ if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
             cd "$repo"
             git -C "$repo" diff --no-ext-diff --binary HEAD
             git -C "$repo" diff --cached --no-ext-diff --binary HEAD
+            git -C "$repo" status --porcelain=v1 --untracked-files=all
+            git -C "$repo" ls-files -s | awk '$1 == 160000 { print }'
             git -C "$repo" ls-files --others --exclude-standard -z | LC_ALL=C sort -z | xargs -0 -r sha256sum
-            git -C "$repo" submodule status --recursive
         } | sha256sum | cut -d " " -f1)"
     else
         digest=clean
@@ -26,5 +34,6 @@ else
     dirty=true
     digest="$(find "$repo/sources/meta-geisa-community" -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d " " -f1)"
 fi
-mkdir -p "$(dirname "$out")"
-printf 'GEISA_SOURCE_REVISION = "%s"\nGEISA_SOURCE_DIRTY = "%s"\nGEISA_SOURCE_DIRTY_DIGEST = "%s"\n' "$revision" "$dirty" "$digest" > "$out"
+printf 'GEISA_SOURCE_REVISION = "%s"\nGEISA_SOURCE_DIRTY = "%s"\nGEISA_SOURCE_DIRTY_DIGEST = "%s"\n' "$revision" "$dirty" "$digest" > "$tmp"
+mv -f "$tmp" "$out"
+trap - EXIT HUP INT TERM

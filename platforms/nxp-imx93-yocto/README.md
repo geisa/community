@@ -498,16 +498,18 @@ A complete installed-package manifest is available on a running image at
 
 ### Development and Validation
 
-| Tools                     | Use                                                |
-| ------------------------- | -------------------------------------------------- |
-| `cmake`, `ninja`, `make`  | Configure and build native projects                |
-| `gcc`/`g++`/`pkg-config`  | Compile and locate native dependencies             |
-| `python3`, `pip3`, `venv` | Python tools and isolated environment support      |
-| `node`, `npm`             | Run Node-based development or package tooling      |
-| `git`, `file`, `jq`       | Inspect source, artifacts, and JSON data           |
-| `python3 -m jsonschema`   | Validate JSON documents against a schema           |
-| `/usr/bin/xml`            | Inspect XML                                        |
-| `vela`                    | Compile and check Ethos-U compatible TFLite models |
+| Tools                      | Use                                                    |
+| -------------------------- | ------------------------------------------------------ |
+| `cmake`, `ninja`, `make`   | Configure and build native projects                    |
+| `gcc`/`g++`/`pkg-config`   | Compile and locate native dependencies                 |
+| `protoc`, `protobuf`       | Compile protobuf schemas and use the C++ runtime       |
+| `nanopb_generator`, `nanopb-runtime` | Generate nanopb C sources + matching headers |
+| `python3`, `pip3`, `venv`            | Python tooling- pip, venv, JSON Schema, etc. |
+| `node`, `npm`              | Run Node-based development or package tooling          |
+| `git`, `file`, `jq`        | Inspect source, artifacts, and JSON data               |
+| `python3 -m jsonschema`    | Validate JSON documents against a schema               |
+| `/usr/bin/xml`             | Inspect XML                                            |
+| `vela`                     | Compile and check Ethos-U compatible TFLite models     |
 
 ### Board and Kernel Bring-up
 

@@ -71,7 +71,10 @@ GEISA_DEV_DYNAMIC_RENAMED_INSTALL = " \
     gnutls \
     libcoap \
     nanopb-runtime \
+    nanopb-runtime-dev \
+    nanopb-runtime-source \
     protobuf \
+    protobuf-dev \
     protobuf-c \
     tensorflow-lite \
     tensorflow-lite-host-tools \
