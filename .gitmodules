@@ -57,3 +57,9 @@
 	path = platforms/nxp-conformance-yocto/doc/test-report-pdf
 	url = https://github.com/savoirfairelinux/test-report-pdf
 	branch = master
+[submodule "platforms/nxp-imx93-yocto/sources/meta-clang"]
+	path = platforms/nxp-imx93-yocto/sources/meta-clang
+	url = https://github.com/kraj/meta-clang.git
+[submodule "platforms/nxp-imx93-yocto/sources/meta-security"]
+	path = platforms/nxp-imx93-yocto/sources/meta-security
+	url = https://git.yoctoproject.org/meta-security

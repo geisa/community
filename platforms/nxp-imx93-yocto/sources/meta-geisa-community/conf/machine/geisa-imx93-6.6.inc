@@ -2,6 +2,8 @@
 
 IMXBOOT_TARGETS:imx93-11x11-lpddr4x-frdm = "flash_singleboot"
 BBMASK:append = " \
+    meta-geisa-community/recipes-kernel/linux/linux-imx_6\\.12\\.bbappend \
+    meta-geisa-community/recipes-bsp/u-boot/u-boot-imx_2025\\.04\\.bbappend \
     meta-imx-frdm/meta-nxp-connectivity \
     meta-imx-frdm/meta-nxp-demo-experience \
     meta-imx-frdm/meta-nxp-connectivity/recipes-matter/matter/matter.bbappend \

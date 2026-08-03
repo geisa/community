@@ -10,7 +10,7 @@ set -euo pipefail
 GEISA_PLATFORM_ROOT="${GEISA_PLATFORM_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 release_profile_error() { printf 'release profile error: %s\n' "$*" >&2; return 1; }
 
-release_profile_known_source_ids=(poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization)
+release_profile_known_source_ids=(poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization meta-clang meta-security)
 release_profile_source_ids=()
 release_profile_source_path() {
     case "$1" in
@@ -19,6 +19,7 @@ release_profile_source_path() {
         meta-imx-frdm) echo sources/meta-imx-frdm;;
         meta-openembedded) echo sources/meta-openembedded;;
         meta-virtualization) echo sources/meta-virtualization;;
+        meta-clang) echo sources/meta-clang;; meta-security) echo sources/meta-security;;
         *) release_profile_error "unknown source id: $1";;
     esac
 }
@@ -29,6 +30,7 @@ release_profile_source_var() {
         meta-imx-frdm) echo SOURCE_META_IMX_FRDM;;
         meta-openembedded) echo SOURCE_META_OPENEMBEDDED;;
         meta-virtualization) echo SOURCE_META_VIRTUALIZATION;;
+        meta-clang) echo SOURCE_META_CLANG;; meta-security) echo SOURCE_META_SECURITY;;
         *) release_profile_error "unknown source id: $1";;
     esac
 }
@@ -85,7 +87,7 @@ release_profile_default_id() {
 release_profile_load() {
     local file="$1" line key value
     [ -r "$file" ] || { release_profile_error "missing profile: $file"; return 1; }
-    unset RELEASE_ID STATUS NXP_BSP_VERSION YOCTO_SERIES BUILD_DIR MACHINE DISTRO IMAGE KERNEL_VERSION KERNEL_SRCREV UBOOT_VERSION UBOOT_SRCREV SOURCE_IDS LAYER_PATHS GEISA_NXP_MACHINE_INCLUDE GEISA_MACHINE_INCLUDE SOURCE_POKY SOURCE_META_ARM SOURCE_META_FREESCALE SOURCE_META_IMX SOURCE_META_IMX_FRDM SOURCE_META_OPENEMBEDDED SOURCE_META_VIRTUALIZATION
+    unset RELEASE_ID STATUS NXP_BSP_VERSION YOCTO_SERIES BUILD_DIR MACHINE DISTRO IMAGE KERNEL_VERSION KERNEL_SRCREV UBOOT_VERSION UBOOT_SRCREV SOURCE_IDS LAYER_PATHS GEISA_NXP_MACHINE_INCLUDE GEISA_MACHINE_INCLUDE SOURCE_POKY SOURCE_META_ARM SOURCE_META_FREESCALE SOURCE_META_IMX SOURCE_META_IMX_FRDM SOURCE_META_OPENEMBEDDED SOURCE_META_VIRTUALIZATION SOURCE_META_CLANG SOURCE_META_SECURITY
     while IFS= read -r line || [ -n "$line" ]; do
         [ -z "$line" ] || [[ "$line" == \#* ]] && continue
         [[ "$line" =~ ^([A-Z][A-Z0-9_]*)=\"([^\"]*)\"$ ]] || {
@@ -105,7 +107,7 @@ release_profile_load() {
                 ;;
         esac
         case "$key" in
-            RELEASE_ID|STATUS|NXP_BSP_VERSION|YOCTO_SERIES|BUILD_DIR|MACHINE|DISTRO|IMAGE|KERNEL_VERSION|KERNEL_SRCREV|UBOOT_VERSION|UBOOT_SRCREV|SOURCE_IDS|LAYER_PATHS|GEISA_NXP_MACHINE_INCLUDE|GEISA_MACHINE_INCLUDE|SOURCE_POKY|SOURCE_META_ARM|SOURCE_META_FREESCALE|SOURCE_META_IMX|SOURCE_META_IMX_FRDM|SOURCE_META_OPENEMBEDDED|SOURCE_META_VIRTUALIZATION) ;;
+            RELEASE_ID|STATUS|NXP_BSP_VERSION|YOCTO_SERIES|BUILD_DIR|MACHINE|DISTRO|IMAGE|KERNEL_VERSION|KERNEL_SRCREV|UBOOT_VERSION|UBOOT_SRCREV|SOURCE_IDS|LAYER_PATHS|GEISA_NXP_MACHINE_INCLUDE|GEISA_MACHINE_INCLUDE|SOURCE_POKY|SOURCE_META_ARM|SOURCE_META_FREESCALE|SOURCE_META_IMX|SOURCE_META_IMX_FRDM|SOURCE_META_OPENEMBEDDED|SOURCE_META_VIRTUALIZATION|SOURCE_META_CLANG|SOURCE_META_SECURITY) ;;
             *) release_profile_error "unknown key $key in $file"; return 1;;
         esac
         printf -v "$key" '%s' "$value"

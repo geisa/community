@@ -32,6 +32,11 @@ assert_fails "$setup" --check --release no-such-release
 (
     release_profile_select nxp-6.12.34-2.1.0
     release_profile_check_complete
+    [[ " ${SOURCE_IDS} " == *" meta-clang "* && " ${SOURCE_IDS} " == *" meta-security "* ]]
+)
+(
+    release_profile_select nxp-6.6.52-2.2.2
+    [[ " ${SOURCE_IDS} " != *" meta-clang "* && " ${SOURCE_IDS} " != *" meta-security "* ]]
 )
 
 mkdir -p "$tmp_root/releases"
@@ -53,7 +58,8 @@ for source_id in "${release_profile_known_source_ids[@]}"; do
         meta-freescale) echo sources/meta-freescale;; meta-imx) echo sources/meta-imx;;
         meta-imx-frdm) echo sources/meta-imx-frdm;;
         meta-openembedded) echo sources/meta-openembedded;;
-        meta-virtualization) echo sources/meta-virtualization;; esac)"
+        meta-virtualization) echo sources/meta-virtualization;;
+        meta-clang) echo sources/meta-clang;; meta-security) echo sources/meta-security;; esac)"
     mkdir -p "$path"
     git -C "$path" init -q
     git -C "$path" config user.name test
@@ -81,7 +87,7 @@ done
     printf '%s\n' 'UBOOT_VERSION="2024.04"'
     printf '%s\n' 'UBOOT_SRCREV="fedcba9876543210fedcba9876543210fedcba98"'
 # shellcheck disable=SC2154
-    for source_id in "${release_profile_known_source_ids[@]}"; do
+    for source_id in poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization; do
         var="$(release_profile_source_var "$source_id")"
         printf '%s="%s"\n' "$var" "${fake_revs[$source_id]}"
     done
