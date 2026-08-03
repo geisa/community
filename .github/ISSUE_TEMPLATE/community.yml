@@ -1,0 +1,49 @@
+name: Community issue
+description: Report a problem or proposal for a GEISA Community project.
+title: "[Community] "
+body:
+  - type: dropdown
+    id: destination
+    attributes:
+      label: Affected project or destination
+      description: Select the current Community project or destination that best fits this issue.
+      options:
+        - NXP i.MX93 Yocto platform — platforms/nxp-imx93-yocto/
+        - API mockup — example-implementations/api/api-mockup/
+        - ADM mockup — example-implementations/adm/lwm2m-client/wakaama/
+        - LEE mockup — platforms/nxp-conformance-yocto/
+        - Protobuf demos — demonstrations/protobuf-demos/
+        - Community repository-wide issue
+        - New project proposal
+        - Other / Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem or proposal
+      description: Briefly describe the problem you found or the project you propose.
+      placeholder: What should the Community maintainers know?
+    validations:
+      required: true
+  - type: textarea
+    id: supporting-details
+    attributes:
+      label: Reproduction steps or supporting details
+      description: Include steps to reproduce the problem, logs, links, or other useful context.
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: GEISA version, revision, platform, or environment
+      description: Provide any relevant version, commit, hardware, operating system, or build details.
+    validations:
+      required: false
+  - type: checkboxes
+    id: sensitive-information
+    attributes:
+      label: Sensitive information
+      options:
+        - label: I confirm that this issue does not include sensitive information.
+          required: true
