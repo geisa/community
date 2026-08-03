@@ -34,9 +34,27 @@ assert_fails "$setup" --check --release no-such-release
     release_profile_check_complete
     [[ " ${SOURCE_IDS} " == *" meta-clang "* && " ${SOURCE_IDS} " == *" meta-security "* ]]
 )
+# shellcheck disable=SC2154,SC2034
 (
     release_profile_select nxp-6.6.52-2.2.2
     [[ " ${SOURCE_IDS} " != *" meta-clang "* && " ${SOURCE_IDS} " != *" meta-security "* ]]
+)
+(
+    # shellcheck disable=SC2154
+    release_profile_select nxp-6.6.52-2.2.2
+    # shellcheck disable=SC2154
+    [ "${#release_profile_mask_paths[@]}" -eq 2 ]
+    [ "${release_profile_mask_paths[0]}" = "meta-geisa-community/recipes-kernel/linux/linux-imx_6\\.12\\.bbappend" ]
+    [ "${release_profile_mask_paths[1]}" = "meta-geisa-community/recipes-bsp/u-boot/u-boot-imx_2025\\.04\\.bbappend" ]
+    BBMASK_PATHS=""
+    release_profile_validate_mask_paths
+    [ "${#release_profile_mask_paths[@]}" -eq 0 ]
+    # shellcheck disable=SC2034
+    BBMASK_PATHS="duplicate duplicate"
+    assert_fails release_profile_validate_mask_paths
+    # shellcheck disable=SC2034
+    BBMASK_PATHS="unsafe|mask"
+    assert_fails release_profile_validate_mask_paths
 )
 
 mkdir -p "$tmp_root/releases"
@@ -79,6 +97,7 @@ done
     printf '%s\n' 'DISTRO="fake"'
     printf '%s\n' 'IMAGE="fake"'
     printf '%s\n' 'SOURCE_IDS="poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization"'
+    printf '%s\n' 'BBMASK_PATHS=""'
     printf '%s\n' 'LAYER_PATHS="sources/meta-imx/meta-imx-ml"'
     printf '%s\n' 'GEISA_NXP_MACHINE_INCLUDE="conf/machine/imx93frdm.conf"'
     printf '%s\n' 'GEISA_MACHINE_INCLUDE="conf/machine/geisa-imx93-6.6.inc"'

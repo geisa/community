@@ -76,6 +76,17 @@ for layer_path in $LAYER_PATHS; do
     printf '  %s/%s \\\n' "$root" "$layer_path" >> "$layer_fragment"
 done
 printf '  "\n' >> "$layer_fragment"
+printf '\nBBMASK:append = " \\\n' >> "$layer_fragment"
+declare -A mask_seen=()
+for mask_path in $BBMASK_PATHS; do
+    [ -z "${mask_seen[$mask_path]+x}" ] || {
+        echo "duplicate BBMASK path for $RELEASE_ID: $mask_path" >&2
+        exit 1
+    }
+    mask_seen[$mask_path]=1
+    printf '  %s \\\n' "$mask_path" >> "$layer_fragment"
+done
+printf '  "\n' >> "$layer_fragment"
 printf '\ninclude conf/geisa-release-layers.conf\n' >> "$build/conf/bblayers.conf"
 cp "$root/build-configuration/templates/local.conf" "$build/conf/local.conf"
 state_file="$build/conf/geisa-source-state.conf"
