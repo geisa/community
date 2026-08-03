@@ -4,7 +4,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += "file://geisa-bluetooth.conf"
 
 do_install:append() {
-    install -D -m 0644 ${WORKDIR}/geisa-bluetooth.conf \
+    install -D -m 0644 ${UNPACKDIR}/geisa-bluetooth.conf \
         ${D}${systemd_system_unitdir}/bluetooth.service.d/geisa.conf
 }
 

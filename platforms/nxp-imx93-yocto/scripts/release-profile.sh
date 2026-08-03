@@ -10,7 +10,8 @@ set -euo pipefail
 GEISA_PLATFORM_ROOT="${GEISA_PLATFORM_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 release_profile_error() { printf 'release profile error: %s\n' "$*" >&2; return 1; }
 
-release_profile_source_ids=(poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization)
+release_profile_known_source_ids=(poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization)
+release_profile_source_ids=()
 release_profile_source_path() {
     case "$1" in
         poky) echo sources/poky;; meta-arm) echo sources/meta-arm;;
@@ -31,6 +32,44 @@ release_profile_source_var() {
         *) release_profile_error "unknown source id: $1";;
     esac
 }
+release_profile_validate_inventory() {
+    local source_id var value
+    local -A seen=()
+    release_profile_source_ids=()
+    [ -n "${SOURCE_IDS:-}" ] || { release_profile_error "SOURCE_IDS is empty"; return 1; }
+    for source_id in $SOURCE_IDS; do
+        [ -z "${seen[$source_id]+x}" ] || {
+            release_profile_error "duplicate source ID: $source_id"; return 1;
+        }
+        release_profile_source_path "$source_id" >/dev/null || return 1
+        seen[$source_id]=1
+        release_profile_source_ids+=("$source_id")
+    done
+    for source_id in "${release_profile_known_source_ids[@]}"; do
+        var="$(release_profile_source_var "$source_id")"; value="${!var:-}"
+        if [ -n "${seen[$source_id]+x}" ]; then
+            [[ "$value" =~ ^[0-9a-fA-F]{40}$ ]] || {
+                release_profile_error "$var must be a full commit for selected source $source_id"; return 1;
+            }
+        elif [ -n "$value" ]; then
+            release_profile_error "$var is set for unselected source $source_id"; return 1
+        fi
+    done
+}
+release_profile_validate_layer_paths() {
+    local layer_path
+    local -A seen=()
+    [ -n "${LAYER_PATHS:-}" ] || { release_profile_error "LAYER_PATHS is empty"; return 1; }
+    for layer_path in $LAYER_PATHS; do
+        [ -z "${seen[$layer_path]+x}" ] || {
+            release_profile_error "duplicate layer path: $layer_path"; return 1;
+        }
+        seen[$layer_path]=1
+        [[ "$layer_path" != /* && "$layer_path" != *..* ]] || {
+            release_profile_error "unsafe layer path: $layer_path"; return 1;
+        }
+    done
+}
 release_profile_default_id() {
     local line file="$GEISA_PLATFORM_ROOT/releases/default"
     [ -r "$file" ] || { release_profile_error "missing default release: $file"; return 1; }
@@ -46,18 +85,27 @@ release_profile_default_id() {
 release_profile_load() {
     local file="$1" line key value
     [ -r "$file" ] || { release_profile_error "missing profile: $file"; return 1; }
-    unset RELEASE_ID STATUS NXP_BSP_VERSION YOCTO_SERIES BUILD_DIR MACHINE DISTRO IMAGE KERNEL_VERSION KERNEL_SRCREV UBOOT_VERSION UBOOT_SRCREV SOURCE_POKY SOURCE_META_ARM SOURCE_META_FREESCALE SOURCE_META_IMX SOURCE_META_IMX_FRDM SOURCE_META_OPENEMBEDDED SOURCE_META_VIRTUALIZATION
+    unset RELEASE_ID STATUS NXP_BSP_VERSION YOCTO_SERIES BUILD_DIR MACHINE DISTRO IMAGE KERNEL_VERSION KERNEL_SRCREV UBOOT_VERSION UBOOT_SRCREV SOURCE_IDS LAYER_PATHS GEISA_NXP_MACHINE_INCLUDE GEISA_MACHINE_INCLUDE SOURCE_POKY SOURCE_META_ARM SOURCE_META_FREESCALE SOURCE_META_IMX SOURCE_META_IMX_FRDM SOURCE_META_OPENEMBEDDED SOURCE_META_VIRTUALIZATION
     while IFS= read -r line || [ -n "$line" ]; do
         [ -z "$line" ] || [[ "$line" == \#* ]] && continue
         [[ "$line" =~ ^([A-Z][A-Z0-9_]*)=\"([^\"]*)\"$ ]] || {
             release_profile_error "invalid profile line in $file: $line"; return 1;
         }
         key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
-        [[ "$value" =~ ^[A-Za-z0-9._:/+-]+$ ]] || {
-            release_profile_error "unsafe value for $key in $file"; return 1;
-        }
         case "$key" in
-            RELEASE_ID|STATUS|NXP_BSP_VERSION|YOCTO_SERIES|BUILD_DIR|MACHINE|DISTRO|IMAGE|KERNEL_VERSION|KERNEL_SRCREV|UBOOT_VERSION|UBOOT_SRCREV|SOURCE_POKY|SOURCE_META_ARM|SOURCE_META_FREESCALE|SOURCE_META_IMX|SOURCE_META_IMX_FRDM|SOURCE_META_OPENEMBEDDED|SOURCE_META_VIRTUALIZATION) ;;
+            SOURCE_IDS|LAYER_PATHS)
+                [[ "$value" =~ ^[A-Za-z0-9._:/+\ -]+$ ]] || {
+                    release_profile_error "unsafe value for $key in $file: $value"; return 1;
+                }
+                ;;
+            *)
+                [[ "$value" =~ ^[A-Za-z0-9._:/+-]+$ ]] || {
+                    release_profile_error "unsafe value for $key in $file"; return 1;
+                }
+                ;;
+        esac
+        case "$key" in
+            RELEASE_ID|STATUS|NXP_BSP_VERSION|YOCTO_SERIES|BUILD_DIR|MACHINE|DISTRO|IMAGE|KERNEL_VERSION|KERNEL_SRCREV|UBOOT_VERSION|UBOOT_SRCREV|SOURCE_IDS|LAYER_PATHS|GEISA_NXP_MACHINE_INCLUDE|GEISA_MACHINE_INCLUDE|SOURCE_POKY|SOURCE_META_ARM|SOURCE_META_FREESCALE|SOURCE_META_IMX|SOURCE_META_IMX_FRDM|SOURCE_META_OPENEMBEDDED|SOURCE_META_VIRTUALIZATION) ;;
             *) release_profile_error "unknown key $key in $file"; return 1;;
         esac
         printf -v "$key" '%s' "$value"
@@ -67,6 +115,11 @@ release_profile_load() {
     for key in RELEASE_ID NXP_BSP_VERSION YOCTO_SERIES BUILD_DIR MACHINE DISTRO IMAGE; do
         [ -n "${!key:-}" ] || { release_profile_error "missing $key in $file"; return 1; }
     done
+    for key in SOURCE_IDS LAYER_PATHS GEISA_NXP_MACHINE_INCLUDE GEISA_MACHINE_INCLUDE; do
+        [ -n "${!key:-}" ] || { release_profile_error "missing $key in $file"; return 1; }
+    done
+    release_profile_validate_inventory
+    release_profile_validate_layer_paths
     # shellcheck disable=SC2034
     RELEASE_PROFILE_FILE="$file"
     # shellcheck disable=SC2034

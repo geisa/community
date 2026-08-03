@@ -18,7 +18,7 @@ SRC_URI = " \
 "
 SRC_URI[pyav.sha256sum] = "${PYAV_SHA256}"
 
-S = "${WORKDIR}"
+S = "${UNPACKDIR}"
 include ${TOPDIR}/conf/geisa-source-state.conf
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
@@ -33,12 +33,12 @@ RDEPENDS:${PN} += "geisa-runtime-groups"
 do_install() {
     output="${D}/platform/profiles/nxp-ethosu-tflite"
     rm -rf "$output"
-    python3 "${WORKDIR}/assemble-nxp-ethosu-tflite-profile.py" assemble \
+    python3 "${UNPACKDIR}/assemble-nxp-ethosu-tflite-profile.py" assemble \
         --sysroot "${RECIPE_SYSROOT}" \
         --wheel "${DL_DIR}/${PYAV_WHEEL}" \
         --root "$output" \
         --source-revision "${GEISA_SOURCE_REVISION}"
-    python3 "${WORKDIR}/assemble-nxp-ethosu-tflite-profile.py" verify --root "$output"
+    python3 "${UNPACKDIR}/assemble-nxp-ethosu-tflite-profile.py" verify --root "$output"
     chown -R 0:0 "$output"
     chmod -R go-w "$output"
 }

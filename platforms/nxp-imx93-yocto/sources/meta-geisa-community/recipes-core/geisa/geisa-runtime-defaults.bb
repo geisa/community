@@ -7,13 +7,13 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 
 SRC_URI = "file://geisa"
 
-S = "${WORKDIR}"
+S = "${UNPACKDIR}"
 
 inherit allarch
 
 do_install() {
     install -d ${D}${sysconfdir}/default
-    install -m 0644 ${WORKDIR}/geisa ${D}${sysconfdir}/default/geisa
+    install -m 0644 ${UNPACKDIR}/geisa ${D}${sysconfdir}/default/geisa
 }
 
 FILES:${PN} = "${sysconfdir}/default/geisa"

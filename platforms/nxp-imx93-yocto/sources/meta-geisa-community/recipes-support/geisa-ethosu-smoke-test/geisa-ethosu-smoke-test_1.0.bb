@@ -14,7 +14,7 @@ SRC_URI = " \
     file://README \
 "
 
-S = "${WORKDIR}"
+S = "${UNPACKDIR}"
 
 inherit allarch
 
@@ -31,10 +31,10 @@ RDEPENDS:${PN} = " \
 
 do_install() {
     install -d ${D}${bindir}
-    install -m 0755 ${WORKDIR}/geisa-ethosu-smoke-test \
+    install -m 0755 ${UNPACKDIR}/geisa-ethosu-smoke-test \
         ${D}${bindir}/geisa-ethosu-smoke-test
     install -d ${D}${datadir}/geisa/examples/ethosu-smoke
-    install -m 0644 ${WORKDIR}/README \
+    install -m 0644 ${UNPACKDIR}/README \
         ${D}${datadir}/geisa/examples/ethosu-smoke/README
 }
 

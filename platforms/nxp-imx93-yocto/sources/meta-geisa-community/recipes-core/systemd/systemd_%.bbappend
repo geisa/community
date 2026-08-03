@@ -14,11 +14,11 @@ do_install:append() {
     fi
 
     install -d ${D}/${systemd_system_unitdir}/systemd-networkd-wait-online.service.d
-    install -m 0644 ${WORKDIR}/geisa-networkd-wait-online.conf \
+    install -m 0644 ${UNPACKDIR}/geisa-networkd-wait-online.conf \
         ${D}/${systemd_system_unitdir}/systemd-networkd-wait-online.service.d/geisa-networkd-wait-online.conf
 
     install -d ${D}/${sysconfdir}/systemd/network
-    install -m 0644 ${WORKDIR}/10-geisa-end0.link \
+    install -m 0644 ${UNPACKDIR}/10-geisa-end0.link \
         ${D}/${sysconfdir}/systemd/network/10-geisa-end0.link
 }
 

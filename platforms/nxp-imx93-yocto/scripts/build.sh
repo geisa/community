@@ -59,6 +59,24 @@ release_profile_check_sources --check
 build="$root/$BUILD_DIR"
 mkdir -p "$build/conf"
 sed "s|@PLATFORM_ROOT@|$root|g" "$root/build-configuration/templates/bblayers.conf" > "$build/conf/bblayers.conf"
+layer_fragment="$build/conf/geisa-release-layers.conf"
+: > "$layer_fragment"
+printf '# Generated for %s (%s)\nBBLAYERS += " \\\n' "$RELEASE_ID" "$RELEASE_PROFILE_STATUS" >> "$layer_fragment"
+declare -A layer_seen=()
+for layer_path in $LAYER_PATHS; do
+    [ -z "${layer_seen[$layer_path]+x}" ] || {
+        echo "duplicate layer path for $RELEASE_ID: $layer_path" >&2
+        exit 1
+    }
+    layer_seen[$layer_path]=1
+    [ -d "$root/$layer_path" ] || {
+        echo "missing layer path for $RELEASE_ID: $root/$layer_path" >&2
+        exit 1
+    }
+    printf '  %s/%s \\\n' "$root" "$layer_path" >> "$layer_fragment"
+done
+printf '  "\n' >> "$layer_fragment"
+printf '\ninclude conf/geisa-release-layers.conf\n' >> "$build/conf/bblayers.conf"
 cp "$root/build-configuration/templates/local.conf" "$build/conf/local.conf"
 state_file="$build/conf/geisa-source-state.conf"
 rm -f "$state_file"
@@ -69,6 +87,8 @@ DL_DIR = "${DL_DIR:-$HOME/yocto-cache/downloads}"
 SSTATE_DIR = "${SSTATE_DIR:-$HOME/yocto-cache/sstate}"
 MACHINE = "$MACHINE"
 DISTRO = "$DISTRO"
+GEISA_NXP_MACHINE_INCLUDE = "$GEISA_NXP_MACHINE_INCLUDE"
+GEISA_MACHINE_INCLUDE = "$GEISA_MACHINE_INCLUDE"
 EOF
 set +u
 . "$root/sources/poky/oe-init-build-env" "$build" >/dev/null

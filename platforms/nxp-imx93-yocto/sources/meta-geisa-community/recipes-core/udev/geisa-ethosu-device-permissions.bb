@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 
 SRC_URI = "file://99-geisa-ethosu.rules"
 
-S = "${WORKDIR}"
+S = "${UNPACKDIR}"
 
 inherit allarch useradd
 
@@ -20,7 +20,7 @@ GROUPMEMS_PARAM:${PN} = "--group ethosu --add geisa"
 
 do_install() {
     install -d ${D}${nonarch_base_libdir}/udev/rules.d
-    install -m 0644 ${WORKDIR}/99-geisa-ethosu.rules \
+    install -m 0644 ${UNPACKDIR}/99-geisa-ethosu.rules \
         ${D}${nonarch_base_libdir}/udev/rules.d/99-geisa-ethosu.rules
 }
 
