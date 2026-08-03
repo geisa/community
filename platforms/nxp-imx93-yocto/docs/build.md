@@ -12,6 +12,20 @@ git submodule update --init --recursive
 ACCEPT_FSL_EULA=1 ./scripts/build.sh development
 ```
 
+`nxp-6.6.52-2.2.2` is the default supported release. Check or select it
+explicitly with:
+
+```sh
+./scripts/setup-sources.sh --check --release nxp-6.6.52-2.2.2
+ACCEPT_FSL_EULA=1 ./scripts/build.sh development \
+    --release nxp-6.6.52-2.2.2
+```
+
+`setup-sources.sh` checks exact local commits and refuses to switch a dirty
+submodule. It does not fetch or discard local work. The experimental
+`nxp-6.12.34-2.1.0` profile is intentionally incomplete and fails before
+BitBake because its exact source revisions are not verified.
+
 `ACCEPT_FSL_EULA=1` allows the local build flow only. It does not grant
 redistribution rights for generated artifacts. The build generates the
 Ethos-U/TFLite profile from declared dependencies and a checksum-pinned PyAV

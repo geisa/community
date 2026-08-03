@@ -41,7 +41,7 @@ to support development and testing of those implementations. Matter, Zigbee,
 the NXP WLAN SDK, and firmware daemons are outside the scope of this image.
 
 The stable development baseline is Yocto Scarthgap with the pinned NXP
-`lf-6.6.y` kernel source and its 6.6.36-based configuration. A newer BSP or
+6.6.52 kernel source and the NXP 6.6.52-2.2.2 release profile. A newer BSP or
 kernel migration may be done via a separate future track, but is not part of
 this image release.
 
@@ -183,6 +183,32 @@ possible.
 `main` contains the current development version. A published release may name
 a tag; to reproduce that release, check out its tag before building. Use
 `git tag --list` to see all available tags.
+
+## Release Profiles
+
+The default release is `nxp-6.6.52-2.2.2`.
+
+Use the existing build command for the default release:
+
+```
+ACCEPT_FSL_EULA=1 ./scripts/build.sh development
+```
+
+To select it explicitly:
+
+```
+./scripts/setup-sources.sh --release nxp-6.6.52-2.2.2
+ACCEPT_FSL_EULA=1 ./scripts/build.sh development \
+    --release nxp-6.6.52-2.2.2
+```
+
+The `nxp-6.12.34-2.1.0` profile is reserved for the newer NXP BSP. Its source
+revisions and release-specific recipe changes have not yet been added, so it
+cannot currently be selected for setup or build.
+
+Source setup verifies the selected release against the checked-out submodule
+revisions. It stops if a submodule contains local changes or does not match the
+selected profile.
 
 ## NXP License Acceptance
 

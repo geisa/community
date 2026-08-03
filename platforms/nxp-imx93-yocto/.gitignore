@@ -1,5 +1,6 @@
 # Build products and local inspection/release output are never source inputs.
 build-development/
+build-development-nxp-6.12.34-2.1.0/
 release-staging/
 inspection-*/
 

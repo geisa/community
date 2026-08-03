@@ -13,7 +13,23 @@ Use the checklist below when preparing a release candidate.
 - Record the source revision and submodule revisions alongside the release
   artifacts.
 
-## 2. Run a normal build
+## 2. Select and check the release profile
+
+- The default supported profile is `nxp-6.6.52-2.2.2`.
+- Run `./scripts/setup-sources.sh --check` and retain its expected-versus-
+  actual revision report with the candidate.
+- Use `--release RELEASE` on both source checks and the build when a release
+  must be selected explicitly.
+- Do not switch a dirty submodule. The helper does not fetch or discard local
+  changes.
+- The `nxp-6.12.34-2.1.0` profile is experimental and incomplete. It must not
+  be presented as buildable or bootable until NXP source revisions and recipe
+  compatibility are verified.
+- Keep each release in its own build directory. The 6.6 profile uses
+  `build-development`; the experimental profile reserves
+  `build-development-nxp-6.12.34-2.1.0`.
+
+## 3. Run a normal build
 
 - Run a normal development-image build.
 - Identify the exact candidate WIC.
@@ -21,7 +37,7 @@ Use the checklist below when preparing a release candidate.
 - Confirm the generated `nxp-ethosu-tflite` profile records the declared Yocto
   inputs and the pinned PyAV wheel.
 
-## 3. Run release validation
+## 4. Run release validation
 
 Run:
 
@@ -35,7 +51,7 @@ its WIC contents.
 Do not release the image if the selected e2fsck cannot validate the filesystem
 feature set or if it reports filesystem errors.
 
-## 4. Complete offline acceptance checks
+## 5. Complete offline acceptance checks
 
 Confirm that the candidate root filesystem contains:
 
@@ -49,7 +65,7 @@ Confirm that the candidate root filesystem contains:
 Also confirm that the kernel image embeds the signed regulatory database and
 signature required before the root filesystem becomes available.
 
-## 5. Complete hardware acceptance checks
+## 6. Complete hardware acceptance checks
 
 Validate the candidate on FRDM-i.MX93 hardware.
 
@@ -71,7 +87,7 @@ Confirm at minimum:
   - socket diagnostics
   - trace and probe support
 
-## 6. Keep release scope narrow
+## 7. Keep release scope narrow
 
 This release is intended to stay on the reviewed Scarthgap and NXP 6.6
 baseline. A BSP or kernel migration requires its own review and acceptance

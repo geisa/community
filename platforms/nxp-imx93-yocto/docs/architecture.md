@@ -4,9 +4,16 @@ This initial contribution supports the NXP FRDM-i.MX93 development image only.
 The Yocto metadata is in `sources/meta-geisa-community`; upstream Yocto layers
 are pinned as submodules.
 
-The supported baseline is Scarthgap with the pinned NXP `lf-6.6.y` source and
-6.6.36-based kernel configuration. A newer BSP or kernel migration is separate
+The supported default is NXP 6.6.52-2.2.2 on Scarthgap with Linux 6.6.52 and
+the pinned FRDM-i.MX93 layer set. A newer BSP or kernel migration is separate
 future work.
+
+Release selection is explicit. `releases/default` selects
+`nxp-6.6.52-2.2.2`; `scripts/setup-sources.sh --check` reports expected and
+actual source commits without changing them. The `nxp-6.12.34-2.1.0` profile
+is an incomplete experimental placeholder: it has no verified source commits
+or recipe compatibility and must fail source setup and builds until those are
+established.
 
 The image uses a 256 MB boot partition, an 8 GB writable root filesystem, and
 a 6 GB `/platform` filesystem. Host configuration and application data live
