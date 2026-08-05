@@ -46,7 +46,7 @@ do_install() {
 FILES:${PN} = "/platform/profiles/nxp-ethosu-tflite"
 # These libraries are deliberately private to the read-only profile; managed
 # applications load them through the profile's explicit library path.
-PRIVATE_LIBS:${PN} = "libethosu.so.1.0.0 libethosu_delegate.so libtensorflow-lite.so.2.16.2"
+PRIVATE_LIBS:${PN} = "libethosu.so.1.0.0 libethosu_delegate.so libtensorflow-lite.so.${GEISA_TFLITE_RUNTIME_VERSION}"
 INSANE_SKIP:${PN} += "already-stripped dev-so file-rdeps ldflags"
 SKIP_FILEDEPS:${PN} = "1"
 do_install[vardeps] += "PYAV_SHA256 PYAV_URL GEISA_SOURCE_REVISION"

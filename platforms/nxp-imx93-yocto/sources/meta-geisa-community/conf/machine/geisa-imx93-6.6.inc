@@ -11,6 +11,7 @@ BBMASK:append = " \
     meta-imx-frdm/meta-imx-bsp/recipes-connectivity/nxp-wlan-sdk/nxp-wlan-sdk_git.bbappend \
 "
 PREFERRED_VERSION_firmware-ele-imx = "2.0.3.1"
+GEISA_TFLITE_RUNTIME_VERSION = "2.16.2"
 WKS_FILE_DEPENDS:remove:imx93-11x11-lpddr4x-frdm = "imx-m33-demos"
 IMAGE_BOOT_FILES:remove:imx93-11x11-lpddr4x-frdm = " \
     imx93-11x11-evk_m33_TCM_power_mode_switch.bin \

@@ -13,7 +13,6 @@ import zipfile
 
 PROFILE = "nxp-ethosu-tflite"
 PROFILE_VERSION = "2"
-PYTHON_SITE = Path("usr/lib/python3.12/site-packages")
 PYAV_WHEEL = "av-18.0.0-cp311-abi3-manylinux_2_28_aarch64.whl"
 PYAV_SHA256 = "4d683b7747a0ba9222b8a5f81e41db5f796e7f64473454ec4fe2548e083c2fa0"
 PYAV_TAG = "cp311-abi3-manylinux_2_28_aarch64"
@@ -25,13 +24,7 @@ PYAV_URL = (
 
 NATIVE_SOURCES = {
     "lib/libethosu_delegate.so": "usr/lib/libethosu_delegate.so",
-    "lib/libtensorflow-lite.so.2.16.2": "usr/lib/libtensorflow-lite.so.2.16.2",
     "lib/libethosu.so.1.0.0": "usr/lib/libethosu.so.1.0.0",
-}
-LINKS = {
-    "lib/libethosu.so": "libethosu.so.1.0.0",
-    "lib/libethosu.so.1": "libethosu.so.1.0.0",
-    "lib/libtensorflow-lite.so": "libtensorflow-lite.so.2.16.2",
 }
 NUMPY_EXCLUDES = {
     "_pyinstaller",
@@ -67,6 +60,29 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def tensorflow_lite_library(sysroot: Path) -> tuple[str, str]:
+    libraries = sorted(
+        path
+        for path in (sysroot / "usr/lib").glob("libtensorflow-lite.so.*")
+        if path.is_file()
+    )
+    if len(libraries) != 1:
+        raise ValueError(f"expected one TensorFlow Lite runtime library, found: {libraries}")
+    name = libraries[0].name
+    return name, f"usr/lib/{name}"
+
+
+def python_site(sysroot: Path) -> Path:
+    sites = sorted(
+        path
+        for path in (sysroot / "usr/lib").glob("python*/site-packages")
+        if path.is_dir() and (path / "tflite_runtime").is_dir()
+    )
+    if len(sites) != 1:
+        raise ValueError(f"expected one Python runtime site-packages tree, found: {sites}")
+    return sites[0].relative_to(sysroot)
 
 
 def ensure_safe_relative(name: str) -> Path:
@@ -189,14 +205,25 @@ def assemble(sysroot: Path, wheel: Path, output: Path, source_revision: str) -> 
     if output.exists():
         raise ValueError(f"refusing to replace profile output: {output}")
     output.mkdir(parents=True)
-    for destination, source in NATIVE_SOURCES.items():
+    tensorflow_library, tensorflow_source = tensorflow_lite_library(sysroot)
+    native_sources = {
+        **NATIVE_SOURCES,
+        f"lib/{tensorflow_library}": tensorflow_source,
+    }
+    links = {
+        "lib/libethosu.so": "libethosu.so.1.0.0",
+        "lib/libethosu.so.1": "libethosu.so.1.0.0",
+        "lib/libtensorflow-lite.so": tensorflow_library,
+    }
+    site = python_site(sysroot)
+    for destination, source in native_sources.items():
         candidate = sysroot / source
         if not candidate.is_file():
             raise ValueError(f"missing declared Yocto runtime input: {candidate}")
         copy_file(candidate, output / destination)
-    copy_tree(sysroot / PYTHON_SITE / "tflite_runtime", output / "python" / "tflite_runtime", {"test", "tests", "__pycache__"})
-    copy_tree(sysroot / PYTHON_SITE / "numpy", output / "python" / "numpy", NUMPY_EXCLUDES)
-    for destination, target in LINKS.items():
+    copy_tree(sysroot / site / "tflite_runtime", output / "python" / "tflite_runtime", {"test", "tests", "__pycache__"})
+    copy_tree(sysroot / site / "numpy", output / "python" / "numpy", NUMPY_EXCLUDES)
+    for destination, target in links.items():
         link = output / destination
         link.parent.mkdir(parents=True, exist_ok=True)
         link.symlink_to(target)
