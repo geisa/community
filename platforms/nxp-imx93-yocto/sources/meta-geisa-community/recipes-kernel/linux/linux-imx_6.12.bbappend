@@ -8,10 +8,11 @@ LINUX_VERSION:geisa-imx93-machine = "6.12.34"
 SRC_URI:append = " \
     file://container.cfg \
     file://development.cfg \
+    file://nxp-6.12.cfg \
     file://unused-configs.cfg \
 "
 
-DELTA_KERNEL_DEFCONFIG:geisa-imx93-machine = "container.cfg development.cfg unused-configs.cfg"
+DELTA_KERNEL_DEFCONFIG:geisa-imx93-machine = "container.cfg development.cfg nxp-6.12.cfg unused-configs.cfg"
 
 DEPENDS:append:geisa-imx93-machine = " wireless-regdb"
 SYSROOT_DIRS:append:geisa-imx93-machine = " ${nonarch_base_libdir}/firmware"
