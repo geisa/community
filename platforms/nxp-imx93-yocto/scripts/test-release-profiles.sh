@@ -29,6 +29,14 @@ grep -Fq 'nxp-6.6.52-2.2.2' "$tmp_root/default-check"
 "$setup" --check --release nxp-6.6.52-2.2.2 >"$tmp_root/supported-check"
 grep -Fq 'nxp-6.6.52-2.2.2' "$tmp_root/supported-check"
 assert_fails "$setup" --check --release no-such-release
+
+if rg -n 'debug-tweaks' \
+    "$platform_root/build-configuration/templates/local.conf" \
+    "$platform_root/sources/meta-geisa-community"; then
+    echo "active GEISA platform metadata still uses debug-tweaks" >&2
+    exit 1
+fi
+
 (
     release_profile_select nxp-6.12.34-2.1.0
     release_profile_check_complete
