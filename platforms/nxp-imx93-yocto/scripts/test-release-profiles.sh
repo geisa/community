@@ -51,9 +51,10 @@ fi
     # shellcheck disable=SC2154
     release_profile_select nxp-6.6.52-2.2.2
     # shellcheck disable=SC2154
-    [ "${#release_profile_mask_paths[@]}" -eq 2 ]
+    [ "${#release_profile_mask_paths[@]}" -eq 3 ]
     [ "${release_profile_mask_paths[0]}" = "meta-geisa-community/recipes-kernel/linux/linux-imx_6\\.12\\.bbappend" ]
     [ "${release_profile_mask_paths[1]}" = "meta-geisa-community/recipes-bsp/u-boot/u-boot-imx_2025\\.04\\.bbappend" ]
+    [ "${release_profile_mask_paths[2]}" = "meta-geisa-community/recipes-core/systemd/systemd_257\\.6\\.bbappend" ]
     BBMASK_PATHS=""
     release_profile_validate_mask_paths
     [ "${#release_profile_mask_paths[@]}" -eq 0 ]
