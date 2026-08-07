@@ -34,6 +34,7 @@ GEISA_DEV_RUNTIME_INSTALL = " \
     geisa-sudo-policy \
     mosquitto-clients \
     nodejs \
+    systemd-analyze \
 "
 
 # The FRDM-i.MX93 uses the NXP IW612 SDIO/UART module. This exact package is
