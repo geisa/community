@@ -9,8 +9,8 @@ Website: https://www.pragsolconsulting.com/
 `geisa-ethosu-smoke-test` is a host-side development diagnostic. It is not a
 GEISA application, a managed application, or a performance benchmark.
 
-The helper uses the Apache-2.0 TensorFlow Lite 2.16.2 MobileNet example and
-Grace Hopper image already installed by the `tensorflow-lite` package. It
+The helper uses the Apache-2.0 TensorFlow Lite MobileNet example and Grace
+Hopper image installed by the release-selected `tensorflow-lite` package. It
 checks the source model SHA-256, uses Vela for `ethos-u65-256` to create a
 temporary compiled model, loads `/usr/lib/libethosu_delegate.so`, and runs one
 inference through `/dev/ethosu0`. It succeeds only when the delegate reports

@@ -18,6 +18,7 @@ DEBUG=0
 SYSFS_ROOT="${SYSFS_ROOT:-/sys}"
 PROC_ROOT="${PROC_ROOT:-/proc}"
 GEISA_STATE_ROOT="${GEISA_STATE_ROOT:-/var/lib/geisa}"
+GEISA_LXC_LS_PATH="${GEISA_LXC_LS_PATH:-}"
 
 usage() {
     cat <<'EOF'
@@ -105,7 +106,7 @@ print_network() {
         while IFS='|' read -r name state; do
             [ -n "$name" ] || continue
             address="$(printf '%s\n' "$rows" | awk -v interface="$name" '$1 == interface { print $2; exit }')"
-            [ -z "$summary" ] || summary="$summary; "
+            [ -z "$summary" ] || summary="$summary "
             summary="${summary}${name} ${state:-UNKNOWN} ${address:-<no IP>}"
         done <<EOF
 $interfaces
@@ -114,7 +115,7 @@ EOF
     elif [ -n "$rows" ]; then
         while IFS=' ' read -r name address; do
             [ "$name" = lo ] && continue
-            [ -z "$summary" ] || summary="$summary; "
+            [ -z "$summary" ] || summary="$summary "
             summary="${summary}${name} UNKNOWN ${address}"
         done <<EOF
 $rows
@@ -126,16 +127,19 @@ EOF
 }
 
 print_thermal() {
+    printf 'Thermals: '
     found=0
     for zone in "$SYSFS_ROOT"/class/thermal/thermal_zone*; do
         [ -d "$zone" ] || continue
         name="$(read_file "$zone/type")"
         raw="$(read_file "$zone/temp")"
         [ -n "$name" ] || name="$(basename "$zone")"
-        printf 'Thermal: %s %s\n' "$name" "$(format_temp "$raw")"
+        [ "$found" -eq 0 ] || printf ' '
+        printf '%s %s' "$name" "$(format_temp "$raw")"
         found=1
     done
-    [ "$found" -eq 1 ] || printf 'Thermal: unavailable\n'
+    [ "$found" -eq 1 ] || printf 'unavailable'
+    printf '\n'
 }
 
 print_filesystems() {
@@ -164,11 +168,39 @@ print_resources() {
 
 print_lxc() {
     printf '\nLXC:\n'
-    if ! have lxc-ls; then
-        printf 'lxc-ls unavailable\n'
+    lxc_ls="$GEISA_LXC_LS_PATH"
+    if [ -z "$lxc_ls" ] && have lxc-ls; then
+        lxc_ls="$(command -v lxc-ls)"
+    elif [ -z "$lxc_ls" ]; then
+        for candidate in /usr/bin/lxc-ls /usr/sbin/lxc-ls /bin/lxc-ls; do
+            if [ -x "$candidate" ]; then
+                lxc_ls="$candidate"
+                break
+            fi
+        done
+    fi
+    if [ -z "$lxc_ls" ]; then
+        printf 'lxc tooling unavailable (lxc-ls not found)\n'
         return
     fi
-    output="$(lxc-ls --fancy 2>/dev/null || true)"
+    if [ ! -x "$lxc_ls" ]; then
+        printf 'lxc tooling unavailable (lxc-ls not found)\n'
+        return
+    fi
+    if [ "$(id -u 2>/dev/null || printf 1)" = 0 ]; then
+        output="$($lxc_ls --fancy -F NAME,STATE,AUTOSTART,GROUPS,IPV4,UNPRIVILEGED 2>/dev/null)"
+        lxc_rc=$?
+    elif have sudo && sudo -n true >/dev/null 2>&1; then
+        output="$(sudo -n "$lxc_ls" --fancy -F NAME,STATE,AUTOSTART,GROUPS,IPV4,UNPRIVILEGED 2>/dev/null)"
+        lxc_rc=$?
+    else
+        output="$($lxc_ls --fancy -F NAME,STATE,AUTOSTART,GROUPS,IPV4,UNPRIVILEGED 2>/dev/null)"
+        lxc_rc=$?
+    fi
+    if [ "$lxc_rc" -ne 0 ]; then
+        printf 'lxc inventory unavailable (permission denied or command failed)\n'
+        return
+    fi
     # lxc-ls prints its column heading even when there are no containers.
     rows="$(printf '%s\n' "$output" | sed -n '2,$p' | sed '/^[[:space:]]*$/d')"
     if [ -n "$output" ] && [ -n "$rows" ]; then
@@ -246,9 +278,9 @@ print_report() {
     print_geisa_identity
     print_network
     print_thermal
-    print_lxc
     print_managed_apps
     print_systemd
+    print_lxc
     print_filesystems
     print_resources
     print_debug

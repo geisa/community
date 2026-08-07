@@ -56,7 +56,7 @@ outer_status_filtered() {
         [ -n "$line" ] || continue
         path="${line:3}"
         case "$path" in
-            "${prefix}"sources/poky|"${prefix}"sources/meta-arm|"${prefix}"sources/meta-freescale|"${prefix}"sources/meta-imx|"${prefix}"sources/meta-imx-frdm|"${prefix}"sources/meta-openembedded|"${prefix}"sources/meta-virtualization)
+            "${prefix}"sources/poky|"${prefix}"sources/meta-arm|"${prefix}"sources/meta-freescale|"${prefix}"sources/meta-imx|"${prefix}"sources/meta-imx-frdm|"${prefix}"sources/meta-openembedded|"${prefix}"sources/meta-virtualization|"${prefix}"sources/meta-clang|"${prefix}"sources/meta-security)
                 ;;
             *) printf '%s\n' "$line" ;;
         esac
@@ -71,6 +71,8 @@ outer_excludes=(
     ":(exclude)${prefix}sources/meta-imx-frdm"
     ":(exclude)${prefix}sources/meta-openembedded"
     ":(exclude)${prefix}sources/meta-virtualization"
+    ":(exclude)${prefix}sources/meta-clang"
+    ":(exclude)${prefix}sources/meta-security"
 )
 
 source_dirty=false

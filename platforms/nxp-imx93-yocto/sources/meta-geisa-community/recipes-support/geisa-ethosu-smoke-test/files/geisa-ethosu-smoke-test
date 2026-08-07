@@ -31,8 +31,9 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-model="${GEISA_ETHOSU_SMOKE_MODEL:-/usr/bin/tensorflow-lite-2.16.2/examples/mobilenet_v1_1.0_224_quant.tflite}"
-input="${GEISA_ETHOSU_SMOKE_INPUT:-/usr/bin/tensorflow-lite-2.16.2/examples/grace_hopper.bmp}"
+tflite_examples="/usr/bin/tensorflow-lite-@GEISA_TFLITE_RUNTIME_VERSION@/examples"
+model="${GEISA_ETHOSU_SMOKE_MODEL:-${tflite_examples}/mobilenet_v1_1.0_224_quant.tflite}"
+input="${GEISA_ETHOSU_SMOKE_INPUT:-${tflite_examples}/grace_hopper.bmp}"
 delegate="${GEISA_ETHOSU_SMOKE_DELEGATE:-/usr/lib/libethosu_delegate.so}"
 device="${GEISA_ETHOSU_SMOKE_DEVICE:-/dev/ethosu0}"
 vela="${GEISA_ETHOSU_SMOKE_VELA:-/usr/bin/vela}"

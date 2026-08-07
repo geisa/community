@@ -186,29 +186,29 @@ a tag; to reproduce that release, check out its tag before building. Use
 
 ## Release Profiles
 
-The default release is `nxp-6.6.52-2.2.2`.
+The default supported release is `nxp-6.6.52-2.2.2`.
 
-Use the existing build command for the default release:
+The experimental `nxp-6.12.34-2.1.0` release uses Walnascar / Yocto 5.2 and
+the FRDM-i.MX93 machine provided by the main NXP `meta-imx` release. It also
+uses `meta-clang` and `meta-security/meta-parsec`. The older
+`meta-imx-frdm` layer is used only by the 6.6 release.
 
-```
-ACCEPT_FSL_EULA=1 ./scripts/build.sh development
-```
+Select a release with `--release`:
 
-To select it explicitly:
-
-```
-./scripts/setup-sources.sh --release nxp-6.6.52-2.2.2
+```sh
 ACCEPT_FSL_EULA=1 ./scripts/build.sh development \
-    --release nxp-6.6.52-2.2.2
-```
+    --release nxp-6.6.52-2.2.2 -- bitbake geisa-dev-image
 
-The `nxp-6.12.34-2.1.0` profile is reserved for the newer NXP BSP. Its source
-revisions and release-specific recipe changes have not yet been added, so it
-cannot currently be selected for setup or build.
+ACCEPT_FSL_EULA=1 ./scripts/build.sh development \
+    --release nxp-6.12.34-2.1.0 -- bitbake geisa-dev-image
 
-Source setup verifies the selected release against the checked-out submodule
-revisions. It stops if a submodule contains local changes or does not match the
-selected profile.
+### Experimental 6.12 status
+
+The 6.12 image builds with Linux 6.12.34 and U-Boot 2025.04. Walnascar support
+includes unpack-path compatibility, explicit development image features,
+TensorFlow Lite 2.19, and read-only application-container handling. Removable-
+media validation is still required. Keep the known-good 6.6 eMMC image until it
+passes.
 
 ## NXP License Acceptance
 
@@ -237,17 +237,30 @@ build:
 
     ACCEPT_FSL_EULA=1 ./scripts/build.sh development -- bitbake -p
 
-Deployment artifacts are written under:
+Deployment artifacts are written under the selected release's build directory:
+
+    <build-directory>/tmp/deploy/images/geisa-imx93/
+
+For example:
 
     build-development/tmp/deploy/images/geisa-imx93/
+    build-development-nxp-6.12.34-2.1.0/tmp/deploy/images/geisa-imx93/
 
 The compressed disk image is named similarly to:
 
     geisa-dev-image-geisa-imx93.rootfs-<timestamp>.wic.zst
 
-The deployment directory also contains the kernel, device tree,
-installed-package manifest, license information, SPDX output, and related build
-artifacts.
+The deployment directory also contains the `.wic.bmap`, package manifest,
+testdata JSON, image-manifest JSON, kernel, device trees, license information,
+and SPDX output.
+
+The testdata JSON records the selected release, the GEISA Community repository
+revision and dirty state, the expected and actual source revisions, and the
+expected kernel and U-Boot revisions. `GEISA_SOURCE_REVISION` identifies the
+GEISA Community repository revision, not an NXP layer revision.
+
+An image built with uncommitted repository changes records a dirty source state
+and should be used for development validation rather than publication.
 
 For general sanity, you should calculate the WIC SHA-256 before writing the
 image:
@@ -581,6 +594,15 @@ warning-log details.
 
 The script tolerates missing optional tools and reports the information
 available on the currently running image.
+
+The output summarizes systemd state, LXC containers, network interfaces, and
+available thermal readings. Missing optional tools and command failures are
+reported rather than silently omitted.
+
+Set `GEISA_LXC_LS_PATH` to use a specific `lxc-ls` executable.
+
+The output is intended for simple status checks and quick diagnostics, including
+use on smaller displays such as a 10-inch Raspberry Pi display.
 
 Usage:
 

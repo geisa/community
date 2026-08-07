@@ -31,10 +31,12 @@ RDEPENDS:${PN} = " \
 
 do_install() {
     install -d ${D}${bindir}
-    install -m 0755 ${WORKDIR}/geisa-ethosu-smoke-test \
+    install -m 0755 ${S}/geisa-ethosu-smoke-test \
+        ${D}${bindir}/geisa-ethosu-smoke-test
+    sed -i -e 's/@GEISA_TFLITE_RUNTIME_VERSION@/${GEISA_TFLITE_RUNTIME_VERSION}/g' \
         ${D}${bindir}/geisa-ethosu-smoke-test
     install -d ${D}${datadir}/geisa/examples/ethosu-smoke
-    install -m 0644 ${WORKDIR}/README \
+    install -m 0644 ${S}/README \
         ${D}${datadir}/geisa/examples/ethosu-smoke/README
 }
 

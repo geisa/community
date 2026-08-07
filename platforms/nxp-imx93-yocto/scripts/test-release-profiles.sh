@@ -10,8 +10,11 @@ setup="$platform_root/scripts/setup-sources.sh"
 state="$platform_root/scripts/geisa-source-state.sh"
 export GEISA_PLATFORM_ROOT="$platform_root"
 . "$platform_root/scripts/release-profile.sh"
-tmp_root="/home/swegener/work/gridops/tmp/release-profile-tests.$$"
-mkdir -p "$tmp_root"
+tmp_parent="${TMPDIR:-/tmp}"
+tmp_root="$(mktemp -d "$tmp_parent/geisa-release-profile-tests.XXXXXX")" || {
+    echo "unable to create release-profile test temporary directory under $tmp_parent" >&2
+    exit 1
+}
 trap 'rm -rf "$tmp_root"' EXIT
 
 assert_fails() {
@@ -21,10 +24,50 @@ assert_fails() {
     fi
 }
 
-grep -Fq 'nxp-6.6.52-2.2.2' <("$setup" --check)
-grep -Fq 'nxp-6.6.52-2.2.2' <("$setup" --check --release nxp-6.6.52-2.2.2)
+"$setup" --check >"$tmp_root/default-check"
+grep -Fq 'nxp-6.6.52-2.2.2' "$tmp_root/default-check"
+"$setup" --check --release nxp-6.6.52-2.2.2 >"$tmp_root/supported-check"
+grep -Fq 'nxp-6.6.52-2.2.2' "$tmp_root/supported-check"
 assert_fails "$setup" --check --release no-such-release
-assert_fails "$setup" --check --release nxp-6.12.34-2.1.0
+
+if rg -n 'debug-tweaks' \
+    "$platform_root/build-configuration/templates/local.conf" \
+    "$platform_root/sources/meta-geisa-community"; then
+    echo "active GEISA platform metadata still uses debug-tweaks" >&2
+    exit 1
+fi
+
+(
+    release_profile_select nxp-6.12.34-2.1.0
+    release_profile_check_complete
+    [[ " ${SOURCE_IDS} " == *" meta-clang "* && " ${SOURCE_IDS} " == *" meta-security "* ]]
+)
+# shellcheck disable=SC2154,SC2034
+(
+    release_profile_select nxp-6.6.52-2.2.2
+    [[ " ${SOURCE_IDS} " != *" meta-clang "* && " ${SOURCE_IDS} " != *" meta-security "* ]]
+)
+(
+    # shellcheck disable=SC2154
+    release_profile_select nxp-6.6.52-2.2.2
+    # shellcheck disable=SC2154
+    [ "${#release_profile_mask_paths[@]}" -eq 6 ]
+    [ "${release_profile_mask_paths[0]}" = "meta-geisa-community/recipes-kernel/linux/linux-imx_6\\.12\\.bbappend" ]
+    [ "${release_profile_mask_paths[1]}" = "meta-geisa-community/recipes-bsp/u-boot/u-boot-imx_2025\\.04\\.bbappend" ]
+    [ "${release_profile_mask_paths[2]}" = "meta-geisa-community/recipes-core/systemd/systemd_257\\.6\\.bbappend" ]
+    [ "${release_profile_mask_paths[3]}" = "meta-geisa-community/recipes-libraries/tensorflow-lite/tensorflow-lite-host-tools_2\\.19\\.0\\.bbappend" ]
+    [ "${release_profile_mask_paths[4]}" = "meta-geisa-community/recipes-libraries/tensorflow-lite/tensorflow-lite_2\\.19\\.0\\.bbappend" ]
+    [ "${release_profile_mask_paths[5]}" = "meta-geisa-community/recipes-support/geisa-ethosu-smoke-test/geisa-ethosu-smoke-test_1\\.0\\.bbappend" ]
+    BBMASK_PATHS=""
+    release_profile_validate_mask_paths
+    [ "${#release_profile_mask_paths[@]}" -eq 0 ]
+    # shellcheck disable=SC2034
+    BBMASK_PATHS="duplicate duplicate"
+    assert_fails release_profile_validate_mask_paths
+    # shellcheck disable=SC2034
+    BBMASK_PATHS="unsafe|mask"
+    assert_fails release_profile_validate_mask_paths
+)
 
 mkdir -p "$tmp_root/releases"
 cp "$platform_root/releases/nxp-6.6.52-2.2.2.conf" "$tmp_root/releases/malformed.conf"
@@ -39,13 +82,14 @@ fake="$tmp_root/fake"
 mkdir -p "$fake/releases" "$fake/sources"
 declare -A fake_revs
 # shellcheck disable=SC2154
-for source_id in "${release_profile_source_ids[@]}"; do
+for source_id in "${release_profile_known_source_ids[@]}"; do
     path="$fake/$(case "$source_id" in
         poky) echo sources/poky;; meta-arm) echo sources/meta-arm;;
         meta-freescale) echo sources/meta-freescale;; meta-imx) echo sources/meta-imx;;
         meta-imx-frdm) echo sources/meta-imx-frdm;;
         meta-openembedded) echo sources/meta-openembedded;;
-        meta-virtualization) echo sources/meta-virtualization;; esac)"
+        meta-virtualization) echo sources/meta-virtualization;;
+        meta-clang) echo sources/meta-clang;; meta-security) echo sources/meta-security;; esac)"
     mkdir -p "$path"
     git -C "$path" init -q
     git -C "$path" config user.name test
@@ -64,12 +108,17 @@ done
     printf '%s\n' 'MACHINE="fake"'
     printf '%s\n' 'DISTRO="fake"'
     printf '%s\n' 'IMAGE="fake"'
+    printf '%s\n' 'SOURCE_IDS="poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization"'
+    printf '%s\n' 'BBMASK_PATHS=""'
+    printf '%s\n' 'LAYER_PATHS="sources/meta-imx/meta-imx-ml"'
+    printf '%s\n' 'GEISA_NXP_MACHINE_INCLUDE="conf/machine/imx93frdm.conf"'
+    printf '%s\n' 'GEISA_MACHINE_INCLUDE="conf/machine/geisa-imx93-6.6.inc"'
     printf '%s\n' 'KERNEL_VERSION="6.6.52"'
     printf '%s\n' 'KERNEL_SRCREV="0123456789abcdef0123456789abcdef01234567"'
     printf '%s\n' 'UBOOT_VERSION="2024.04"'
     printf '%s\n' 'UBOOT_SRCREV="fedcba9876543210fedcba9876543210fedcba98"'
 # shellcheck disable=SC2154
-    for source_id in "${release_profile_source_ids[@]}"; do
+    for source_id in poky meta-arm meta-freescale meta-imx meta-imx-frdm meta-openembedded meta-virtualization; do
         var="$(release_profile_source_var "$source_id")"
         printf '%s="%s"\n' "$var" "${fake_revs[$source_id]}"
     done
@@ -97,7 +146,7 @@ done
 "$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-a"
 "$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-b"
 cmp "$tmp_root/state-a" "$tmp_root/state-b"
-grep -Fqx 'GEISA_SOURCE_RELEASE = "nxp-6.6.52-2.2.2"' "$tmp_root/state-a"
+grep -Fqx 'GEISA_RELEASE_ID = "nxp-6.6.52-2.2.2"' "$tmp_root/state-a"
 grep -Fqx 'GEISA_SOURCE_RELEASE_MATCH = "true"' "$tmp_root/state-a"
 grep -Fqx 'GEISA_EXPECTED_KERNEL_VERSION = "6.6.52"' "$tmp_root/state-a"
 grep -Fqx 'GEISA_EXPECTED_UBOOT_VERSION = "2024.04"' "$tmp_root/state-a"

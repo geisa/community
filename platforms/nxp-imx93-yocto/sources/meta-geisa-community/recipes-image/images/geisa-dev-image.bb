@@ -6,7 +6,7 @@ require geisa-common.inc
 # Developer tools are collected in packagegroup-geisa-dev-tools.
 
 # System tools
-IMAGE_FEATURES += "allow-empty-password debug-tweaks empty-root-password \
+IMAGE_FEATURES += "allow-empty-password empty-root-password \
                    post-install-logging"
 
 # Clear REPRODUCIBLE_TIMESTAMP_ROOTFS variable to get the build time in /etc/version
@@ -34,6 +34,7 @@ GEISA_DEV_RUNTIME_INSTALL = " \
     geisa-sudo-policy \
     mosquitto-clients \
     nodejs \
+    systemd-analyze \
 "
 
 # The FRDM-i.MX93 uses the NXP IW612 SDIO/UART module. This exact package is
