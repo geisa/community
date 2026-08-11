@@ -9,6 +9,7 @@ body:
       description: Select the current Community project or destination that best fits this issue.
       options:
         - NXP i.MX93 Yocto platform — platforms/nxp-imx93-yocto/
+        - geisa-simple — applications/geisa-simple/
         - API mockup — example-implementations/api/api-mockup/
         - ADM mockup — example-implementations/adm/lwm2m-client/wakaama/
         - LEE mockup — platforms/nxp-conformance-yocto/

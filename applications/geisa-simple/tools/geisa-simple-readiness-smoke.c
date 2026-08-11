@@ -19,16 +19,21 @@
  */
 
 #include <assert.h>
+#include <conn-status.pb.h>
 #include <mosquitto.h>
+#include <pb_encode.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 static const char *published_topics[3];
+static int published_qos[3];
 static unsigned published_count;
+static int capture_startup_publications = 1;
 
 enum {
-    READINESS_EXPECTED_QOS = 1,
+    READINESS_STATUS_QOS = 0,
+    READINESS_REQUEST_QOS = 1,
     READINESS_SUBACK_QOS_COUNT = 1,
     EXPECTED_STARTUP_PUBLICATION_COUNT = 3U,
     UNCHANGED_NEXT_MESSAGE_MS = 123456789U
@@ -44,9 +49,15 @@ static int capture_mosquitto_publish(struct mosquitto *mosq, int *mid,
     (void)payloadlen;
     (void)payload;
     (void)retain;
-    assert(qos == READINESS_EXPECTED_QOS);
+    if (capture_startup_publications) {
+        assert(qos == (published_count == 0U ? READINESS_STATUS_QOS
+                                             : READINESS_REQUEST_QOS));
+    } else {
+        assert(qos == READINESS_REQUEST_QOS);
+    }
     assert(published_count < EXPECTED_STARTUP_PUBLICATION_COUNT);
     published_topics[published_count++] = topic;
+    published_qos[published_count - 1U] = qos;
     return MOSQ_ERR_SUCCESS;
 }
 
@@ -59,7 +70,11 @@ static int capture_mosquitto_publish(struct mosquitto *mosq, int *mid,
 int main(void) {
     struct app_state state;
     struct geisa_proto_bytes wire = {0};
-    int granted_qos = READINESS_EXPECTED_QOS;
+    unsigned char global_payload[GeisaPlatformStatus_size];
+    GeisaPlatformStatus global_status = GeisaPlatformStatus_init_zero;
+    pb_ostream_t global_stream;
+    struct mosquitto_message global_message = {0};
+    int granted_qos = READINESS_REQUEST_QOS;
     int denied_qos = MQTT_SUBACK_FAILURE;
     static const char read_config[] =
         "{\"operation\":\"get_effective_configuration\"}";
@@ -71,6 +86,7 @@ int main(void) {
     state.startup_subscription_mids[2] = 12;
     state.startup_subscription_mids[3] = 13;
     state.startup_subscription_mids[4] = 14;
+    state.startup_subscription_mids[5] = 15;
     state.mosq = (struct mosquitto *)1;
 
     snprintf(state.mqtt.app_status_topic, sizeof(state.mqtt.app_status_topic),
@@ -107,16 +123,35 @@ int main(void) {
            STARTUP_SUBSCRIPTION_PENDING);
     assert(record_startup_subscription_ack(
                &state, 14, READINESS_SUBACK_QOS_COUNT, &granted_qos) ==
+           STARTUP_SUBSCRIPTION_PENDING);
+    assert(record_startup_subscription_ack(
+               &state, 15, READINESS_SUBACK_QOS_COUNT, &granted_qos) ==
            STARTUP_SUBSCRIPTIONS_READY);
     assert(record_startup_subscription_ack(
                &state, 13, READINESS_SUBACK_QOS_COUNT, &granted_qos) ==
            STARTUP_SUBSCRIPTION_PENDING);
-    assert(state.startup_subscription_acks == 5U);
+    assert(state.startup_subscription_acks == 6U);
     assert(publish_startup_transactions(&state) == 0);
     assert(published_count == EXPECTED_STARTUP_PUBLICATION_COUNT);
     assert(strcmp(published_topics[0], "app-status") == 0);
     assert(strcmp(published_topics[1], "discovery-request") == 0);
     assert(strcmp(published_topics[2], "manifest-request") == 0);
+    assert(published_qos[0] == READINESS_STATUS_QOS);
+    assert(published_qos[1] == READINESS_REQUEST_QOS);
+    assert(published_qos[2] == READINESS_REQUEST_QOS);
+
+    global_status.timestamp_ms = 42U;
+    global_status.mode = GeisaPlatformMode_PLATFORM_MODE_NORMAL;
+    global_status.conn_msg = GeisaConnState_CONN_ENABLED_UP;
+    global_status.sys_high_cpu = true;
+    global_stream =
+        pb_ostream_from_buffer(global_payload, sizeof(global_payload));
+    assert(pb_encode(&global_stream, &GeisaPlatformStatus_msg, &global_status));
+    global_message.topic = (char *)GLOBAL_PLATFORM_STATUS_TOPIC;
+    global_message.payload = global_payload;
+    global_message.payloadlen = (int)global_stream.bytes_written;
+    on_message(NULL, &state, &global_message);
+    capture_startup_publications = 0;
 
     snprintf(state.mqtt.downstream_response_topic,
              sizeof(state.mqtt.downstream_response_topic), "%s",
