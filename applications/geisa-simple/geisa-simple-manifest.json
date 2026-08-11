@@ -1,0 +1,74 @@
+{
+  "geisa-application-manifest": {
+    "manifest": {
+      "app-id": "com.pragsol.geisa-simple",
+      "author": "PragSol Consulting LLC",
+      "name": "geisa-simple",
+      "description": "A simple GEISA 0.9.0 application.",
+      "app-version": "0.9.0",
+      "manifest-version": "0.9.0",
+      "artifacts": [
+        {
+          "image-name": "__IMAGE_NAME__",
+          "image-type": "appoverlay",
+          "image-size": "__IMAGE_SIZE__",
+          "uncompressed-size": "__UNCOMPRESSED_SIZE__",
+          "signature": {
+            "signatureType": "ECDSA",
+            "signatureLength": 64,
+            "signatureHex": "__ARTIFACT_SIGNATURE_HEX__",
+            "signatureReference": "com.pragsol.geisa-simple"
+          }
+        }
+      ],
+      "api-access": {
+        "messaging": true,
+        "actuator-status": false,
+        "actuator-control": false,
+        "instantaneous": false,
+        "sensor": false,
+        "waveform": false
+      },
+      "compatibility": {
+        "GEISA-API": "0.9.0",
+        "GEISA-LEE": "0.9.0",
+        "GEISA-VEE": null,
+        "toolchain-id": "__TOOLCHAIN_ID__",
+        "toolchain-version": "__TOOLCHAIN_VERSION__"
+      },
+      "default-configuration": {
+        "reporting_enabled": true,
+        "reporting_interval_seconds": 60
+      },
+      "default-launch-strategy": {
+        "auto-restart": true,
+        "max-restarts": 5,
+        "restart-period": 60,
+        "start-timeout": 15,
+        "start-background": true,
+        "start-string": "./geisa-app",
+        "stop-timeout": 15,
+        "notify-timeout": 30,
+        "watchdog": false
+      },
+      "external-dependencies": [],
+      "communication": {
+        "messaging": {
+          "daily-messages": 2000
+        }
+      },
+      "resources": {
+        "app-cpu": 1,
+        "app-ram": 5120,
+        "storage-persistent": 4096,
+        "storage-nonpersistent": 4096
+      }
+    },
+    "signature": {
+      "signatureType": "ECDSA",
+      "signatureLength": 64,
+      "signatureHex": "__MANIFEST_SIGNATURE_HEX__",
+      "signatureReference": "com.pragsol.geisa-simple"
+    }
+  }
+}
