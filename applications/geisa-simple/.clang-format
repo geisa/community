@@ -1,0 +1,22 @@
+---
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+ColumnLimit: 80
+
+BreakBeforeBraces: Attach
+
+# Preserve compact, readable C where we already use it.
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortCaseLabelsOnASingleLine: true
+
+# Don't rewrite our license/header prose.
+ReflowComments: false
+
+# Don't churn include ordering just to satisfy the formatter.
+SortIncludes: Never
+...

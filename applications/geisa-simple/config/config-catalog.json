@@ -1,0 +1,29 @@
+{
+  "geisa-simple-config-catalog": {
+    "version": 1,
+    "notes": [
+      "geisa-simple exposes only a small set of reporting options.",
+      "This documents the example CONFIG payload, not a manifest schema."
+    ],
+    "items": [
+      {
+        "key": "reporting_enabled",
+        "type": "boolean",
+        "default": true,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Enable recurring upstream EVENT messages."
+      },
+      {
+        "key": "reporting_interval_seconds",
+        "type": "integer",
+        "default": 60,
+        "min": 60,
+        "max": 604800,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Seconds between upstream EVENT messages."
+      }
+    ]
+  }
+}
