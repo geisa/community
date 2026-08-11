@@ -32,6 +32,9 @@ int main(void) {
 #define APPLY(value)                                                           \
     geisa_simple_config_apply_json((value), strlen(value), &config, error,     \
                                    sizeof(error))
+#define APPLY_LENGTH(value, value_length)                                      \
+    geisa_simple_config_apply_json((value), (value_length), &config, error,    \
+                                   sizeof(error))
 
     /* Defaults and a valid update */
     geisa_simple_config_defaults(&config);
@@ -50,6 +53,24 @@ int main(void) {
     assert(geisa_simple_config_format(&config, formatted, sizeof(formatted)) ==
            0);
     assert(strstr(formatted, "reporting_interval_seconds") != NULL);
+
+    /* Integer parsing rejects malformed and overlarge values. */
+    assert(APPLY("{\"operation\":\"set_configuration\","
+                 "\"values\":{\"reporting_interval_seconds\":abc}}") ==
+           GEISA_SIMPLE_CONFIG_INVALID_TYPE);
+    assert(APPLY("{\"operation\":\"set_configuration\","
+                 "\"values\":{\"reporting_interval_seconds\":604801}}") ==
+           GEISA_SIMPLE_CONFIG_INVALID_TYPE);
+
+    /* The integer ends at the supplied boundary, without a trailing NUL. */
+    {
+        static const char boundary_payload[] =
+            "{\"operation\":\"set_configuration\","
+            "\"values\":{\"reporting_interval_seconds\":120999999";
+        size_t boundary_length = strlen(boundary_payload) - 6U;
+        assert(APPLY_LENGTH(boundary_payload, boundary_length) ==
+               GEISA_SIMPLE_CONFIG_INVALID_JSON);
+    }
 
     before = config;
     assert(APPLY("{\"operation\":\"set_configuration\","
@@ -75,5 +96,6 @@ int main(void) {
     assert(before.reporting_interval_seconds == 120);
     puts("geisa-simple config smoke PASS");
 #undef APPLY
+#undef APPLY_LENGTH
     return EXIT_SUCCESS;
 }

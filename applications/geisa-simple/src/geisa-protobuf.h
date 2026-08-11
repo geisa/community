@@ -127,6 +127,20 @@ struct geisa_proto_platform_to_app_status {
     struct geisa_proto_conn_app_info conn_local;
 };
 
+/* Holds the broadcast platform status fields logged by geisa-simple. */
+struct geisa_proto_global_platform_status {
+    uint64_t timestamp_ms;
+    unsigned mode;
+    unsigned conn_msg;
+    int sys_over_temp;
+    int sys_high_cpu;
+    int sys_low_mem;
+    int sys_power_degraded;
+    int sys_power_loss;
+    int sys_reboot_soon;
+    int sys_shutdown_soon;
+};
+
 /* Holds Manifest status and copied text in the fixed manifest[] buffer. */
 struct geisa_proto_manifest_response_view {
     unsigned status_code;
@@ -162,6 +176,11 @@ int geisa_proto_encode_platform_to_app_status(
 int geisa_proto_decode_platform_to_app_status(
     const unsigned char *data, size_t len,
     struct geisa_proto_platform_to_app_status *out);
+
+/* Decodes the non-application-specific platform status broadcast. */
+int geisa_proto_decode_global_platform_status(
+    const unsigned char *data, size_t len,
+    struct geisa_proto_global_platform_status *out);
 
 /* Encode and decode Deployment Manifest request/response messages. */
 int geisa_proto_encode_manifest_request(struct geisa_proto_bytes *out);

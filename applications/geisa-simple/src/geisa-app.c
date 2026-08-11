@@ -35,10 +35,11 @@
 #define STATUS_TIMEOUT_SECONDS 25
 #define REQUEST_TIMEOUT_SECONDS 10
 #define EVENT_TTL_SECONDS 300
+#define MQTT_QOS_AT_MOST_ONCE 0
 #define MQTT_QOS_AT_LEAST_ONCE 1
 #define MQTT_SUBACK_FAILURE 0x80
 #define MQTT_KEEPALIVE_SECONDS 60
-#define STARTUP_SUBSCRIPTION_COUNT 5U
+#define STARTUP_SUBSCRIPTION_COUNT 6U
 
 enum {
     GEISA_SIMPLE_EXIT_SETUP_FAILURE = 2,
@@ -52,6 +53,7 @@ enum startup_subscription_result {
 };
 
 #define PLATFORM_STATUS_TOPIC_PREFIX "geisa/api/platform/app/status/"
+#define GLOBAL_PLATFORM_STATUS_TOPIC "geisa/api/platform/status"
 #define APP_STATUS_TOPIC_PREFIX "geisa/api/app/platform/status/"
 #define MANIFEST_REQUEST_TOPIC_PREFIX "geisa/api/app/manifest/req/"
 #define MANIFEST_RESPONSE_TOPIC_PREFIX "geisa/api/app/manifest/rsp/"
@@ -237,9 +239,9 @@ static int load_mqtt_config(struct mqtt_config *config) {
 }
 
 static int publish_wire(struct app_state *state, const char *topic,
-                        const struct geisa_proto_bytes *wire) {
+                        const struct geisa_proto_bytes *wire, int qos) {
     int rc = mosquitto_publish(state->mosq, NULL, topic, (int)wire->len,
-                               wire->data, MQTT_QOS_AT_LEAST_ONCE, false);
+                               wire->data, qos, false);
     if (rc != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "publish failed topic=%s error=%s\n", topic,
                 mosquitto_strerror(rc));
@@ -255,9 +257,11 @@ static int publish_app_status(struct app_state *state, unsigned type) {
     struct geisa_proto_bytes wire = {0};
     int rc = geisa_proto_encode_app_status(type, STATUS_INTERVAL_SECONDS,
                                            STATUS_TIMEOUT_SECONDS, &wire);
-    if (rc == 0) rc = publish_wire(state, state->mqtt.app_status_topic, &wire);
+    if (rc == 0)
+        rc = publish_wire(state, state->mqtt.app_status_topic, &wire,
+                          MQTT_QOS_AT_MOST_ONCE);
     if (rc == 0) {
-        printf("published app status type=%s topic=%s qos=1\n",
+        printf("published app status type=%s topic=%s qos=0\n",
                geisa_proto_app_status_type_name(type),
                state->mqtt.app_status_topic);
     }
@@ -275,7 +279,8 @@ static int request_manifest(struct app_state *state) {
     if (rc == 0) {
         state->manifest_pending = 1;
         state->manifest_deadline_ms = 0U;
-        rc = publish_wire(state, state->mqtt.manifest_request_topic, &wire);
+        rc = publish_wire(state, state->mqtt.manifest_request_topic, &wire,
+                          MQTT_QOS_AT_LEAST_ONCE);
     }
     if (rc == 0) {
         state->manifest_deadline_ms =
@@ -299,7 +304,8 @@ static int request_discovery(struct app_state *state) {
     if (rc == 0) {
         state->discovery_pending = 1;
         state->discovery_deadline_ms = 0U;
-        rc = publish_wire(state, state->mqtt.discovery_request_topic, &wire);
+        rc = publish_wire(state, state->mqtt.discovery_request_topic, &wire,
+                          MQTT_QOS_AT_LEAST_ONCE);
     }
     if (rc == 0) {
         state->discovery_deadline_ms =
@@ -334,7 +340,8 @@ static int publish_event(struct app_state *state) {
         snprintf(state->pending_request_id, sizeof(state->pending_request_id),
                  "%s", request_id);
         state->pending_deadline_ms = 0U;
-        rc = publish_wire(state, state->mqtt.upstream_request_topic, &wire);
+        rc = publish_wire(state, state->mqtt.upstream_request_topic, &wire,
+                          MQTT_QOS_AT_LEAST_ONCE);
     }
     if (rc == 0) {
         state->pending_deadline_ms =
@@ -355,7 +362,8 @@ static int publish_config_response(struct app_state *state,
     int rc = geisa_proto_encode_app_response(request_id, status, text,
                                              epoch_ms(), &wire);
     if (rc == 0) {
-        rc = publish_wire(state, state->mqtt.downstream_response_topic, &wire);
+        rc = publish_wire(state, state->mqtt.downstream_response_topic, &wire,
+                          MQTT_QOS_AT_LEAST_ONCE);
     }
     geisa_proto_bytes_free(&wire);
     return rc;
@@ -375,6 +383,26 @@ log_platform_status(const struct geisa_proto_platform_to_app_status *status) {
            (unsigned long long)status->conn_msg.today_used,
            (unsigned long long)status->conn_msg.today_limit,
            (unsigned long long)status->conn_msg.today_remaining);
+}
+
+/*
+ * Logs a valid non-application-specific status broadcast without taking action.
+ */
+static void handle_global_platform_status(const unsigned char *payload,
+                                          size_t length) {
+    struct geisa_proto_global_platform_status status;
+
+    if (geisa_proto_decode_global_platform_status(payload, length, &status) !=
+        0) {
+        fprintf(stderr, "malformed global platform status ignored\n");
+        return;
+    }
+    printf("global platform status timestamp=%llu mode=%u conn-msg=%u "
+           "alerts=%d%d%d%d%d%d%d\n",
+           (unsigned long long)status.timestamp_ms, status.mode,
+           status.conn_msg, status.sys_over_temp, status.sys_high_cpu,
+           status.sys_low_mem, status.sys_power_degraded, status.sys_power_loss,
+           status.sys_reboot_soon, status.sys_shutdown_soon);
 }
 
 /*
@@ -633,18 +661,21 @@ static void on_connect(struct mosquitto *mosq, void *userdata, int result) {
     memset(state->startup_subscription_acked, 0,
            sizeof(state->startup_subscription_acked));
     if (queue_startup_subscription(mosq, state, 0U,
-                                   state->mqtt.platform_status_topic) !=
+                                   GLOBAL_PLATFORM_STATUS_TOPIC) !=
             MOSQ_ERR_SUCCESS ||
         queue_startup_subscription(mosq, state, 1U,
-                                   state->mqtt.manifest_response_topic) !=
+                                   state->mqtt.platform_status_topic) !=
             MOSQ_ERR_SUCCESS ||
         queue_startup_subscription(mosq, state, 2U,
-                                   state->mqtt.discovery_response_topic) !=
+                                   state->mqtt.manifest_response_topic) !=
             MOSQ_ERR_SUCCESS ||
         queue_startup_subscription(mosq, state, 3U,
-                                   state->mqtt.upstream_response_topic) !=
+                                   state->mqtt.discovery_response_topic) !=
             MOSQ_ERR_SUCCESS ||
         queue_startup_subscription(mosq, state, 4U,
+                                   state->mqtt.upstream_response_topic) !=
+            MOSQ_ERR_SUCCESS ||
+        queue_startup_subscription(mosq, state, 5U,
                                    state->mqtt.downstream_request_topic) !=
             MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "MQTT subscription setup failed\n");
@@ -686,7 +717,9 @@ static void on_message(struct mosquitto *mosq, void *userdata,
     if (!message || !message->topic || message->payloadlen < 0) return;
     payload = message->payload;
     length = (size_t)message->payloadlen;
-    if (strcmp(message->topic, state->mqtt.platform_status_topic) == 0) {
+    if (strcmp(message->topic, GLOBAL_PLATFORM_STATUS_TOPIC) == 0) {
+        handle_global_platform_status(payload, length);
+    } else if (strcmp(message->topic, state->mqtt.platform_status_topic) == 0) {
         handle_platform_status(state, payload, length);
     } else if (strcmp(message->topic, state->mqtt.manifest_response_topic) ==
                0) {

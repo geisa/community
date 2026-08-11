@@ -225,6 +225,27 @@ int geisa_proto_decode_platform_to_app_status(
     return 0;
 }
 
+int geisa_proto_decode_global_platform_status(
+    const unsigned char *data, size_t len,
+    struct geisa_proto_global_platform_status *out) {
+    GeisaPlatformStatus message = GeisaPlatformStatus_init_zero;
+    pb_istream_t stream = pb_istream_from_buffer(data, len);
+
+    if (!out || !pb_decode(&stream, &GeisaPlatformStatus_msg, &message))
+        return -1;
+    out->timestamp_ms = message.timestamp_ms;
+    out->mode = (unsigned)message.mode;
+    out->conn_msg = (unsigned)message.conn_msg;
+    out->sys_over_temp = message.sys_over_temp;
+    out->sys_high_cpu = message.sys_high_cpu;
+    out->sys_low_mem = message.sys_low_mem;
+    out->sys_power_degraded = message.sys_power_degraded;
+    out->sys_power_loss = message.sys_power_loss;
+    out->sys_reboot_soon = message.sys_reboot_soon;
+    out->sys_shutdown_soon = message.sys_shutdown_soon;
+    return 0;
+}
+
 /*
  * Encodes and decodes deployment manifest exchanges used during geisa-simple
  * startup. Decoded manifest text is copied into the manifest[] buffer in the

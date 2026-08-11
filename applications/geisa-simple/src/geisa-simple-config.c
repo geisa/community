@@ -73,19 +73,18 @@ static int consume_literal(const char **cursor, const char *end,
  * *cursor. Values above the parser's supported maximum are rejected here.
  */
 static int consume_integer(const char **cursor, const char *end, int *out) {
-    const char *start;
-    char *parse_end = NULL;
-    long value;
+    int value = 0;
 
     skip_ws(cursor, end);
-    start = *cursor;
-    value = strtol(start, &parse_end, 10);
-    if (parse_end == start || parse_end > end || value < 0 ||
-        value > GEISA_SIMPLE_MAX_REPORTING_INTERVAL_SECONDS) {
-        return -1;
+    if (*cursor >= end || **cursor < '0' || **cursor > '9') return -1;
+    while (*cursor < end && **cursor >= '0' && **cursor <= '9') {
+        int digit = **cursor - '0';
+        if (value > (GEISA_SIMPLE_MAX_REPORTING_INTERVAL_SECONDS - digit) / 10)
+            return -1;
+        value = value * 10 + digit;
+        (*cursor)++;
     }
-    *out = (int)value;
-    *cursor = parse_end;
+    *out = value;
     return 0;
 }
 
@@ -106,7 +105,6 @@ void geisa_simple_config_defaults(struct geisa_simple_config *config) {
  * and applies valid SET changes transactionally. GET requests return
  * GEISA_SIMPLE_CONFIG_READ; validation failures leave *config unchanged and
  * return a named error.
- * validation failures leave config unchanged and return a named error.
  */
 int geisa_simple_config_apply_json(const char *json, size_t length,
                                    struct geisa_simple_config *config,

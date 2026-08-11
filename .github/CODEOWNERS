@@ -24,3 +24,6 @@
 
 # NXP GEISA conformance Yocto platform
 /platforms/nxp-conformance-yocto/ @kevlhop @ndam-sfl @swegener-rtp
+
+# geisa-simple application
+/applications/geisa-simple/ @swegener-rtp

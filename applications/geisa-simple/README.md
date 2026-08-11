@@ -42,6 +42,7 @@ be done as the GEISA specification progresses.
 | Functionality                 | GEISA 0.9.0 | geisa-simple  |
 | ----------------------------- | ----------- | ------------- |
 | Lifecycle and status          | Required    | Supported     |
+| Global platform status        | Required    | Supported     |
 | Platform Discovery            | Required    | Supported     |
 | Deployment Manifest retrieval | Conditional | Supported     |
 | Platform status requests      | Required    | Supported     |
@@ -71,6 +72,7 @@ for the specification.
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Platform configuration | Uses the API connection information and platform credentials, normally through `/etc/geisa/mqtt.conf` on a LEE                    |
 | MQTT subscriptions     | Subscribes to the response and control topics it needs and waits for successful SUBACKs before sending requests depending on them |
+| Global platform status | Subscribes to `geisa/api/platform/status` and logs valid broadcast notifications                                                   |
 | Application status     | Publishes `RUNNING` when the application is operational                                                                           |
 | Platform Discovery     | Calls the Platform Discovery API on every startup                                                                                 |
 | Deployment Manifest    | Retrieves the current manifest when the application uses one                                                                      |
