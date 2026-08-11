@@ -15,7 +15,9 @@ tmp_root="$(mktemp -d "$tmp_parent/geisa-release-profile-tests.XXXXXX")" || {
     echo "unable to create release-profile test temporary directory under $tmp_parent" >&2
     exit 1
 }
-trap 'rm -rf "$tmp_root"' EXIT
+generated_test_root="$platform_root/build-development-source-state-test.$$"
+source_test_file="$platform_root/sources/meta-geisa-community/.geisa-source-state-test.$$"
+trap 'rm -rf "$tmp_root" "$generated_test_root" "$source_test_file"' EXIT
 
 assert_fails() {
     if "$@" >"$tmp_root/stdout" 2>"$tmp_root/stderr"; then
@@ -41,11 +43,43 @@ fi
     release_profile_select nxp-6.12.34-2.1.0
     release_profile_check_complete
     [[ " ${SOURCE_IDS} " == *" meta-clang "* && " ${SOURCE_IDS} " == *" meta-security "* ]]
+    [[ " ${SOURCE_IDS} " != *" meta-freescale-ml "* ]]
+    [[ " ${LAYER_PATHS} " != *" sources/meta-freescale-ml "* ]]
+    [[ "${KERNEL_VERSION}" == "6.12.34" ]]
+    [[ "${KERNEL_SRCREV}" == "be78e49cb4339fd38c9a40019df49b72fbb8bcb7" ]]
+    [[ "${UBOOT_VERSION}" == "2025.04" ]]
+    [[ "${UBOOT_SRCREV}" == "44898b9f3cfe5ff881c11ab1c44b714041f2b4ac" ]]
+)
+(
+    release_profile_select nxp-6.12.49-2.2.0
+    release_profile_check_complete
+    [[ "${BUILD_DIR}" == "build-development-nxp-6.12.49-2.2.0" ]]
+    [[ "${GEISA_MACHINE_INCLUDE}" == "conf/machine/geisa-imx93-6.12.49.inc" ]]
+    [[ "${KERNEL_VERSION}" == "6.12.49" ]]
+    [[ "${KERNEL_SRCREV}" == "df24f9428e38740256a410b983003a478e72a7c0" ]]
+    [[ "${UBOOT_VERSION}" == "2025.04" ]]
+    [[ "${UBOOT_SRCREV}" == "4ddbad60eff308a5b356fb9ab8734ac382ddd692" ]]
+    [[ "${SOURCE_POKY}" == "d0b46a6624ec9c61c47270745dd0b2d5abbe6ac1" ]]
+    [[ "${SOURCE_META_ARM}" == "21894cc2ea3197e6bfc1a56d889f757a09dc8b31" ]]
+    [[ "${SOURCE_META_FREESCALE}" == "3d2781ad200846183ee3f3391f49512d0ef1b529" ]]
+    [[ "${SOURCE_META_FREESCALE_ML}" == "e55df3c0f515ba62fcc2cc4c8ddee80b99706a40" ]]
+    [[ "${SOURCE_META_IMX}" == "1cfbbb8f9ce1d6071775ea6083b79d98597c8206" ]]
+    [[ "${SOURCE_META_OPENEMBEDDED}" == "07330a98cf93806b7a4e0170a541b94962ff3960" ]]
+    [[ "${SOURCE_META_VIRTUALIZATION}" == "38008d99d5bedc7d9769b9e95e3d6019a2df1698" ]]
+    [[ "${SOURCE_META_CLANG}" == "003cba92e982bdd565a6889f28799f8bba14957e" ]]
+    [[ "${SOURCE_META_SECURITY}" == "1f7eeb8e84811fa79b98f236ade42dc52d44cfc6" ]]
+    [[ " ${SOURCE_IDS} " == *" meta-clang "* && " ${SOURCE_IDS} " == *" meta-security "* ]]
+    [[ " ${SOURCE_IDS} " == *" meta-freescale-ml "* ]]
+    [[ " ${LAYER_PATHS} " == *" sources/meta-freescale-ml "* ]]
+    [[ " ${LAYER_PATHS} " == *" sources/meta-imx/meta-imx-sdk "* ]]
+    [[ " ${SOURCE_IDS} " == *" meta-freescale-distro "* ]]
+    [[ " ${LAYER_PATHS} " == *" sources/meta-freescale-distro "* ]]
 )
 # shellcheck disable=SC2154,SC2034
 (
     release_profile_select nxp-6.6.52-2.2.2
     [[ " ${SOURCE_IDS} " != *" meta-clang "* && " ${SOURCE_IDS} " != *" meta-security "* ]]
+    [[ " ${SOURCE_IDS} " != *" meta-freescale-ml "* ]]
 )
 (
     # shellcheck disable=SC2154
@@ -85,7 +119,7 @@ declare -A fake_revs
 for source_id in "${release_profile_known_source_ids[@]}"; do
     path="$fake/$(case "$source_id" in
         poky) echo sources/poky;; meta-arm) echo sources/meta-arm;;
-        meta-freescale) echo sources/meta-freescale;; meta-imx) echo sources/meta-imx;;
+        meta-freescale) echo sources/meta-freescale;; meta-freescale-distro) echo sources/meta-freescale-distro;; meta-freescale-ml) echo sources/meta-freescale-ml;; meta-imx) echo sources/meta-imx;;
         meta-imx-frdm) echo sources/meta-imx-frdm;;
         meta-openembedded) echo sources/meta-openembedded;;
         meta-virtualization) echo sources/meta-virtualization;;
@@ -146,6 +180,18 @@ done
 "$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-a"
 "$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-b"
 cmp "$tmp_root/state-a" "$tmp_root/state-b"
+
+mkdir -p "$generated_test_root/tmp"
+printf '%s\n' generated > "$generated_test_root/tmp/generated-file"
+"$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-generated"
+cmp "$tmp_root/state-a" "$tmp_root/state-generated"
+
+base_digest="$(sed -n 's/^GEISA_SOURCE_DIRTY_DIGEST = "\(.*\)"$/\1/p' "$tmp_root/state-a")"
+printf '%s\n' untracked > "$source_test_file"
+"$state" --release nxp-6.6.52-2.2.2 "$tmp_root/state-untracked"
+grep -Fqx 'GEISA_SOURCE_DIRTY = "true"' "$tmp_root/state-untracked"
+untracked_digest="$(sed -n 's/^GEISA_SOURCE_DIRTY_DIGEST = "\(.*\)"$/\1/p' "$tmp_root/state-untracked")"
+[ "$base_digest" != "$untracked_digest" ]
 grep -Fqx 'GEISA_RELEASE_ID = "nxp-6.6.52-2.2.2"' "$tmp_root/state-a"
 grep -Fqx 'GEISA_SOURCE_RELEASE_MATCH = "true"' "$tmp_root/state-a"
 grep -Fqx 'GEISA_EXPECTED_KERNEL_VERSION = "6.6.52"' "$tmp_root/state-a"

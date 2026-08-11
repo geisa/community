@@ -63,3 +63,9 @@
 [submodule "platforms/nxp-imx93-yocto/sources/meta-security"]
 	path = platforms/nxp-imx93-yocto/sources/meta-security
 	url = https://git.yoctoproject.org/meta-security
+[submodule "platforms/nxp-imx93-yocto/sources/meta-freescale-ml"]
+	path = platforms/nxp-imx93-yocto/sources/meta-freescale-ml
+	url = https://github.com/Freescale/meta-freescale-ml.git
+[submodule "platforms/nxp-imx93-yocto/sources/meta-freescale-distro"]
+	path = platforms/nxp-imx93-yocto/sources/meta-freescale-distro
+	url = https://github.com/Freescale/meta-freescale-distro.git

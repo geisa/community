@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+require conf/machine/geisa-imx93-6.12.inc
+
+PREFERRED_VERSION_firmware-ele-imx = "2.0.4"
+PREFERRED_VERSION_firmware-imx = "8.30"
+GEISA_KERNEL_VERSION = "6.12.49"
+GEISA_KERNEL_SRCREV = "df24f9428e38740256a410b983003a478e72a7c0"
+GEISA_UBOOT_VERSION = "2025.04"
+GEISA_UBOOT_SRCREV = "4ddbad60eff308a5b356fb9ab8734ac382ddd692"
