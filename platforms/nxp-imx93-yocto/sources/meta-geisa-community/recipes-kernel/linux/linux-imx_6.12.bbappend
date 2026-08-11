@@ -2,8 +2,8 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRCREV:geisa-imx93-machine = "be78e49cb4339fd38c9a40019df49b72fbb8bcb7"
-LINUX_VERSION:geisa-imx93-machine = "6.12.34"
+SRCREV:geisa-imx93-machine = "${GEISA_KERNEL_SRCREV}"
+LINUX_VERSION:geisa-imx93-machine = "${GEISA_KERNEL_VERSION}"
 
 SRC_URI:append = " \
     file://container.cfg \

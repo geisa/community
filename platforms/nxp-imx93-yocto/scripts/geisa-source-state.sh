@@ -50,29 +50,37 @@ source_state_path() {
     printf '%s/%s' "$platform_root" "$(release_profile_source_path "$1")"
 }
 
+outer_generated_excludes=(
+    ":(exclude)${prefix}build-development"
+    ":(exclude)${prefix}build-development-*"
+)
+
 outer_status_filtered() {
     local line path
     while IFS= read -r line || [ -n "$line" ]; do
         [ -n "$line" ] || continue
         path="${line:3}"
         case "$path" in
-            "${prefix}"sources/poky|"${prefix}"sources/meta-arm|"${prefix}"sources/meta-freescale|"${prefix}"sources/meta-imx|"${prefix}"sources/meta-imx-frdm|"${prefix}"sources/meta-openembedded|"${prefix}"sources/meta-virtualization|"${prefix}"sources/meta-clang|"${prefix}"sources/meta-security)
+            "${prefix}"sources/poky|"${prefix}"sources/meta-arm|"${prefix}"sources/meta-freescale|"${prefix}"sources/meta-freescale-distro|"${prefix}"sources/meta-freescale-ml|"${prefix}"sources/meta-imx|"${prefix}"sources/meta-imx-frdm|"${prefix}"sources/meta-openembedded|"${prefix}"sources/meta-virtualization|"${prefix}"sources/meta-clang|"${prefix}"sources/meta-security)
                 ;;
             *) printf '%s\n' "$line" ;;
         esac
-    done < <(git -C "$git_root" status --porcelain=v1 --untracked-files=all)
+    done < <(git -C "$git_root" status --porcelain=v1 --untracked-files=normal -- . "${outer_generated_excludes[@]}")
 }
 
 outer_excludes=(
     ":(exclude)${prefix}sources/poky"
     ":(exclude)${prefix}sources/meta-arm"
     ":(exclude)${prefix}sources/meta-freescale"
+    ":(exclude)${prefix}sources/meta-freescale-distro"
+    ":(exclude)${prefix}sources/meta-freescale-ml"
     ":(exclude)${prefix}sources/meta-imx"
     ":(exclude)${prefix}sources/meta-imx-frdm"
     ":(exclude)${prefix}sources/meta-openembedded"
     ":(exclude)${prefix}sources/meta-virtualization"
     ":(exclude)${prefix}sources/meta-clang"
     ":(exclude)${prefix}sources/meta-security"
+    "${outer_generated_excludes[@]}"
 )
 
 source_dirty=false
