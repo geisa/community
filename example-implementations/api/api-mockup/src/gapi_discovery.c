@@ -102,7 +102,7 @@ static GeisaSensorDescriptor sensors_platform_info_descriptors[] = {
 };
 
 static GeisaPlatformDiscovery_Sensor sensor_platform_info = {
-	.sensors_count = 2,
+	.sensors_count = 3,
 	.sensors = sensors_platform_info_descriptors,
 };
 
