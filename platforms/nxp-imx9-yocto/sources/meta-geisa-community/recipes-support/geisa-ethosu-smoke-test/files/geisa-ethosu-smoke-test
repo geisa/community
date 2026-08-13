@@ -1,0 +1,208 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 PragSol Consulting, LLC
+# Website: https://www.pragsolconsulting.com/
+#
+# A small host-side diagnostic for the image-provided Ethos-U software stack.
+# It deliberately creates all generated output in a temporary directory.
+
+set -euo pipefail
+
+fail() {
+    if [ -s "${failure_log:-}" ]; then
+        echo "--- Ethos-U inference output ---" >&2
+        cat "$failure_log" >&2
+        echo "--- end Ethos-U inference output ---" >&2
+    fi
+    echo "FAIL: Ethos-U $*" >&2
+    exit 1
+}
+
+verbose=false
+profile=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --verbose)
+            verbose=true
+            shift
+            ;;
+        --profile)
+            [ "$#" -ge 2 ] || {
+                fail "--profile requires a path"
+            }
+            profile="$2"
+            shift 2
+            ;;
+        *)
+            fail "usage: $(basename "$0") [--verbose] [--profile PATH]"
+            ;;
+    esac
+done
+
+tflite_examples="/usr/bin/tensorflow-lite-@GEISA_TFLITE_RUNTIME_VERSION@/examples"
+model="${GEISA_ETHOSU_SMOKE_MODEL:-${tflite_examples}/mobilenet_v1_1.0_224_quant.tflite}"
+input="${GEISA_ETHOSU_SMOKE_INPUT:-${tflite_examples}/grace_hopper.bmp}"
+delegate="${GEISA_ETHOSU_SMOKE_DELEGATE:-/usr/lib/libethosu_delegate.so}"
+device="${GEISA_ETHOSU_SMOKE_DEVICE:-/dev/ethosu0}"
+vela="${GEISA_ETHOSU_SMOKE_VELA:-/usr/bin/vela}"
+python="${GEISA_ETHOSU_SMOKE_PYTHON:-/usr/bin/python3}"
+json_python="${GEISA_ETHOSU_SMOKE_JSON_PYTHON:-/usr/bin/python3}"
+expected_argmax="${GEISA_ETHOSU_SMOKE_EXPECTED_ARGMAX:-653}"
+expected_model_sha256="${GEISA_ETHOSU_SMOKE_EXPECTED_MODEL_SHA256:-ecc3a67c47c5a609ec35f6a58a7d97532834e43df4cb7d3f1204a8164b7d20dd}"
+pythonpath=
+profile_library_path=
+
+for path in "$model" "$input" "$device" "$vela" "$python" "$json_python"; do
+    [ -r "$path" ] || fail "prerequisite is not readable: $path"
+done
+[ -w "$device" ] || fail "device is not accessible: $device"
+
+model_sha256="$(sha256sum "$model" | awk '{print $1}')"
+[ "$model_sha256" = "$expected_model_sha256" ] || {
+    fail "unexpected model SHA-256: $model_sha256"
+}
+
+if [ -n "$profile" ]; then
+    profile_json="${profile}/profile.json"
+    [ -r "$profile_json" ] || fail "profile metadata is not readable: $profile_json"
+    mapfile -t profile_loader < <("$json_python" - "$profile_json" <<'PY'
+import json
+import pathlib
+import sys
+
+profile_json = pathlib.Path(sys.argv[1]).resolve()
+profile_root = profile_json.parent
+document = json.loads(profile_json.read_text(encoding="utf-8"))
+loader = document.get("loader", {})
+pythonpath = loader.get("pythonpath")
+library_path = loader.get("library-path", [])
+if not pythonpath or not isinstance(library_path, list) or not library_path:
+    raise SystemExit("profile loader metadata is incomplete")
+print((profile_root / pythonpath).resolve())
+print(":".join(str((profile_root / item).resolve()) for item in library_path))
+PY
+)
+    [ "${#profile_loader[@]}" -eq 2 ] || {
+        fail "unable to load profile runtime metadata from: $profile_json"
+    }
+    pythonpath="${profile_loader[0]}"
+    profile_library_path="${profile_loader[1]}"
+    delegate="${profile}/lib/libethosu_delegate.so"
+    for path in "$profile" "$profile_json" "$pythonpath" "$delegate"; do
+        [ -r "$path" ] || {
+            fail "profile prerequisite is not readable: $path"
+        }
+    done
+fi
+
+[ -r "$delegate" ] || fail "delegate is not readable: $delegate"
+
+workdir="$(mktemp -d "${TMPDIR:-/tmp}/geisa-ethosu-smoke.XXXXXX")"
+trap 'rm -rf "$workdir"' EXIT
+compiled_model="${workdir}/$(basename "${model%.tflite}")_vela.tflite"
+start_seconds="$(date +%s)"
+failure_log=
+
+echo "GEISA Ethos-U smoke test"
+
+if [ -n "$profile" ]; then
+    echo "Mode: profile"
+    echo "Profile: $profile"
+    echo "Profile pythonpath: $pythonpath"
+    echo "Profile library path: $profile_library_path"
+else
+    echo "Mode: host"
+fi
+echo "Model: $model ($model_sha256)"
+echo "Input: $input"
+echo "Delegate: $delegate"
+echo "Device: $device"
+
+vela_log="${workdir}/vela.log"
+failure_log="$vela_log"
+"$vela" --accelerator-config ethos-u65-256 --output-dir "$workdir" "$model" >"$vela_log" 2>&1 || {
+    fail "Vela compilation failed"
+}
+[ -r "$compiled_model" ] || fail "Vela did not create the expected compiled model"
+compiled_model_sha256="$(sha256sum "$compiled_model" | awk '{print $1}')"
+echo "Compiled model: $compiled_model ($compiled_model_sha256)"
+[ "$verbose" = true ] && cat "$vela_log"
+
+inference_log="${workdir}/inference.log"
+failure_log="$inference_log"
+if
+"${python}" - "$compiled_model" "$input" "$delegate" "$expected_argmax" "$profile" "$pythonpath" "$profile_library_path" >"$inference_log" 2>&1 <<'PY'
+import os
+import pathlib
+import sys
+import time
+
+model, image_path, delegate_path, expected_argmax, profile_root, profile_pythonpath, profile_library_path = sys.argv[1:]
+
+if profile_root:
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    os.environ["PYTHONPATH"] = profile_pythonpath
+    os.environ["LD_LIBRARY_PATH"] = profile_library_path
+    sys.path.insert(0, profile_pythonpath)
+import numpy as np
+from PIL import Image
+import tflite_runtime
+from tflite_runtime.interpreter import Interpreter, load_delegate
+
+def first_loaded_path(needle):
+    for line in pathlib.Path("/proc/self/maps").read_text(encoding="utf-8").splitlines():
+        if needle in line and "/" in line:
+            return line.rsplit(None, 1)[-1]
+    return "<not loaded>"
+
+if profile_root:
+    import av
+    print(f"Python: {sys.executable}")
+    print(f"tflite_runtime module: {pathlib.Path(tflite_runtime.__file__).resolve()}")
+    print(f"NumPy module: {pathlib.Path(np.__file__).resolve()}")
+    print(f"PyAV module: {pathlib.Path(av.__file__).resolve()}")
+
+resolved_delegate = pathlib.Path(delegate_path).resolve()
+interpreter = Interpreter(
+    model_path=model,
+    experimental_delegates=[load_delegate(delegate_path)],
+)
+interpreter.allocate_tensors()
+if profile_root:
+    print(f"Loaded delegate: {first_loaded_path('libethosu_delegate.so')}")
+    print(f"Loaded libethosu: {first_loaded_path('libethosu.so.1.0.0')}")
+    print(
+        "Loaded TFLite wrapper: "
+        f"{first_loaded_path('_pywrap_tensorflow_interpreter_wrapper.so')}"
+    )
+    print(f"Resolved delegate path: {resolved_delegate}")
+input_detail = interpreter.get_input_details()[0]
+shape = input_detail["shape"]
+image = Image.open(image_path).convert("RGB").resize((int(shape[2]), int(shape[1])))
+input_data = np.asarray(image, dtype=input_detail["dtype"])[None, ...]
+interpreter.set_tensor(input_detail["index"], input_data)
+started = time.monotonic()
+interpreter.invoke()
+elapsed_ms = int((time.monotonic() - started) * 1000)
+output = interpreter.get_tensor(interpreter.get_output_details()[0]["index"])
+result = int(np.argmax(output))
+print(f"Result: argmax={result} expected={expected_argmax} inference_ms={elapsed_ms}")
+if result != int(expected_argmax):
+    raise SystemExit("unexpected inference result")
+PY
+then
+    :
+else
+    fail "inference execution failed"
+fi
+
+cat "$inference_log"
+if ! grep -Eq 'EthosuDelegate:.*[1-9][0-9]* nodes? delegated out of' "$inference_log"; then
+    fail "delegate reported no delegated graph nodes; refusing CPU fallback"
+fi
+
+delegated="$(grep -E 'EthosuDelegate:.*[1-9][0-9]* nodes? delegated out of' "$inference_log" | head -1)"
+elapsed_seconds=$(( $(date +%s) - start_seconds ))
+echo "Delegation: $delegated"
+echo "Ethos-U smoke test passed in ${elapsed_seconds}s"
+echo "PASS: Ethos-U accelerated inference verified"

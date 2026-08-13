@@ -69,3 +69,40 @@
 [submodule "platforms/nxp-imx93-yocto/sources/meta-freescale-distro"]
 	path = platforms/nxp-imx93-yocto/sources/meta-freescale-distro
 	url = https://github.com/Freescale/meta-freescale-distro.git
+
+[submodule "platforms/nxp-imx9-yocto/sources/base"]
+	path = platforms/nxp-imx9-yocto/sources/base
+	url = https://github.com/Freescale/fsl-community-bsp-base.git
+[submodule "platforms/nxp-imx9-yocto/sources/bitbake"]
+	path = platforms/nxp-imx9-yocto/sources/bitbake
+	url = https://github.com/openembedded/bitbake.git
+[submodule "platforms/nxp-imx9-yocto/sources/openembedded-core"]
+	path = platforms/nxp-imx9-yocto/sources/openembedded-core
+	url = https://github.com/openembedded/openembedded-core.git
+[submodule "platforms/nxp-imx9-yocto/sources/meta-yocto"]
+	path = platforms/nxp-imx9-yocto/sources/meta-yocto
+	url = https://git.yoctoproject.org/meta-yocto
+[submodule "platforms/nxp-imx9-yocto/sources/meta-arm"]
+	path = platforms/nxp-imx9-yocto/sources/meta-arm
+	url = https://git.yoctoproject.org/meta-arm
+[submodule "platforms/nxp-imx9-yocto/sources/meta-freescale"]
+	path = platforms/nxp-imx9-yocto/sources/meta-freescale
+	url = https://git.yoctoproject.org/meta-freescale
+[submodule "platforms/nxp-imx9-yocto/sources/meta-freescale-distro"]
+	path = platforms/nxp-imx9-yocto/sources/meta-freescale-distro
+	url = https://github.com/Freescale/meta-freescale-distro.git
+[submodule "platforms/nxp-imx9-yocto/sources/meta-freescale-ml"]
+	path = platforms/nxp-imx9-yocto/sources/meta-freescale-ml
+	url = https://github.com/Freescale/meta-freescale-ml.git
+[submodule "platforms/nxp-imx9-yocto/sources/meta-imx"]
+	path = platforms/nxp-imx9-yocto/sources/meta-imx
+	url = https://github.com/nxp-imx/meta-imx.git
+[submodule "platforms/nxp-imx9-yocto/sources/meta-openembedded"]
+	path = platforms/nxp-imx9-yocto/sources/meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded.git
+[submodule "platforms/nxp-imx9-yocto/sources/meta-virtualization"]
+	path = platforms/nxp-imx9-yocto/sources/meta-virtualization
+	url = https://git.yoctoproject.org/meta-virtualization
+[submodule "platforms/nxp-imx9-yocto/sources/meta-clang"]
+	path = platforms/nxp-imx9-yocto/sources/meta-clang
+	url = https://github.com/kraj/meta-clang.git

@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 PragSol Consulting, LLC
+# Website: https://www.pragsolconsulting.com/
+#
+set -euo pipefail
+[ "${1:-}" = development ] || {
+    echo "usage: ACCEPT_FSL_EULA=1 $0 development [--release RELEASE] [-- bitbake-command ...]" >&2
+    exit 2
+}
+[ "${ACCEPT_FSL_EULA:-}" = 1 ] || {
+    echo "ACCEPT_FSL_EULA=1 is required before building; review sources/meta-freescale/EULA and sources/meta-imx/LICENSE.txt" >&2
+    exit 2
+}
+shift
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+export GEISA_PLATFORM_ROOT="$root"
+# shellcheck source=release-profile.sh
+. "$root/scripts/release-profile.sh"
+
+release=
+machine=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --release)
+            [ "$#" -ge 2 ] || {
+                echo "--release requires a release identifier" >&2
+                exit 2
+            }
+            release="$2"
+            shift 2
+            ;;
+        --machine)
+            [ "$#" -ge 2 ] || { echo "--machine requires a machine" >&2; exit 2; }
+            machine="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "unknown build option: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+release_profile_select "$release"
+release_profile_check_complete
+case "$machine" in
+    "") machine="${MACHINE_IMX93}"; machine_include="${GEISA_MACHINE_INCLUDE_IMX93}"; nxp_machine_include="${GEISA_NXP_MACHINE_INCLUDE_IMX93}";;
+    "$MACHINE_IMX93") machine_include="${GEISA_MACHINE_INCLUDE_IMX93}"; nxp_machine_include="${GEISA_NXP_MACHINE_INCLUDE_IMX93}";;
+    "$MACHINE_IMX95") machine_include="${GEISA_MACHINE_INCLUDE_IMX95}"; nxp_machine_include="${GEISA_NXP_MACHINE_INCLUDE_IMX95}";;
+    *) echo "unsupported machine for $RELEASE_ID: $machine" >&2; exit 2;;
+esac
+build_config="$root/build-configuration/releases/$RELEASE_ID.conf"
+[ -r "$build_config" ] || {
+    echo "missing build configuration for $RELEASE_ID: $build_config" >&2
+    exit 1
+}
+for setting in RELEASE_ID BUILD_DIR DISTRO IMAGE; do
+    profile_value="${!setting}"
+    grep -Fqx "$setting=\"$profile_value\"" "$build_config" || {
+        echo "build configuration disagrees with release profile: $setting" >&2
+        exit 1
+    }
+done
+release_profile_check_sources --check
+
+build="$root/$BUILD_DIR"
+mkdir -p "$build/conf"
+sed "s|@PLATFORM_ROOT@|$root|g" "$root/build-configuration/templates/bblayers.conf" > "$build/conf/bblayers.conf"
+layer_fragment="$build/conf/geisa-release-layers.conf"
+: > "$layer_fragment"
+printf '# Generated for %s (%s)\nBBLAYERS += " \\\n' "$RELEASE_ID" "$RELEASE_PROFILE_STATUS" >> "$layer_fragment"
+declare -A layer_seen=()
+for layer_path in $LAYER_PATHS; do
+    [ -z "${layer_seen[$layer_path]+x}" ] || {
+        echo "duplicate layer path for $RELEASE_ID: $layer_path" >&2
+        exit 1
+    }
+    layer_seen[$layer_path]=1
+    [ -d "$root/$layer_path" ] || {
+        echo "missing layer path for $RELEASE_ID: $root/$layer_path" >&2
+        exit 1
+    }
+    printf '  %s/%s \\\n' "$root" "$layer_path" >> "$layer_fragment"
+done
+printf '  "\n' >> "$layer_fragment"
+printf '\nBBMASK:append = " \\\n' >> "$layer_fragment"
+declare -A mask_seen=()
+for mask_path in $BBMASK_PATHS; do
+    [ -z "${mask_seen[$mask_path]+x}" ] || {
+        echo "duplicate BBMASK path for $RELEASE_ID: $mask_path" >&2
+        exit 1
+    }
+    mask_seen[$mask_path]=1
+    printf '  %s \\\n' "$mask_path" >> "$layer_fragment"
+done
+printf '  "\n' >> "$layer_fragment"
+printf '\ninclude conf/geisa-release-layers.conf\n' >> "$build/conf/bblayers.conf"
+cp "$root/build-configuration/templates/local.conf" "$build/conf/local.conf"
+state_file="$build/conf/geisa-source-state.conf"
+rm -f "$state_file"
+"$root/scripts/geisa-source-state.sh" --release "$RELEASE_ID" "$state_file"
+cat > "$build/conf/auto.conf" <<EOF
+ACCEPT_FSL_EULA = "1"
+DL_DIR = "${DL_DIR:-$HOME/yocto-cache/downloads}"
+SSTATE_DIR = "${SSTATE_DIR:-$HOME/yocto-cache/sstate}"
+MACHINE = "$machine"
+DISTRO = "$DISTRO"
+GEISA_NXP_MACHINE_INCLUDE = "$nxp_machine_include"
+GEISA_MACHINE_INCLUDE = "$machine_include"
+EOF
+set +u
+. "$root/sources/openembedded-core/oe-init-build-env" "$build" >/dev/null
+set -u
+[ "$#" -gt 0 ] || set -- bitbake "$IMAGE"
+"$@"

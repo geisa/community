@@ -1,0 +1,60 @@
+<!--
+SPDX-License-Identifier: Apache-2.0
+Copyright (C) 2026 PragSol Consulting, LLC
+Website: https://www.pragsolconsulting.com/
+-->
+
+# Ethos-U Profile and Smoke Test
+
+The `geisa-imx93` image selects the NXP Ethos-U runtime and the
+`geisa-nxp-ethosu-tflite-profile` package. The profile is generated during the
+build at:
+
+    /platform/profiles/nxp-ethosu-tflite
+
+It contains the private TensorFlow Lite runtime, Ethos-U delegate and runtime
+libraries, NumPy, and PyAV needed by the profile loader. The image also provides
+the Ethos-U driver stack, firmware, Vela, device permissions, and the
+`tensorflow-lite-ethosu-delegate` package. The device used by the runtime is
+`/dev/ethosu0`.
+
+The profile is selected by the `geisa-imx93` system configuration. It is not a
+checked-in archive. The build assembles it from Yocto runtime outputs and a
+checksum-pinned PyAV wheel.
+
+## Smoke Test
+
+`geisa-ethosu-smoke-test` is a platform/enabler qualification command. It is
+not a GEISA application, managed application, or performance benchmark.
+
+Run the image-level check with the system runtime:
+
+    geisa-ethosu-smoke-test
+
+Run through the generated profile when qualifying the profile itself:
+
+    geisa-ethosu-smoke-test --profile /platform/profiles/nxp-ethosu-tflite
+
+The helper checks the supplied TensorFlow Lite model checksum, compiles a
+temporary model with Vela for `ethos-u65-256`, loads the Ethos-U delegate, and
+runs the Grace Hopper image example through `/dev/ethosu0`. A successful run
+requires the expected inference result and a delegate message showing at least
+one delegated graph node. This confirms delegated inference rather than device
+presence, firmware startup, or CPU-only execution.
+
+The command prints the model and compiled-model checksums, delegation evidence,
+the inference result, and an explicit final status:
+
+    PASS: Ethos-U accelerated inference verified
+
+Generated files are removed on exit. The command does not require network
+access or starting of an LXC container.
+
+Failures end with `FAIL:` and include the captured diagnostic output. The
+command is intended as a simple check the NPU is operational and usable and
+not intended as any form of performance benchmark.
+
+The generated profile combines NXP runtime components with the PyAV wheel and
+bundled multimedia libraries. See [the image licensing notes](https://github.com/geisa/community/tree/main/platforms/nxp-imx9-yocto/docs/licensing.md)
+for the package and redistribution review required before distributing an image
+that includes it.

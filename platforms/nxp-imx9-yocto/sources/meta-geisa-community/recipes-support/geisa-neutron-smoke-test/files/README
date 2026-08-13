@@ -1,0 +1,60 @@
+<!--
+SPDX-License-Identifier: Apache-2.0
+Copyright (C) 2026 PragSol Consulting, LLC
+Website: https://www.pragsolconsulting.com/
+-->
+
+# Neutron Smoke Test
+
+The `geisa-imx95` machine selects the NXP Neutron runtime for the FRDM-i.MX95
+image. The image provides the Neutron firmware and driver libraries, the
+TensorFlow Lite 2.19 Neutron delegate, and the qualification device policy:
+
+    /usr/lib/firmware/NeutronFirmware.elf
+    /usr/lib/libNeutronDriver.so
+    /usr/lib/libneutron_delegate.so
+    /dev/neutron0
+
+The udev rule creates the `neutron` group and grants `geisa` access to the
+device with mode `0660`. The delegate and driver manage the firmware lifecycle;
+the smoke test does not write remoteproc controls or change device permissions.
+
+## Qualification Fixture
+
+The smoke-test package installs this converted MobileNet model:
+
+    /usr/share/geisa/examples/neutron-smoke/mobilenet_v1_1.0_224_quant_neutron_imx95.tflite
+
+Its SHA-256 is:
+
+    89e1746ebeae7d54dd4e1017e2c8ef52b2b351dd6eb74791dfc50fa11f106198
+
+The recipe verifies this digest during the image build.
+
+## Smoke Test
+
+Run:
+
+    geisa-neutron-smoke-test
+
+The command runs TensorFlow Lite's `benchmark_model` with the external Neutron
+delegate and operator profiling enabled. It requires readable runtime files,
+writable access to `/dev/neutron0`, the expected fixture digest, a successful
+benchmark, nonzero delegated nodes and partitions, and `NeutronDelegate` in the
+regular-run profiling section. Delegate errors, unresolved `NeutronGraph`,
+permission errors, CPU fallback, and zero delegation fail the test. Residual
+host operators such as `SOFTMAX` and `QUANTIZE` are allowed.
+
+This proves that the fixture executed through the Neutron delegate during an
+inference run. It is stronger than checking firmware startup, library loading,
+or device-node presence alone. Successful output ends with:
+
+    PASS: Neutron accelerated inference verified
+
+Failures end with `FAIL:` and include the captured diagnostic output. The
+command is intended as a simple check the NPU is operational and usable and
+not intended as any form of performance benchmark.
+
+The Neutron runtime is distributed under NXP's terms. Review [the image
+licensing notes](https://github.com/geisa/community/tree/main/platforms/nxp-imx9-yocto/docs/licensing.md)
+before distributing an image that includes it.

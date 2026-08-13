@@ -1,0 +1,1 @@
+KERNEL=="ethosu*", GROUP="ethosu", MODE="0660"
