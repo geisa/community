@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 PragSol Consulting, LLC
+# Website: https://www.pragsolconsulting.com/
+
+set -euo pipefail
+
+model="${GEISA_NEUTRON_SMOKE_MODEL:-/usr/share/geisa/examples/neutron-smoke/mobilenet_v1_1.0_224_quant_neutron_imx95.tflite}"
+delegate="${GEISA_NEUTRON_SMOKE_DELEGATE:-/usr/lib/libneutron_delegate.so}"
+driver="${GEISA_NEUTRON_SMOKE_DRIVER:-/usr/lib/libNeutronDriver.so}"
+firmware="${GEISA_NEUTRON_SMOKE_FIRMWARE:-/usr/lib/firmware/NeutronFirmware.elf}"
+device="${GEISA_NEUTRON_SMOKE_DEVICE:-/dev/neutron0}"
+tflite_examples="/usr/bin/tensorflow-lite-2.19.0/examples"
+benchmark="${GEISA_NEUTRON_SMOKE_BENCHMARK:-${tflite_examples}/benchmark_model}"
+expected_model_sha256="${GEISA_NEUTRON_SMOKE_EXPECTED_MODEL_SHA256:-89e1746ebeae7d54dd4e1017e2c8ef52b2b351dd6eb74791dfc50fa11f106198}"
+workdir="$(mktemp -d "${TMPDIR:-/tmp}/geisa-neutron-smoke.XXXXXX")"
+trap 'rm -rf "$workdir"' EXIT
+
+fail() {
+    if [ -s "${log:-}" ]; then
+        echo "--- benchmark output ---" >&2
+        cat "$log" >&2
+        echo "--- end benchmark output ---" >&2
+    fi
+    echo "FAIL: Neutron $*" >&2
+    exit 1
+}
+
+[ -r "$model" ] || fail "model is not readable: $model"
+[ -r "$delegate" ] || fail "delegate is not readable: $delegate"
+[ -r "$driver" ] || fail "driver is not readable: $driver"
+[ -r "$firmware" ] || fail "firmware is not readable: $firmware"
+[ -r "$benchmark" ] || fail "benchmark_model is not readable: $benchmark"
+[ -e "$device" ] && [ -r "$device" ] && [ -w "$device" ] \
+    || fail "Neutron device is not accessible: $device"
+
+model_sha256="$(sha256sum "$model" | awk '{print $1}')"
+[ "$model_sha256" = "$expected_model_sha256" ] \
+    || fail "unexpected model SHA-256: $model_sha256"
+firmware_sha256="$(sha256sum "$firmware" | awk '{print $1}')"
+
+log="$workdir/benchmark.log"
+"$benchmark" \
+    --graph="$model" \
+    --external_delegate_path="$delegate" \
+    --warmup_runs=2 \
+    --num_runs=5 \
+    --min_secs=0 \
+    --warmup_min_secs=0 \
+    --enable_op_profiling=true \
+    >"$log" 2>&1 || {
+        fail "benchmark_model returned a failure"
+    }
+
+delegation_line="$(grep -E 'NeutronDelegate delegate: [0-9]+ nodes delegated out of [0-9]+ nodes with [0-9]+ partitions\.?$' "$log" | head -n 1 || true)"
+[ -n "$delegation_line" ] || fail "expected Neutron delegation evidence is missing"
+read -r delegated_nodes total_nodes delegated_partitions <<EOF
+$(printf '%s\n' "$delegation_line" | awk '{for (i = 1; i <= NF; i++) if ($i == "delegate:") print $(i + 1), $(i + 6), $(i + 9)}')
+EOF
+case "$delegated_nodes" in ''|*[!0-9]*) fail "delegation summary is malformed: $delegation_line" ;; esac
+case "$total_nodes" in ''|*[!0-9]*) fail "delegation summary is malformed: $delegation_line" ;; esac
+case "$delegated_partitions" in ''|*[!0-9]*) fail "delegation summary is malformed: $delegation_line" ;; esac
+[ "$delegated_nodes" -gt 0 ] || fail "Neutron delegated zero nodes"
+[ "$delegated_partitions" -gt 0 ] || fail "Neutron delegated zero partitions"
+if grep -Eq 'Permission denied|delegate application failed|CPU fallback' "$log"; then
+    fail "delegate or CPU fallback failure reported"
+fi
+
+regular_profile_line="$(awk '
+    /Operator-wise Profiling Info for Regular Benchmark Runs:/ {seen=1; next}
+    seen && /Run Order/ {table=1; next}
+    table && /NeutronDelegate/ {print; found=1; exit}
+    END {if (!found) exit 1}
+' "$log")" || fail "NeutronDelegate regular-run profiling evidence is missing"
+
+delegate_version="$(grep -E 'Neutron delegate version:' "$log" | head -n 1 || true)"
+inference_timing="$(grep -E 'Inference timings in us:.*Inference \(avg\):' "$log" | tail -n 1 || true)"
+host_ops="$(awk '
+    /Operator-wise Profiling Info for Regular Benchmark Runs:/ {seen=1; next}
+    seen && /Run Order/ {table=1; next}
+    table && /^[[:space:]]+[A-Z][A-Z0-9_]+[[:space:]]/ && $0 !~ /NeutronDelegate/ {
+        gsub(/^[[:space:]]+/, ""); print $1
+    }
+' "$log" | sort -u | paste -sd, -)"
+
+echo "GEISA Neutron smoke test"
+echo "Device:       $device"
+echo "Delegate:     $delegate"
+echo "Model:        $model"
+echo "Model SHA256: $model_sha256"
+echo "Delegation:   $delegated_nodes/$total_nodes nodes, $delegated_partitions partitions"
+echo "Delegate:     $delegate_version"
+echo "Inference:    ${inference_timing:-unavailable}"
+echo "Accelerator:  $regular_profile_line"
+echo "Host ops:     ${host_ops:-none reported}"
+echo "PASS: Neutron accelerated inference verified"
