@@ -133,6 +133,11 @@ check-dev-deps:
 		echo 'Run: make setup-dev' >&2; \
 		exit 2; \
 	fi
+	@if ! pkg-config --exists libmosquitto; then \
+		echo 'Mosquitto development files are not installed.' >&2; \
+		echo 'Install libmosquitto development headers and pkg-config for your system.' >&2; \
+		exit 2; \
+	fi
 
 setup-dev:
 	sh ./scripts/setup-dev.sh
