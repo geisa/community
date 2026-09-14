@@ -70,7 +70,7 @@ struct mqtt_config {
     char userid[256];
     char password[256];
     int has_password;
-    char client_id[256];
+    char client_id[263];
     char platform_status_topic[512];
     char app_status_topic[512];
     char manifest_request_topic[512];

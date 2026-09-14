@@ -33,6 +33,14 @@ PYTHON := $(VENV_DIR)/bin/python
 NANOPB_GENERATOR := $(PYTHON) -m nanopb.generator.nanopb_generator
 NANOPB_BUILD_DIR := $(BUILD_DIR)/nanopb
 NANOPB_RUNTIME_DIR ?= $(NANOPB_DIR)
+PROTOC ?= protoc
+PROTOC_VERSION := $(shell $(PROTOC) --version | awk '{print $$2}')
+PROTOC_FLAGS ?=
+ifeq ($(shell printf "3.12.0\n$(PROTOC_VERSION)\n" | sort -V | head -n1),3.12.0)
+  ifneq ($(shell printf "$(PROTOC_VERSION)\n3.15.0\n" | sort -V | head -n1),3.15.0)
+    PROTOC_FLAGS += --experimental_allow_proto3_optional
+  endif
+endif
 
 PROTO_FILES := geisa-status.proto conn-status.proto app-message.proto \
                manifest.proto discovery.proto
@@ -45,7 +53,7 @@ COMMON_C := src/geisa-protobuf.c src/geisa-simple-config.c
 APP_OBJECTS := $(COMMON_C:src/%.c=$(BUILD_DIR)/%.o) $(BUILD_DIR)/geisa-app.o
 MOSQUITTO_CFLAGS := $(shell pkg-config --cflags libmosquitto 2>/dev/null)
 MOSQUITTO_LIBS := $(shell pkg-config --libs libmosquitto 2>/dev/null)
-CFLAGS ?= -O2 -Wall -Wextra -Werror -std=c11
+CFLAGS ?= -O2 -Wall -Wextra -Werror -std=c11 -D_POSIX_C_SOURCE=200809L
 CFLAGS += -Isrc -I$(NANOPB_BUILD_DIR) -I$(NANOPB_RUNTIME_DIR) \
           $(MOSQUITTO_CFLAGS)
 LDLIBS += $(MOSQUITTO_LIBS)
@@ -110,6 +118,7 @@ $(NANOPB_STAMP): $(GENERATED_PROTO_FILES:%=$(SCHEMAS_DIR)/%) \
 	$(NANOPB_GENERATOR) -D $(NANOPB_BUILD_DIR) \
 		-I $(SCHEMAS_DIR)/nanopb_options \
 		--protoc-opt=-I$(SCHEMAS_DIR) \
+		$(foreach flag,$(PROTOC_FLAGS),--protoc-opt=$(flag)) \
 		$(GENERATED_PROTO_FILES:%=$(SCHEMAS_DIR)/%)
 	$(MAKE) --no-print-directory write-dependency-info
 	@touch $@
@@ -122,6 +131,11 @@ check-dev-deps:
 		[ ! -x "$(PYTHON)" ]; then \
 		echo 'Development dependencies are not installed.' >&2; \
 		echo 'Run: make setup-dev' >&2; \
+		exit 2; \
+	fi
+	@if ! pkg-config --exists libmosquitto; then \
+		echo 'Mosquitto development files are not installed.' >&2; \
+		echo 'Install libmosquitto development headers and pkg-config for your system.' >&2; \
 		exit 2; \
 	fi
 
