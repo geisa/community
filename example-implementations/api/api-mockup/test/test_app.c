@@ -57,19 +57,19 @@ void handle_instantaneous(const void *payload, size_t len)
 	}
 	printf("Decoded instantaneous quantities successfully\n");
 
-	GeisaTypeInstantaneousQuantities_PerPhase a = msg.phase_A;
-	GeisaTypeInstantaneousQuantities_PerPhase b = msg.phase_B;
-	GeisaTypeInstantaneousQuantities_PerPhase c = msg.phase_C;
-	GeisaTypeInstantaneousQuantities_PerPhase n = msg.phase_N;
-	printf("Timestamp: %ld\n", msg.timestamp);
-	printf("Phase A: microamps:%f microvolts:%f\n", a.microAmps,
-	       a.microVolts);
-	printf("Phase B: microamps: %f microvolts:%f\n", b.microAmps,
-	       b.microVolts);
-	printf("Phase C: microamps: %f microvolts:%f\n", c.microAmps,
-	       c.microVolts);
-	printf("Phase N: microamps: %f microvolts:%f\n", n.microAmps,
-	       n.microVolts);
+	GeisaTypeInstantaneousQuantities_PerPhase a = msg.phase_a;
+	GeisaTypeInstantaneousQuantities_PerPhase b = msg.phase_b;
+	GeisaTypeInstantaneousQuantities_PerPhase c = msg.phase_c;
+	GeisaTypeInstantaneousQuantities_PerPhase n = msg.phase_n;
+	printf("Timestamp: %llu\n", (unsigned long long)msg.timestamp_us);
+	printf("Phase A: microamps:%lld microvolts:%lld\n",
+	       (long long)a.current_micro_a, (long long)a.voltage_micro_v);
+	printf("Phase B: microamps:%lld microvolts:%lld\n",
+	       (long long)b.current_micro_a, (long long)b.voltage_micro_v);
+	printf("Phase C: microamps:%lld microvolts:%lld\n",
+	       (long long)c.current_micro_a, (long long)c.voltage_micro_v);
+	printf("Phase N: microamps:%lld microvolts:%lld\n",
+	       (long long)n.current_micro_a, (long long)n.voltage_micro_v);
 
 	pb_release(GeisaInstantaneousQuantities_fields, &msg);
 }
@@ -99,7 +99,7 @@ void handle_discovery(const void *payload, size_t len)
 	       msg.device.top_module.model, sub_module[0].model);
 	printf("waveform: data_connection=%s, sample_rate=%d\n",
 	       msg.waveform.streams[0].description,
-	       msg.waveform.streams[0].sample_rate);
+	       msg.waveform.streams[0].sample_rate_hz);
 	printf("Metrology: meter_rating_class:%s, neutral_connected:%d\n",
 	       msg.metrology.meter_rating_class,
 	       msg.metrology.neutral_connected);
