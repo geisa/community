@@ -1,9 +1,10 @@
 #!/bin/sh
 # File: scripts/setup-dev.sh
 # Project: geisa-simple
-# Purpose: Set up the pinned schemas, nanopb checkout, and Python environment.
-# Usage: ./scripts/setup-dev.sh; GEISA_SCHEMAS_REF and GEISA_SCHEMAS_DIR
-# override the schema input.
+# Purpose: Set up the pinned Specification schemas, nanopb checkout, and Python
+# environment.
+# Usage: ./scripts/setup-dev.sh; GEISA_SPECIFICATION_REPO,
+# GEISA_SPECIFICATION_REF, and GEISA_SPECIFICATION_DIR override the schema input.
 #
 # Copyright 2026 PragSol Consulting LLC.
 #
@@ -22,30 +23,40 @@ set -eu
 
 ROOT_DIR=$(cd -- "$(dirname "$0")/.." && pwd)
 DEPS_DIR=${DEPS_DIR:-$ROOT_DIR/.deps}
-SCHEMAS_DIR=${GEISA_SCHEMAS_DIR:-$DEPS_DIR/geisa-schemas}
-SCHEMAS_REF=${GEISA_SCHEMAS_REF:-v0.9.0}
+SPECIFICATION_REPO=${GEISA_SPECIFICATION_REPO:-https://github.com/geisa/specification.git}
+SPECIFICATION_REF=${GEISA_SPECIFICATION_REF:-schemas-v0.9.0}
+SPECIFICATION_DIR=${GEISA_SPECIFICATION_DIR:-$DEPS_DIR/geisa-specification}
 NANOPB_DIR=$DEPS_DIR/nanopb
 NANOPB_REF=${NANOPB_VERSION:-0.4.9.1}
 VENV_DIR=${VENV_DIR:-$ROOT_DIR/.venv}
 
 mkdir -p "$DEPS_DIR"
 
-if [ -z "${GEISA_SCHEMAS_DIR:-}" ]; then
-    if [ ! -d "$SCHEMAS_DIR/.git" ]; then
-        git clone https://github.com/geisa/schemas.git "$SCHEMAS_DIR"
+if [ -z "${GEISA_SPECIFICATION_DIR:-}" ]; then
+    if [ ! -d "$SPECIFICATION_DIR/.git" ]; then
+        git clone "$SPECIFICATION_REPO" "$SPECIFICATION_DIR"
     fi
-    git -C "$SCHEMAS_DIR" fetch --tags origin
-    if ! git -C "$SCHEMAS_DIR" cat-file -e \
-            "$SCHEMAS_REF^{commit}" 2>/dev/null; then
-        git -C "$SCHEMAS_DIR" fetch origin "$SCHEMAS_REF"
+    git -C "$SPECIFICATION_DIR" fetch --tags origin
+    if ! git -C "$SPECIFICATION_DIR" cat-file -e \
+            "$SPECIFICATION_REF^{commit}" 2>/dev/null; then
+        git -C "$SPECIFICATION_DIR" fetch origin "$SPECIFICATION_REF"
     fi
-    git -C "$SCHEMAS_DIR" checkout --quiet "$SCHEMAS_REF"
+    git -C "$SPECIFICATION_DIR" checkout --quiet "$SPECIFICATION_REF"
 else
-    test -d "$SCHEMAS_DIR" || {
-        echo "GEISA_SCHEMAS_DIR does not exist: $SCHEMAS_DIR" >&2
+    test -d "$SPECIFICATION_DIR" || {
+        echo "GEISA_SPECIFICATION_DIR does not exist: $SPECIFICATION_DIR" >&2
         exit 1
     }
 fi
+
+test -f "$SPECIFICATION_DIR/geisa-status.proto" || {
+    echo "Selected Specification ref does not expose schemas at checkout root: $SPECIFICATION_REF" >&2
+    exit 1
+}
+test -d "$SPECIFICATION_DIR/nanopb_options" || {
+    echo "Selected Specification ref is missing nanopb_options/: $SPECIFICATION_REF" >&2
+    exit 1
+}
 
 if [ ! -d "$NANOPB_DIR/.git" ]; then
     git clone https://github.com/nanopb/nanopb.git "$NANOPB_DIR"
@@ -59,8 +70,8 @@ fi
 "$VENV_DIR/bin/python" -m pip install --upgrade pip
 "$VENV_DIR/bin/python" -m pip install "nanopb==$NANOPB_REF"
 
-SCHEMAS_COMMIT=$(git -C "$SCHEMAS_DIR" rev-parse --short HEAD \
+SPECIFICATION_COMMIT=$(git -C "$SPECIFICATION_DIR" rev-parse --short HEAD \
     2>/dev/null || echo local)
-echo "GEISA schemas: $SCHEMAS_DIR ($SCHEMAS_COMMIT)"
+echo "GEISA Specification: $SPECIFICATION_DIR ($SPECIFICATION_COMMIT)"
 echo "nanopb: $NANOPB_DIR ($(git -C "$NANOPB_DIR" rev-parse --short HEAD))"
 echo "Next: make"

@@ -18,15 +18,16 @@
 
 APP := geisa-simple
 APP_VERSION := 0.9.0
-GEISA_SCHEMAS_REF ?= v0.9.0
-GEISA_SCHEMAS_DIR ?=
+GEISA_SPECIFICATION_REPO ?= https://github.com/geisa/specification.git
+GEISA_SPECIFICATION_REF ?= schemas-v0.9.0
+GEISA_SPECIFICATION_DIR ?=
 NANOPB_VERSION ?= 0.4.9.1
 TOOLCHAIN_ID ?=
 TOOLCHAIN_VERSION ?=
 BUILD_DIR ?= build
 DEPS_DIR ?= .deps
-SCHEMAS_DIR := $(if $(strip $(GEISA_SCHEMAS_DIR)),\
-                 $(GEISA_SCHEMAS_DIR),$(DEPS_DIR)/geisa-schemas)
+SPECIFICATION_DIR := $(if $(strip $(GEISA_SPECIFICATION_DIR)),$(GEISA_SPECIFICATION_DIR),$(DEPS_DIR)/geisa-specification)
+SCHEMA_SOURCE_DIR := $(SPECIFICATION_DIR)
 NANOPB_DIR := $(DEPS_DIR)/nanopb
 VENV_DIR := .venv
 PYTHON := $(VENV_DIR)/bin/python
@@ -82,51 +83,52 @@ $(BUILD_DIR)/geisa-app.o: src/geisa-app.c $(NANOPB_HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 write-dependency-info:
-	@test -d "$(SCHEMAS_DIR)" || { \
-		echo 'GEISA schemas checkout is unavailable; run make setup-dev or set' \
-			'GEISA_SCHEMAS_DIR' >&2; exit 2; }
+	@test -d "$(SCHEMA_SOURCE_DIR)" || { \
+		echo 'GEISA Specification checkout is unavailable; run make setup-dev or set' \
+			'GEISA_SPECIFICATION_DIR' >&2; exit 2; }
 	@test -d "$(NANOPB_DIR)" || { \
 		echo 'nanopb checkout is unavailable; run make setup-dev' >&2; exit 2; }
 	@test -x "$(PYTHON)" || { \
 		echo 'nanopb Python environment is unavailable; run make setup-dev' \
 			>&2; exit 2; }
-	@schema_commit=$$(git -C "$(SCHEMAS_DIR)" rev-parse HEAD \
+	@schema_commit=$$(git -C "$(SPECIFICATION_DIR)" rev-parse HEAD \
 		2>/dev/null) || { \
-		echo 'GEISA schemas directory is not a Git checkout' >&2; exit 2; }; \
-	 schema_ref=$$(git -C "$(SCHEMAS_DIR)" symbolic-ref --short -q HEAD \
+		echo 'GEISA Specification directory is not a Git checkout' >&2; exit 2; }; \
+	 schema_ref=$$(git -C "$(SPECIFICATION_DIR)" symbolic-ref --short -q HEAD \
 		2>/dev/null || true); \
-	 if [ -z "$$schema_ref" ]; then schema_ref=$$(git -C "$(SCHEMAS_DIR)" \
+	 if [ -z "$$schema_ref" ]; then schema_ref=$$(git -C "$(SPECIFICATION_DIR)" \
 		describe --tags --exact-match HEAD 2>/dev/null || true); fi; \
 	 if [ -z "$$schema_ref" ]; then schema_ref=detached; fi; \
-	 if [ -n "$(strip $(GEISA_SCHEMAS_DIR))" ]; then \
-		schema_source='local checkout'; \
+	 if [ -n "$(strip $(GEISA_SPECIFICATION_DIR))" ]; then \
+		schema_source='local Specification checkout'; \
 	 else schema_source='managed checkout'; fi; \
 	 mkdir -p "$(BUILD_DIR)"; \
 	 { printf 'schemas-source=%s\n' "$$schema_source"; \
-	   printf 'schemas-path=%s\n' "$(SCHEMAS_DIR)"; \
-	   printf 'schemas-commit=%s\n' "$$schema_commit"; \
-	   printf 'schemas-ref=%s\n' "$$schema_ref"; \
+	   printf 'specification-repository=%s\n' "$(GEISA_SPECIFICATION_REPO)"; \
+	   printf 'specification-path=%s\n' "$(SPECIFICATION_DIR)"; \
+	   printf 'specification-commit=%s\n' "$$schema_commit"; \
+	   printf 'specification-ref=%s\n' "$$schema_ref"; \
 	   printf 'nanopb-source=managed checkout\n'; \
 	   printf 'nanopb-path=%s\n' "$(NANOPB_DIR)"; \
 	   printf 'nanopb-commit='; git -C "$(NANOPB_DIR)" rev-parse HEAD; \
 	   printf 'nanopb-version=%s\n' "$(NANOPB_VERSION)"; \
 	 } > "$(BUILD_DIR)/dependency-info.txt"
 
-$(NANOPB_STAMP): $(GENERATED_PROTO_FILES:%=$(SCHEMAS_DIR)/%) \
-		$(SCHEMAS_DIR)/nanopb_options/*.options $(PYTHON)
+$(NANOPB_STAMP): $(GENERATED_PROTO_FILES:%=$(SCHEMA_SOURCE_DIR)/%) \
+		$(SCHEMA_SOURCE_DIR)/nanopb_options/*.options $(PYTHON)
 	@mkdir -p $(NANOPB_BUILD_DIR)
 	$(NANOPB_GENERATOR) -D $(NANOPB_BUILD_DIR) \
-		-I $(SCHEMAS_DIR)/nanopb_options \
-		--protoc-opt=-I$(SCHEMAS_DIR) \
+		-I $(SCHEMA_SOURCE_DIR)/nanopb_options \
+		--protoc-opt=-I$(SCHEMA_SOURCE_DIR) \
 		$(foreach flag,$(PROTOC_FLAGS),--protoc-opt=$(flag)) \
-		$(GENERATED_PROTO_FILES:%=$(SCHEMAS_DIR)/%)
+		$(GENERATED_PROTO_FILES:%=$(SCHEMA_SOURCE_DIR)/%)
 	$(MAKE) --no-print-directory write-dependency-info
 	@touch $@
 
 $(NANOPB_FILES) $(NANOPB_HEADERS): $(NANOPB_STAMP)
 
 check-dev-deps:
-	@if [ ! -f "$(SCHEMAS_DIR)/geisa-status.proto" ] || \
+	@if [ ! -f "$(SCHEMA_SOURCE_DIR)/geisa-status.proto" ] || \
 		[ ! -f "$(NANOPB_RUNTIME_DIR)/pb_encode.c" ] || \
 		[ ! -x "$(PYTHON)" ]; then \
 		echo 'Development dependencies are not installed.' >&2; \
@@ -140,12 +142,16 @@ check-dev-deps:
 	fi
 
 setup-dev:
+	GEISA_SPECIFICATION_REPO='$(GEISA_SPECIFICATION_REPO)' \
+	GEISA_SPECIFICATION_REF='$(GEISA_SPECIFICATION_REF)' \
+	GEISA_SPECIFICATION_DIR='$(GEISA_SPECIFICATION_DIR)' \
 	sh ./scripts/setup-dev.sh
 
 regenerate: check-dev-deps
 	$(MAKE) $(NANOPB_STAMP) \
-		GEISA_SCHEMAS_REF='$(GEISA_SCHEMAS_REF)' \
-		GEISA_SCHEMAS_DIR='$(GEISA_SCHEMAS_DIR)'
+		GEISA_SPECIFICATION_REPO='$(GEISA_SPECIFICATION_REPO)' \
+		GEISA_SPECIFICATION_REF='$(GEISA_SPECIFICATION_REF)' \
+		GEISA_SPECIFICATION_DIR='$(GEISA_SPECIFICATION_DIR)'
 
 verify-generated: check-dev-deps $(NANOPB_STAMP)
 	@test -s $(NANOPB_BUILD_DIR)/app-message.pb.c
@@ -184,7 +190,7 @@ help:
 	@printf '%s\n' \
 		'geisa-simple $(APP_VERSION)' \
 		'' \
-		'make setup-dev  Download the pinned schemas and nanopb dependencies.' \
+		'make setup-dev  Download the pinned Specification schemas and nanopb dependencies.' \
 		'make             Build the application.' \
 		'make test        Build and run app-local smoke tests.' \
 		'make regenerate  Regenerate protobuf bindings from the selected schemas.' \
@@ -192,5 +198,5 @@ help:
 		'make dependency-info  Show the active schema checkout and nanopb version.' \
 		'make manifest TOOLCHAIN_ID=... TOOLCHAIN_VERSION=...  Fill fields.' \
 		'' \
-		'GEISA_SCHEMAS_REF=v0.9.0 is the reproducible default.' \
-		'Use GEISA_SCHEMAS_REF=main, a tag, commit, or local checkout.'
+		'GEISA_SPECIFICATION_REF=schemas-v0.9.0 is the reproducible default.' \
+		'Use GEISA_SPECIFICATION_REF=<root-layout tag|branch|commit>.'
