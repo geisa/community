@@ -306,20 +306,9 @@ static int handle_socket_removal(char *app_id, char *stream_id,
 }
 
 static GeisaWaveform_SampleType
-get_sample_type(GeisaWaveform_Datatype sample_type)
+get_sample_type(GeisaWaveform_SampleType sample_type)
 {
-	switch (sample_type) {
-	case GeisaWaveform_Datatype_DATA_INT16:
-		return GeisaWaveform_SampleType_WAVEFORM_SAMPLE_TYPE_INT16;
-	case GeisaWaveform_Datatype_DATA_INT32:
-		return GeisaWaveform_SampleType_WAVEFORM_SAMPLE_TYPE_INT32;
-	case GeisaWaveform_Datatype_DATA_FLOAT32:
-		return GeisaWaveform_SampleType_WAVEFORM_SAMPLE_TYPE_FLOAT32;
-	case GeisaWaveform_Datatype_DATA_FLOAT64:
-		return GeisaWaveform_SampleType_WAVEFORM_SAMPLE_TYPE_FLOAT64;
-	default:
-		return GeisaWaveform_SampleType_WAVEFORM_SAMPLE_TYPE_UNSPECIFIED;
-	}
+	return sample_type;
 }
 
 static void waveform_handle_stream_request(
@@ -345,8 +334,10 @@ static void waveform_handle_stream_request(
 		response->stream_id =
 			waveform_platform_info.streams[stream_number].stream_id;
 
-		ret = handle_socket_creation(app_id, response->stream_id,
-					     socket_path);
+		ret = handle_socket_creation(
+			app_id,
+			waveform_platform_info.streams[stream_number].stream_id,
+			socket_path);
 		if (ret == 1) {
 			response->waveform_status =
 				GeisaWaveform_Status_WAVEFORM_ERR_ALREADY_SUBSCRIBED;
@@ -361,19 +352,23 @@ static void waveform_handle_stream_request(
 		response->subscribed = true;
 		response->socket_path = socket_path;
 		response->sample_type = get_sample_type(
-			waveform_platform_info.streams[stream_number].datatype);
+			waveform_platform_info.streams[stream_number]
+				.sample_type);
 		response->voltage_channel_count =
 			waveform_platform_info.streams[stream_number]
-				.num_voltage_ch;
+				.voltage_channel_count;
 		response->current_channel_count =
 			waveform_platform_info.streams[stream_number]
-				.num_current_ch;
+				.current_channel_count;
+		response->other_channel_count =
+			waveform_platform_info.streams[stream_number]
+				.other_channel_count;
 		response->total_channel_count =
 			waveform_platform_info.streams[stream_number]
 				.total_channel_count;
 		response->sample_rate_hz =
 			waveform_platform_info.streams[stream_number]
-				.sample_rate;
+				.sample_rate_hz;
 		response->samples_per_cycle =
 			waveform_platform_info.streams[stream_number]
 				.samples_per_cycle;
@@ -388,10 +383,10 @@ static void waveform_handle_stream_request(
 				.zero_crossing_aligned;
 		response->voltage_scale =
 			waveform_platform_info.streams[stream_number]
-				.voltage_multiplier;
+				.voltage_scale;
 		response->current_scale =
 			waveform_platform_info.streams[stream_number]
-				.current_multiplier;
+				.current_scale;
 		response->expected_frame_period_ms =
 			waveform_platform_info.streams[stream_number]
 				.expected_frame_period_ms;
@@ -402,8 +397,10 @@ static void waveform_handle_stream_request(
 		response->stream_id =
 			waveform_platform_info.streams[stream_number].stream_id;
 
-		ret = handle_socket_removal(app_id, response->stream_id,
-					    socket_path);
+		ret = handle_socket_removal(
+			app_id,
+			waveform_platform_info.streams[stream_number].stream_id,
+			socket_path);
 		if (ret == 1) {
 			response->waveform_status =
 				GeisaWaveform_Status_WAVEFORM_ERR_NOT_SUBSCRIBED;

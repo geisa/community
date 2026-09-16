@@ -65,8 +65,7 @@ After building, run the API mockup with:
   support.
 - MQTT users, permissions, topics, and supporting platform services must be
   configured separately.
-- The schema submodule points to the historical standalone `geisa/schemas`
-  repository so the imported build remains reproducible.
-- Updating the project to schemas maintained with the GEISA specification
-  should be handled as a separate functional change.
+- The schema submodule points to the preserved Schemas 0.9.0 source in
+  `geisa/specification` at `schemas-v0.9.0`. That tag retains the historical
+  Schemas tree at the submodule root so the build remains reproducible.
 - The original pinned nanopb version is retained during migration.
