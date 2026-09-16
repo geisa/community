@@ -101,7 +101,7 @@ for the authoritative requirements.
 | License             | Apache-2.0                                                  |
 | Application version | 0.9.0                                                       |
 | GEISA baseline      | 0.9.0                                                       |
-| Schemas tested      | `geisa-schemas` `v0.9.0`                                    |
+| Schemas tested      | GEISA Specification `schemas-v0.9.0`                         |
 
 `geisa-simple` uses SemVer syntax for versioning. While GEISA is pre-1.0, its
 major and minor version identify the GEISA release family it targets, with
@@ -128,8 +128,11 @@ make
 make test
 ```
 
-`make setup-dev` will download the pinned `geisa-schemas` `v0.9.0` sources and
-nanopb `0.4.9.1` used to generate the required GEISA protobuf bindings.
+`make setup-dev` will download the pinned GEISA Specification
+`schemas-v0.9.0` source and nanopb `0.4.9.1` used to generate the required
+GEISA protobuf bindings. This preserved tag exposes the historical Schemas
+tree at the Specification checkout root, so the existing protobuf paths remain
+unchanged.
 
 Note that the tests run locally and do not require a GEISA LEE or MQTT broker.
 They check CONFIG handling, protobuf encoding and decoding, and startup
@@ -181,13 +184,15 @@ GEISA_MQTT_CONFIG=/path/to/mqtt.conf ./geisa-app
 
 ## Schema development
 
-`GEISA_SCHEMAS_REF` accepts a tag, a branch such as `main`, or a commit. Use
-`GEISA_SCHEMAS_DIR` to build from a local checkout.
+`GEISA_SPECIFICATION_REF` selects a preserved Schemas tag or other Specification
+commit whose tree exposes the schemas at the checkout root. Use `GEISA_SPECIFICATION_REPO` to override the
+repository URL and `GEISA_SPECIFICATION_DIR` to build from a local
+Specification checkout.
 
 ```sh
-GEISA_SCHEMAS_REF=<tag|branch|commit> make setup-dev
-GEISA_SCHEMAS_DIR=/path/to/schemas make setup-dev
-GEISA_SCHEMAS_DIR=/path/to/schemas make regenerate
+GEISA_SPECIFICATION_REF=<tag|branch|commit> make setup-dev
+GEISA_SPECIFICATION_DIR=/path/to/specification make setup-dev
+GEISA_SPECIFICATION_DIR=/path/to/specification make regenerate
 make dependency-info
 ```
 
