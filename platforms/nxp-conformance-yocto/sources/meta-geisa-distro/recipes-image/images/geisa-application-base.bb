@@ -10,6 +10,7 @@ require recipes-core/images/core-image-minimal.bb
 IMAGE_FSTYPES = "squashfs"
 
 IMAGE_INSTALL:append = " \
+    libasyncns \
     libatomic \
     libmosquitto1 \
     protobuf \
