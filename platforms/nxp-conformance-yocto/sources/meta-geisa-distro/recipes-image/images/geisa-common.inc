@@ -16,12 +16,19 @@ IMAGE_INSTALL:append = " \
     adm-client \
     gapi \
     glibc-utils \
-    lrzsz \
     lxc \
     lxc-networking \
     kernel-modules \
     iperf3 \
     mosquitto \
+"
+
+# Conformance requirements
+IMAGE_INSTALL:append = " \
+   e2fsprogs-dumpe2fs \
+   lrzsz \
+   python3 \
+   util-linux-findmnt \
 "
 
 TOOLCHAIN_TARGET_TASK:append = " \
