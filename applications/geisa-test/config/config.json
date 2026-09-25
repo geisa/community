@@ -1,0 +1,214 @@
+{
+  "geisa-test-config": {
+    "version": 1,
+    "notes": [
+      "Application identity and MQTT runtime bindings are supplied by the GEISA platform and are not test configuration.",
+      "Managed configuration and commands use the released GEISA downstream application-message channel."
+    ],
+    "items": [
+      {
+        "key": "reporting_enabled",
+        "type": "boolean",
+        "default": true,
+        "allowed": [
+          true,
+          false
+        ],
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Enable or disable normal reporting traffic.",
+        "notes": "Discovery still runs on startup; false suppresses normal app traffic."
+      },
+      {
+        "key": "reporting_interval_seconds",
+        "type": "integer",
+        "default": 3600,
+        "min": 60,
+        "max": 86400,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Seconds between normal reporting cycles.",
+        "notes": "Used for the resident default cadence."
+      },
+      {
+        "key": "reporting_message_types",
+        "type": "array<enum>",
+        "default": [
+          "EVENT",
+          "ALARM",
+          "APP_DATA",
+          "TELEMETRY"
+        ],
+        "allowed": [
+          "EVENT",
+          "ALARM",
+          "APP_DATA",
+          "TELEMETRY"
+        ],
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Reporting message types emitted during a normal cycle.",
+        "notes": "CONFIG, COMMAND, and COMMAND_RESULT are intentionally excluded."
+      },
+      {
+        "key": "payload_size_bytes",
+        "type": "integer",
+        "default": 256,
+        "min": 0,
+        "max": 65536,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Payload size used by payload-size test mode.",
+        "notes": "Used only by the payload test. Zero uses its selected profile's example payload; normal reporting and burst always use profile payloads."
+      },
+      {
+        "key": "payload_pattern",
+        "type": "enum",
+        "default": "alpha",
+        "allowed": [
+          "alpha",
+          "zero",
+          "index"
+        ],
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Deterministic payload byte pattern for functional tests.",
+        "notes": "Used only by the payload test; it does not change the GEISA envelope or normal/burst profile payloads."
+      },
+      {
+        "key": "message_count",
+        "type": "integer",
+        "default": 0,
+        "min": 0,
+        "max": 1000000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Optional exact number of normal-reporting app-message attempts.",
+        "notes": "Applies only to normal reporting. Payload sends one request, burst uses burst_count, and quota uses quota_max_attempts plus the QUOTA_EXCEEDED response. Zero preserves resident-cycle behavior."
+      },
+      {
+        "key": "expected_status",
+        "type": "string",
+        "default": "GEISA_APP_MESSAGE_STATUS_ACCEPTED",
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Response status expected by a functional test run.",
+        "notes": "Applies to message cases that expect a single status; the quota test group expects QUOTA_EXCEEDED by definition."
+      },
+      {
+        "key": "mode",
+        "type": "enum",
+        "default": "normal",
+        "allowed": [
+          "normal",
+          "test"
+        ],
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Select normal resident reporting or configured test execution."
+      },
+      {
+        "key": "test",
+        "type": "enum",
+        "allowed": [
+          "cpu",
+          "memory",
+          "persistent_storage",
+          "transient_storage",
+          "burst",
+          "quota",
+          "payload",
+          "lee_all",
+          "api_all",
+          "all"
+        ],
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Select the bounded test run when mode is test; no test is selected by default. CONFIG selection triggers one run. Payload sends one generated payload; burst sends burst_count profile payloads at burst_interval_ms; quota runs to QUOTA_EXCEEDED or quota_max_attempts."
+      },
+      {
+        "key": "test_duration_ms",
+        "type": "integer",
+        "default": 1000,
+        "min": 1,
+        "max": 30000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Bounded duration for a selected resource test."
+      },
+      {
+        "key": "test_target_bytes",
+        "type": "integer",
+        "default": 1048576,
+        "min": 1,
+        "max": 67108864,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Bounded allocation or write target for a selected resource test."
+      },
+      {
+        "key": "test_chunk_bytes",
+        "type": "integer",
+        "default": 65536,
+        "min": 1,
+        "max": 1048576,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Bounded allocation or write chunk for a selected resource test."
+      },
+      {
+        "key": "cpu_intensity_percent",
+        "type": "integer",
+        "default": 100,
+        "min": 1,
+        "max": 100,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "CPU busy-loop duty setting for the cpu test."
+      },
+      {
+        "key": "burst_count",
+        "type": "integer",
+        "default": 4,
+        "min": 1,
+        "max": 1000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Number of messages sent in burst mode.",
+        "notes": "Used only by burst mode; payload mode always sends exactly one request."
+      },
+      {
+        "key": "burst_interval_ms",
+        "type": "integer",
+        "default": 1000,
+        "min": 0,
+        "max": 60000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Delay between messages in burst mode.",
+        "notes": "Quota pacing is configured separately."
+      },
+      {
+        "key": "quota_interval_ms",
+        "type": "integer",
+        "default": 1000,
+        "min": 0,
+        "max": 60000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Delay between quota-test attempts."
+      },
+      {
+        "key": "quota_max_attempts",
+        "type": "integer",
+        "default": 10,
+        "min": 1,
+        "max": 100000,
+        "operator-configurable": true,
+        "apply": "live",
+        "description": "Maximum number of send attempts in the quota test.",
+        "notes": "Caps the explicit quota proof loop."
+      }
+    ]
+  }
+}

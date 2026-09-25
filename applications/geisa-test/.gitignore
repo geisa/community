@@ -1,0 +1,5 @@
+# Local dependencies, generated bindings, and build output.
+.deps/
+.venv/
+build/
+config/local.env
