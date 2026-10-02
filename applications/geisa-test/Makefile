@@ -1,7 +1,9 @@
 # Makefile
 #
-# Build and validate the standalone geisa-test Community application against
-# the pinned GEISA v0.9.0 schema set.
+# File: Makefile
+# Project: geisa-test
+# Purpose: Build, test, and package the app against the pinned GEISA v0.9.0 schemas.
+# Usage: make setup-dev, make, make test, make manifest, or make package.
 #
 # Copyright 2026 PragSol Consulting LLC.
 # SPDX-License-Identifier: Apache-2.0
@@ -9,13 +11,21 @@
 .DEFAULT_GOAL := all
 
 APP := geisa-test
-APP_VERSION := 0.8.9
+APP_VERSION := 0.8.11
 GEISA_BASELINE := 0.9.0
+TOOLCHAIN_ID ?=
+TOOLCHAIN_VERSION ?=
+IMAGE_NAME ?=
+IMAGE_SIZE ?=
+UNCOMPRESSED_SIZE ?=
+export TOOLCHAIN_ID TOOLCHAIN_VERSION IMAGE_NAME IMAGE_SIZE UNCOMPRESSED_SIZE
+PACKAGE_NAME := $(APP)-$(APP_VERSION)-appoverlay.tgz
 GEISA_SCHEMAS_REPO ?= https://github.com/geisa/schemas.git
 GEISA_SCHEMAS_REF ?= v0.9.0
 GEISA_SCHEMAS_DIR ?=
 NANOPB_VERSION ?= 0.4.9.1
 BUILD_DIR ?= build
+PACKAGE_PATH := $(BUILD_DIR)/$(PACKAGE_NAME)
 DEPS_DIR ?= .deps
 SCHEMAS_DIR := $(if $(strip $(GEISA_SCHEMAS_DIR)),$(GEISA_SCHEMAS_DIR),$(DEPS_DIR)/geisa-schemas)
 SCHEMA_SOURCE_DIR := $(SCHEMAS_DIR)
@@ -55,7 +65,7 @@ DEPFILES := $(APP_OBJECTS:.o=.d) $(TEST_BINS:=.d)
 
 .PHONY: all app setup-dev check-dev-deps regenerate verify-generated \
         dependency-info write-dependency-info test test-api test-lee \
-        test-lifecycle test-summary clean help
+        test-lifecycle test-summary manifest package clean help FORCE
 
 all: app
 
@@ -167,6 +177,22 @@ write-dependency-info:
 dependency-info: write-dependency-info
 	@cat $(BUILD_DIR)/dependency-info.txt
 
+manifest: $(BUILD_DIR)/manifest.json
+
+$(BUILD_DIR)/manifest.json: geisa-test-manifest.json FORCE
+	@python3 scripts/generate-manifest.py "$<" "$@"
+
+package: check-dev-deps $(BUILD_DIR)/geisa-test
+	@python3 scripts/package.py \
+		--executable "$(BUILD_DIR)/geisa-test" \
+		--member-name geisa-test \
+		--artifact "$(PACKAGE_PATH)" \
+		--manifest-template geisa-test-manifest.json \
+		--manifest-output "$(BUILD_DIR)/manifest.json" \
+		--manifest-generator scripts/generate-manifest.py
+
+FORCE:
+
 clean:
 	rm -rf $(BUILD_DIR)
 
@@ -182,4 +208,6 @@ help:
 	  'make regenerate      Regenerate bindings from selected schemas.' \
 	  'make verify-generated Check generated bindings and record dependencies.' \
 	  'make dependency-info Show the schema and nanopb revisions in use.' \
+	  'make manifest TOOLCHAIN_ID=... TOOLCHAIN_VERSION=... IMAGE_NAME=... IMAGE_SIZE=... UNCOMPRESSED_SIZE=...' \
+	  'make package TOOLCHAIN_ID=... TOOLCHAIN_VERSION=... Build unsigned appoverlay and pre-signing manifest.' \
 	  'make clean           Remove generated local build output.'
