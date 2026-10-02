@@ -29,7 +29,7 @@ and LEE tests, with additional tests expected over time.
 | Status              | Experimental                                                                  |
 | Maintainer          | [PragSol Consulting LLC](https://pragsolconsulting.com)                       |
 | License             | Apache-2.0                                                                    |
-| Application version | 0.8.9                                                                         |
+| Application version | 0.8.11                                                                        |
 | GEISA compatibility | [Specification v0.9.0](https://spec.geisa-energy.org/0.9.0/)                  |
 | Schema dependency   | [`geisa/schemas` tag `v0.9.0`](https://github.com/geisa/schemas/tree/v0.9.0)  |
 <!-- markdownlint-enable MD013 -->
@@ -37,6 +37,19 @@ and LEE tests, with additional tests expected over time.
 The GEISA Community repository is the authoritative source for this
 application. Please refer to the repository's guidance for contributions:
 [Contributing](https://github.com/geisa/community/blob/main/CONTRIBUTING.md).
+
+`geisa-test` uses SemVer syntax for application versioning. While GEISA is
+pre-1.0, the application's major and minor version track closely to the GEISA
+release version that it targets, with patch releases used for application fixes
+and minor updates.
+
+For example, the initial `0.8.x` releases target the GEISA 0.9.0 specification.
+When appropriate, `geisa-test` will move to `0.9.0`; that release will indicate
+that the application is believed to conform to GEISA 0.9.0 for the functionality
+it uses.
+
+The application version will not move to `1.x.x` until it supports the GEISA
+1.x baseline.
 
 ## Support and maintenance
 
@@ -47,10 +60,6 @@ For contributions, use the
 [contribution guidance](https://github.com/geisa/community/blob/main/CONTRIBUTING.md).
 PragSol Consulting LLC is the original contributor and initial maintainer.
 Community applications are provided without a support commitment or SLA.
-
-`geisa-test` is versioned independently from GEISA. Releases identify the
-GEISA specification and schema version they target; application release
-`0.8.9` currently targets GEISA v0.9.0.
 
 ## Build and developer smoke tests
 
@@ -97,6 +106,35 @@ make verify-generated
 
 `make` builds `build/geisa-test`. `make test` builds and runs the app-local C
 smoke tests. `make verify-generated` checks the generated protobuf bindings.
+
+`geisa-test-manifest.json` is a source template. Generate a pre-signing
+manifest with all five required build and artifact inputs:
+
+```sh
+make manifest \
+  TOOLCHAIN_ID="$TOOLCHAIN_ID" \
+  TOOLCHAIN_VERSION="$TOOLCHAIN_VERSION" \
+  IMAGE_NAME="$IMAGE_NAME" \
+  IMAGE_SIZE="$IMAGE_SIZE" \
+  UNCOMPRESSED_SIZE="$UNCOMPRESSED_SIZE"
+```
+
+The target validates the inputs and writes `build/manifest.json`. The checked-in
+template fixes `signatureType` to `ECDSA`; signature length, hex, and reference
+fields remain publisher-supplied values.
+
+`make package TOOLCHAIN_ID=example-toolchain TOOLCHAIN_VERSION=1.2.3` builds
+`build/geisa-test-0.8.11-appoverlay.tgz` and its pre-signing
+`build/manifest.json`. The unsigned archive contains the root-level
+`geisa-test` executable expected by the manifest. Packaging does not
+cross-compile; build with the LEE target toolchain first. The publisher
+supplies the final signature values before deployment.
+
+The manifest's `stop-string` sends SIGTERM to `geisa-test`; the platform can
+also request shutdown through GEISA status control. The app cancels an active
+probe, publishes `SHUTTING_DOWN`, and gives MQTT a bounded opportunity to send
+the final status before exit. `stop-timeout` remains 15 seconds, after which
+LEE may force termination.
 
 Generated nanopb sources are kept under `build/nanopb/`; executables, test
 programs, object files, and dependency information also stay under the ignored

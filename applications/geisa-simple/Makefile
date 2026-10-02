@@ -1,7 +1,7 @@
 # File: Makefile
 # Project: geisa-simple
-# Purpose: Build the application and its generated GEISA protobuf bindings.
-# Usage: make setup-dev, make, make test, or make manifest.
+# Purpose: Build, test, and package the application with its GEISA protobuf bindings.
+# Usage: make setup-dev, make, make test, make manifest, or make package.
 #
 # Copyright 2026 PragSol Consulting LLC.
 #
@@ -17,14 +17,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 APP := geisa-simple
-APP_VERSION := 0.9.0
+APP_VERSION := 0.8.11
 GEISA_SPECIFICATION_REPO ?= https://github.com/geisa/specification.git
 GEISA_SPECIFICATION_REF ?= schemas-v0.9.0
 GEISA_SPECIFICATION_DIR ?=
 NANOPB_VERSION ?= 0.4.9.1
 TOOLCHAIN_ID ?=
 TOOLCHAIN_VERSION ?=
+IMAGE_NAME ?=
+IMAGE_SIZE ?=
+UNCOMPRESSED_SIZE ?=
+export TOOLCHAIN_ID TOOLCHAIN_VERSION IMAGE_NAME IMAGE_SIZE UNCOMPRESSED_SIZE
+PACKAGE_NAME := $(APP)-$(APP_VERSION)-appoverlay.tgz
 BUILD_DIR ?= build
+PACKAGE_PATH := $(BUILD_DIR)/$(PACKAGE_NAME)
 DEPS_DIR ?= .deps
 SPECIFICATION_DIR := $(if $(strip $(GEISA_SPECIFICATION_DIR)),$(GEISA_SPECIFICATION_DIR),$(DEPS_DIR)/geisa-specification)
 SCHEMA_SOURCE_DIR := $(SPECIFICATION_DIR)
@@ -61,7 +67,7 @@ LDLIBS += $(MOSQUITTO_LIBS)
 
 .PHONY: all app test setup-dev regenerate verify-generated clean \
         check-dev-deps \
-        dependency-info write-dependency-info manifest help
+        dependency-info write-dependency-info manifest package help FORCE
 
 all: app
 
@@ -173,15 +179,19 @@ dependency-info: write-dependency-info
 
 manifest: $(BUILD_DIR)/manifest.json
 
-$(BUILD_DIR)/manifest.json: geisa-simple-manifest.json
-	@test -n "$(strip $(TOOLCHAIN_ID))" || { \
-		echo 'TOOLCHAIN_ID is required' >&2; exit 2; }
-	@test -n "$(strip $(TOOLCHAIN_VERSION))" || { \
-		echo 'TOOLCHAIN_VERSION is required' >&2; exit 2; }
-	@mkdir -p $(BUILD_DIR)
-	sed -e 's|__TOOLCHAIN_ID__|$(TOOLCHAIN_ID)|g' \
-		-e 's|__TOOLCHAIN_VERSION__|$(TOOLCHAIN_VERSION)|g' \
-		geisa-simple-manifest.json > $@
+$(BUILD_DIR)/manifest.json: geisa-simple-manifest.json FORCE
+	@python3 scripts/generate-manifest.py "$<" "$@"
+
+package: check-dev-deps $(BUILD_DIR)/geisa-app
+	@python3 scripts/package.py \
+		--executable "$(BUILD_DIR)/geisa-app" \
+		--member-name geisa-app \
+		--artifact "$(PACKAGE_PATH)" \
+		--manifest-template geisa-simple-manifest.json \
+		--manifest-output "$(BUILD_DIR)/manifest.json" \
+		--manifest-generator scripts/generate-manifest.py
+
+FORCE:
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -196,7 +206,8 @@ help:
 		'make regenerate  Regenerate protobuf bindings from the selected schemas.' \
 		'make verify-generated  Check generated bindings and dependency info.' \
 		'make dependency-info  Show the active schema checkout and nanopb version.' \
-		'make manifest TOOLCHAIN_ID=... TOOLCHAIN_VERSION=...  Fill fields.' \
+		'make manifest TOOLCHAIN_ID=... TOOLCHAIN_VERSION=... IMAGE_NAME=... IMAGE_SIZE=... UNCOMPRESSED_SIZE=...' \
+		'make package TOOLCHAIN_ID=... TOOLCHAIN_VERSION=...  Build unsigned appoverlay and pre-signing manifest.' \
 		'' \
 		'GEISA_SPECIFICATION_REF=schemas-v0.9.0 is the reproducible default.' \
 		'Use GEISA_SPECIFICATION_REF=<root-layout tag|branch|commit>.'

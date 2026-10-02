@@ -19,6 +19,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 -->
 
+<!-- markdownlint-configure-file {"MD060": {"style": "aligned"}} -->
+
 # geisa-simple
 
 `geisa-simple` is a small example GEISA application. It shows lifecycle status,
@@ -28,11 +30,11 @@ change the reporting interval.
 
 `geisa-simple` is intended for example, reference, and basic testing use. It is
 not optimized for high-frequency or high-bandwidth processing, and it has not
-been designed or validated as a production application.  The implementation
+been designed or validated as a production application. The implementation
 choices made for this app, including message and configuration handling, are
 examples and are not the only way to satisfy the specification.
 
-Use it as a starting point, not as production-ready software.
+Use it as a starting point; not as production-ready software.
 
 The initial release targets GEISA 0.9.0 behaviors; subsequent releases may
 be done as the GEISA specification progresses.
@@ -66,13 +68,14 @@ for the complete requirements.
 ## GEISA application baseline
 
 This is a short guide to the GEISA 0.9.0 application baseline, not a replacement
-for the specification.
+for reviewing the specification.
 
+<!-- markdownlint-disable MD013 -->
 | Requirement            | What an application does                                                                                                          |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Platform configuration | Uses the API connection information and platform credentials, normally through `/etc/geisa/mqtt.conf` on a LEE                    |
 | MQTT subscriptions     | Subscribes to the response and control topics it needs and waits for successful SUBACKs before sending requests depending on them |
-| Global platform status | Subscribes to `geisa/api/platform/status` and logs valid broadcast notifications                                                   |
+| Global platform status | Subscribes to `geisa/api/platform/status` and logs valid broadcast notifications                                                  |
 | Application status     | Publishes `RUNNING` when the application is operational                                                                           |
 | Platform Discovery     | Calls the Platform Discovery API on every startup                                                                                 |
 | Deployment Manifest    | Retrieves the current manifest when the application uses one                                                                      |
@@ -81,6 +84,7 @@ for the specification.
 | Periodic status        | Continues publishing application status at the advertised interval when an interval is configured                                 |
 | Platform shutdown      | Accepts a platform-initiated shutdown request                                                                                     |
 | Shutdown status        | Publishes `SHUTTING_DOWN` when a clean shutdown begins                                                                            |
+<!-- markdownlint-enable MD013 -->
 
 `geisa-simple` waits for the subscriptions it needs to receive successful
 SUBACKs, publishes RUNNING status, then runs Platform Discovery and requests
@@ -94,19 +98,29 @@ for the authoritative requirements.
 
 ## Project information
 
-| Item                | Value                                                       |
-| ------------------- | ----------------------------------------------------------- |
-| Status              | Experimental                                                |
-| Maintainer          | [PragSol Consulting LLC](https://pragsolconsulting.com)     |
-| License             | Apache-2.0                                                  |
-| Application version | 0.9.0                                                       |
-| GEISA baseline      | 0.9.0                                                       |
-| Schemas tested      | GEISA Specification `schemas-v0.9.0`                         |
+<!-- markdownlint-disable MD013 -->
+| Item                | Value                                                    |
+| ------------------- | -------------------------------------------------------- |
+| Status              | Experimental                                             |
+| Maintainer          | [PragSol Consulting LLC](https://pragsolconsulting.com)  |
+| License             | Apache-2.0                                               |
+| Application version | 0.8.11                                                   |
+| GEISA baseline      | 0.9.0                                                    |
+| Schemas tested      | GEISA Specification `schemas-v0.9.0`                     |
+<!-- markdownlint-enable MD013 -->
 
-`geisa-simple` uses SemVer syntax for versioning. While GEISA is pre-1.0, its
-major and minor version identify the GEISA release family it targets, with
-Patch releases containing app fixes and small updates. The app version will
-not be moved to `1.x.x` until it supports the GEISA 1.x baseline.
+`geisa-simple` uses SemVer syntax for application versioning. While GEISA is
+pre-1.0, the application's major and minor version track closely to the GEISA
+release version that it targets, with patch releases used for application fixes
+and minor updates.
+
+For example, the initial `0.8.x` releases target the GEISA 0.9.0 specification.
+When appropriate, `geisa-simple` will move to `0.9.0`; that release will indicate
+that the application is believed to conform to GEISA 0.9.0 for the functionality
+it uses.
+
+The application version will not move to `1.x.x` until it supports the GEISA
+1.x baseline.
 
 ## Build requirements
 
@@ -135,7 +149,7 @@ tree at the Specification checkout root, so the existing protobuf paths remain
 unchanged.
 
 Note that the tests run locally and do not require a GEISA LEE or MQTT broker.
-They check CONFIG handling, protobuf encoding and decoding, and startup
+They check CONFIG handling, protobuf encoding and decoding, startup
 subscription and message ordering. A GEISA platform is only needed to run the
 application itself and test the live API exchanges.
 
@@ -185,8 +199,9 @@ GEISA_MQTT_CONFIG=/path/to/mqtt.conf ./geisa-app
 ## Schema development
 
 `GEISA_SPECIFICATION_REF` selects a preserved Schemas tag or other Specification
-commit whose tree exposes the schemas at the checkout root. Use `GEISA_SPECIFICATION_REPO` to override the
-repository URL and `GEISA_SPECIFICATION_DIR` to build from a local
+commit whose tree exposes the schemas at the checkout root. Use
+`GEISA_SPECIFICATION_REPO` to override the repository URL and
+`GEISA_SPECIFICATION_DIR` to build from a local
 Specification checkout.
 
 ```sh
@@ -199,22 +214,33 @@ make dependency-info
 `make dependency-info` shows the selected schema source and commit and the
 nanopb version.
 
-## Packaging and signing
+## Manifest and package
 
-`geisa-simple-manifest.json` is the application manifest. The builder must
-provide the toolchain used for the deployable artifact:
+`geisa-simple-manifest.json` is a source template. Generate the pre-signing
+manifest with all five required build and artifact inputs:
 
 ```sh
 make manifest \
-  TOOLCHAIN_ID=your-toolchain-id \
-  TOOLCHAIN_VERSION=your-toolchain-version
+  TOOLCHAIN_ID="$TOOLCHAIN_ID" \
+  TOOLCHAIN_VERSION="$TOOLCHAIN_VERSION" \
+  IMAGE_NAME="$IMAGE_NAME" \
+  IMAGE_SIZE="$IMAGE_SIZE" \
+  UNCOMPRESSED_SIZE="$UNCOMPRESSED_SIZE"
 ```
 
-`toolchain-id` and `toolchain-version` identify the build toolchain, not the
-GEISA release. The artifact and manifest signature fields are still
-placeholders until the publisher supplies image metadata, signatures, and the
-final deployment manifest. GEISA deployment artifacts and manifests require
-signing.
+The target validates the inputs and writes `build/manifest.json`. The checked-in
+template fixes `signatureType` to `ECDSA`; signature length, hex, and reference
+fields remain publisher-supplied values.
 
-Note that the `geisa-simple` app does not manage keys or signing; the
-application publisher or package workflow should do that work.
+`make package TOOLCHAIN_ID=example-toolchain TOOLCHAIN_VERSION=1.2.3` builds
+`build/geisa-simple-0.8.11-appoverlay.tgz` and its pre-signing
+`build/manifest.json`. The unsigned archive contains the root-level `geisa-app`
+executable expected by the manifest. Packaging does not cross-compile; build
+with the LEE target toolchain first. The publisher supplies the final signature
+values before deployment.
+
+The manifest's `stop-string` sends SIGTERM to `geisa-app`; the platform can
+also request shutdown through GEISA status control. The app handles SIGTERM and
+SIGINT, publishes `SHUTTING_DOWN`, and gives MQTT a bounded opportunity to send
+the final status before exit. `stop-timeout` remains 15 seconds, after which
+LEE may force termination.

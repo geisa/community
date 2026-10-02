@@ -96,6 +96,7 @@ int main(void) {
     int rejected_qos = 0x80;
     struct app_state startup_state;
     struct app_state ack_state;
+    struct app_state active_probe_state;
     struct mosquitto_message control_message;
     struct mosquitto_message app_response_message;
     struct app_options options_before_clear;
@@ -256,7 +257,30 @@ int main(void) {
     assert(startup_state.shutdown_requested && startup_state.done);
     assert(mock_status_type == 3U &&
            startup_state.lifecycle_shutdown_reports == 1U);
+
+    memset(&active_probe_state, 0, sizeof(active_probe_state));
+    snprintf(active_probe_state.platform_status_topic,
+             sizeof(active_probe_state.platform_status_topic), "%s",
+             "active-probe-platform-status");
+    snprintf(active_probe_state.app_status_topic,
+             sizeof(active_probe_state.app_status_topic), "%s",
+             "active-probe-app-status");
+    active_probe_state.probe.running = 1;
+    mock_state = &active_probe_state;
+    control_message.topic = active_probe_state.platform_status_topic;
+    on_message(NULL, &active_probe_state, &control_message);
+    assert(active_probe_state.shutdown_requested);
+    assert(active_probe_state.probe.cancel);
+    assert(!active_probe_state.done);
+    assert(active_probe_state.lifecycle_shutdown_commands == 1U);
+    assert(active_probe_state.lifecycle_shutdown_reports == 1U);
+    assert(mock_status_type == GEISA_PROTO_APP_STATUS_SHUTTING_DOWN);
+
     mock_state = NULL;
+
+    g_stop = 0;
+    on_signal(SIGTERM);
+    assert(g_stop != 0);
 
     assert(geisa_proto_decode_platform_to_app_status(
                send_status, sizeof(send_status), &control) == 0);

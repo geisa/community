@@ -1,10 +1,10 @@
 {
   "geisa-application-manifest": {
     "manifest": {
-      "app-id": "com.pragsol.geisa-simple",
+      "app-id": "com.pragsol.geisa-test",
       "author": "PragSol Consulting LLC",
-      "name": "geisa-simple",
-      "description": "Simple GEISA 0.9.0 example demonstrating lifecycle status, CONFIG, manifest retrieval, and EVENT reporting.",
+      "name": "geisa-test",
+      "description": "GEISA 0.9.0 application for API and LEE resource-test workloads.",
       "app-version": "0.8.11",
       "manifest-version": "0.9.0",
       "artifacts": [
@@ -38,7 +38,26 @@
       },
       "default-configuration": {
         "reporting_enabled": true,
-        "reporting_interval_seconds": 60
+        "reporting_interval_seconds": 3600,
+        "reporting_message_types": [
+          "EVENT",
+          "ALARM",
+          "APP_DATA",
+          "TELEMETRY"
+        ],
+        "payload_size_bytes": 256,
+        "payload_pattern": "alpha",
+        "message_count": 0,
+        "expected_status": "GEISA_APP_MESSAGE_STATUS_ACCEPTED",
+        "mode": "normal",
+        "test_duration_ms": 1000,
+        "test_target_bytes": 1048576,
+        "test_chunk_bytes": 65536,
+        "cpu_intensity_percent": 100,
+        "burst_count": 4,
+        "burst_interval_ms": 1000,
+        "quota_interval_ms": 1000,
+        "quota_max_attempts": 10
       },
       "default-launch-strategy": {
         "auto-restart": true,
@@ -46,8 +65,8 @@
         "restart-period": 60,
         "start-timeout": 15,
         "start-background": true,
-        "start-string": "./geisa-app",
-        "stop-string": "pkill -TERM -x geisa-app",
+        "start-string": "./geisa-test",
+        "stop-string": "pkill -TERM -x geisa-test",
         "stop-timeout": 15,
         "notify-timeout": 30,
         "watchdog": false
@@ -55,14 +74,14 @@
       "external-dependencies": [],
       "communication": {
         "messaging": {
-          "daily-messages": 2000
+          "daily-messages": 128
         }
       },
       "resources": {
         "app-cpu": 10,
-        "app-ram": 49152,
-        "storage-persistent": 8192,
-        "storage-nonpersistent": 8192
+        "app-ram": 65536,
+        "storage-persistent": 16384,
+        "storage-nonpersistent": 16384
       }
     },
     "signature": {
