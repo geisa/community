@@ -8,7 +8,7 @@
 #include "gapi_mosquitto.h"
 
 const int MOSQUITTO_KEEP_ALIVE = 60;
-enum { MAX_TOPIC_HANDLERS = 6 };
+enum { MAX_TOPIC_HANDLERS = 7 };
 
 static int topic_handler_count = 0;
 
