@@ -4,6 +4,7 @@
  * @copyright Copyright (C) 2025 Southern California Edison
  */
 #include "gapi_actuator.h"
+#include "gapi_app_message.h"
 #include "gapi_discovery.h"
 #include "gapi_instantaneous.h"
 #include "gapi_manifest.h"
@@ -42,6 +43,7 @@ int main(void)
 	api_waveform_init(mosq);
 	api_actuator_init(mosq);
 	api_sensor_init(mosq);
+	api_app_message_init(mosq);
 
 	while (running) {
 		mosquitto_loop(mosq, -1, 1);

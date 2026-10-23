@@ -1,0 +1,5 @@
+GeisaAppMessage_Req.request_id type:FT_POINTER
+GeisaAppMessage_Req.content_type type:FT_POINTER
+GeisaAppMessage_Req.payload type:FT_POINTER
+GeisaAppMessage_Rsp.request_id type:FT_POINTER
+GeisaAppMessage_Rsp.status_text type:FT_POINTER

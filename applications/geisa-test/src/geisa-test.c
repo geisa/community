@@ -2479,7 +2479,7 @@ static int apply_config_update_to_state(struct app_state *state,
 }
 
 static int probe_write_file(struct probe_state *probe, const char *root) {
-    char directory[512];
+    char directory[544];
     char path[640];
     unsigned char *chunk;
     int fd;
