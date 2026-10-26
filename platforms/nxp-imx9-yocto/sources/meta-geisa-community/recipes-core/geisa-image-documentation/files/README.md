@@ -72,6 +72,14 @@ package list.
 | LXC tools, systemctl, journalctl | Containers and services    |
 | vim, nano, less                  | Editing and log viewing    |
 
+Mock/reference implementations such as the GEISA API mock are available as
+optional packages through `packagegroup-geisa-mock-reference`; they are
+intentionally not installed in the default development image.
+
+To include the GEISA API mock in a development image, add
+`IMAGE_INSTALL:append = " packagegroup-geisa-mock-reference"` to the build
+configuration before running the normal image build.
+
 The complete installed package inventory is at
 `/usr/share/doc/geisa-image/packages.manifest`.
 

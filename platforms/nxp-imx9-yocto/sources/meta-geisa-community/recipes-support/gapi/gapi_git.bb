@@ -10,12 +10,12 @@ SRC_URI = " \
     gitsm://github.com/geisa/community.git;protocol=https;branch=main \
     file://gapi.service \
 "
-SRCREV = "${AUTOREV}"
+SRCREV = "193cd3eeff2b27d4f0812e45cd0708065b8dcbd3"
 S = "${UNPACKDIR}/${BP}/example-implementations/api/api-mockup"
 
 DEPENDS = "protobuf-native python3-protobuf-native nanopb-generator-native nanopb-runtime mosquitto"
 
-RDEPENDS:${PN} = "nanopb-runtime"
+RDEPENDS:${PN} = "nanopb-runtime geisa-api-mock-mosquitto-config"
 
 TARGET_CC_ARCH += "${LDFLAGS}"
 

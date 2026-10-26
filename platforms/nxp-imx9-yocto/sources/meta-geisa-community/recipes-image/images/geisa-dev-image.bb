@@ -34,7 +34,6 @@ geisa_dev_rootfs_rw() {
 # /usr/bin/install and /usr/bin/timeout; nodejs supports local development.
 GEISA_DEV_RUNTIME_INSTALL = " \
     coreutils \
-    gapi \
     libasyncns \
     geisa-platform-mount \
     geisa-sudo-policy \
