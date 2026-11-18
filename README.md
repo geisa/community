@@ -29,7 +29,7 @@ For information about GEISA itself, please refer to the official project
 resources.
 
 - [LF Energy GEISA project](https://geisa.energy/)
-- [Published GEISA specification](https://spec.geisa.energy/latest/index.html)
+- [Published GEISA specification](https://spec.geisa-energy.org/)
 - [GEISA specification repository](https://github.com/geisa/specification)
 - [GEISA conformance repository](https://github.com/geisa/conformance)
 - [All GEISA repositories](https://github.com/orgs/geisa/repositories)
